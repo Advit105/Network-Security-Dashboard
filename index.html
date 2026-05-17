@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NetWatch — Security Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">N</div>
+                <span class="logo-text">NetWatch</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <span class="nav-icon">&#9632;</span>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">&#9650;</span>
+                    Alerts
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">&#9670;</span>
+                    Port Scanner
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">&#9679;</span>
+                    IP Lookup
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">&#9781;</span>
+                    Log Analyzer
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">&#9632;</span>
+                    Blocklist
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-dot"></div>
+                    <span>System Online</span>
+                </div>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">&#9881;</span>
+                    Settings
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 class="page-title">Dashboard</h1>
+                    <span class="page-sub">Overview / Real-time</span>
+                </div>
+                <div class="topbar-right">
+                    <div class="badge badge-danger">3 Critical</div>
+                    <div class="badge badge-warn">7 Warnings</div>
+                    <div class="badge badge-success">Live</div>
+                    <div class="topbar-time" id="clock">--:--:--</div>
+                </div>
+            </header>
+
+            <!-- Metric Cards -->
+            <section class="metrics">
+                <div class="metric-card" id="el-threats">
+                    <div class="metric-header">
+                        <span class="metric-label">Total Threats</span>
+                        <span class="metric-trend danger">+12%</span>
+                    </div>
+                    <div class="metric-value danger">42</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill danger" style="width: 72%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="el-ports">
+                    <div class="metric-header">
+                        <span class="metric-label">Open Ports</span>
+                        <span class="metric-trend warn">+3</span>
+                    </div>
+                    <div class="metric-value warn">18</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill warn" style="width: 45%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="el-blocked">
+                    <div class="metric-header">
+                        <span class="metric-label">Blocked IPs</span>
+                        <span class="metric-trend success">+8</span>
+                    </div>
+                    <div class="metric-value">127</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill info" style="width: 60%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="el-uptime">
+                    <div class="metric-header">
+                        <span class="metric-label">Uptime</span>
+                        <span class="metric-trend success">Stable</span>
+                    </div>
+                    <div class="metric-value success">99.8%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill success" style="width: 99%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panels -->
+            <section class="panels">
+
+                <!-- Recent Alerts -->
+                <div class="panel" id="el-logs">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Recent Alerts</h2>
+                        <button class="panel-btn">View all</button>
+                    </div>
+
+                    <div class="alert-list">
+                        <div class="alert-row">
+                            <div class="alert-dot danger"></div>
+                            <div class="alert-info">
+                                <span class="alert-msg">SSH brute force detected</span>
+                                <span class="alert-meta">192.168.1.104 &mdash; 47 attempts</span>
+                            </div>
+                            <div class="alert-badge danger">Critical</div>
+                            <span class="alert-time">2m ago</span>
+                        </div>
+
+                        <div class="alert-row">
+                            <div class="alert-dot danger"></div>
+                            <div class="alert-info">
+                                <span class="alert-msg">Port scan from unknown host</span>
+                                <span class="alert-meta">10.0.0.53 &mdash; TCP SYN flood</span>
+                            </div>
+                            <div class="alert-badge danger">Critical</div>
+                            <span class="alert-time">11m ago</span>
+                        </div>
+
+                        <div class="alert-row">
+                            <div class="alert-dot warn"></div>
+                            <div class="alert-info">
+                                <span class="alert-msg">Unusual outbound traffic spike</span>
+                                <span class="alert-meta">172.16.8.22 &mdash; 3.2 GB sent</span>
+                            </div>
+                            <div class="alert-badge warn">Warning</div>
+                            <span class="alert-time">34m ago</span>
+                        </div>
+
+                        <div class="alert-row">
+                            <div class="alert-dot warn"></div>
+                            <div class="alert-info">
+                                <span class="alert-msg">Login from unrecognised country</span>
+                                <span class="alert-meta">10.0.0.88 &mdash; Origin: CN</span>
+                            </div>
+                            <div class="alert-badge warn">Warning</div>
+                            <span class="alert-time">1h ago</span>
+                        </div>
+
+                        <div class="alert-row">
+                            <div class="alert-dot success"></div>
+                            <div class="alert-info">
+                                <span class="alert-msg">Firewall rule updated</span>
+                                <span class="alert-meta">192.168.1.1 &mdash; Rule #44 applied</span>
+                            </div>
+                            <div class="alert-badge success">Info</div>
+                            <span class="alert-time">2h ago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="right-col">
+
+                    <!-- Open Ports -->
+                    <div class="panel" id="el-portlist">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Open Ports</h2>
+                            <button class="panel-btn">Scan now</button>
+                        </div>
+
+                        <div class="port-list">
+                            <div class="port-row">
+                                <span class="port-num">22</span>
+                                <span class="port-name">SSH</span>
+                                <div class="port-bar-wrap">
+                                    <div class="port-bar danger" style="width:85%"></div>
+                                </div>
+                                <div class="alert-badge danger">High</div>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">21</span>
+                                <span class="port-name">FTP</span>
+                                <div class="port-bar-wrap">
+                                    <div class="port-bar danger" style="width:70%"></div>
+                                </div>
+                                <div class="alert-badge danger">High</div>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">3306</span>
+                                <span class="port-name">MySQL</span>
+                                <div class="port-bar-wrap">
+                                    <div class="port-bar warn" style="width:55%"></div>
+                                </div>
+                                <div class="alert-badge warn">Med</div>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">80</span>
+                                <span class="port-name">HTTP</span>
+                                <div class="port-bar-wrap">
+                                    <div class="port-bar warn" style="width:45%"></div>
+                                </div>
+                                <div class="alert-badge warn">Med</div>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">443</span>
+                                <span class="port-name">HTTPS</span>
+                                <div class="port-bar-wrap">
+                                    <div class="port-bar success" style="width:30%"></div>
+                                </div>
+                                <div class="alert-badge success">Safe</div>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">8080</span>
+                                <span class="port-name">Alt-HTTP</span>
+                                <div class="port-bar-wrap">
+                                    <div class="port-bar warn" style="width:25%"></div>
+                                </div>
+                                <div class="alert-badge warn">Med</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suspicious IPs -->
+                    <div class="panel" id="el-ips">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Suspicious IPs</h2>
+                            <button class="panel-btn">Manage</button>
+                        </div>
+
+                        <table class="ip-table">
+                            <thead>
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Country</th>
+                                    <th>Hits</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="mono">45.33.32.156</td>
+                                    <td>US</td>
+                                    <td>312</td>
+                                    <td>
+                                        <div class="alert-badge danger">Blocked</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">185.220.101.5</td>
+                                    <td>NL</td>
+                                    <td>203</td>
+                                    <td>
+                                        <div class="alert-badge danger">Blocked</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">91.198.174.192</td>
+                                    <td>DE</td>
+                                    <td>87</td>
+                                    <td>
+                                        <div class="alert-badge warn">Watch</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="mono">103.21.244.0</td>
+                                    <td>IN</td>
+                                    <td>14</td>
+                                    <td>
+                                        <div class="alert-badge warn">Watch</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
