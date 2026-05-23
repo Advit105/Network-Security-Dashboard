@@ -1,380 +1,651 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NetWatch — Security Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NetWatch — Security Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
 
-  <!-- Toast Container -->
-  <div id="toast-container"></div>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
-  <!-- Keyboard Shortcuts Modal -->
-  <div id="shortcuts-modal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2 class="modal-title">Keyboard Shortcuts</h2>
-        <button id="shortcuts-close" class="modal-close">×</button>
-      </div>
-      <div class="shortcuts-grid">
-        <div class="shortcut-row"><kbd>1</kbd><span>Dashboard</span></div>
-        <div class="shortcut-row"><kbd>2</kbd><span>Charts</span></div>
-        <div class="shortcut-row"><kbd>3</kbd><span>Log Analyzer</span></div>
-        <div class="shortcut-row"><kbd>4</kbd><span>Port Scanner</span></div>
-        <div class="shortcut-row"><kbd>5</kbd><span>IP Lookup</span></div>
-        <div class="shortcut-row"><kbd>6</kbd><span>Blocklist</span></div>
-        <div class="shortcut-row"><kbd>7</kbd><span>Hash Generator</span></div>
-        <div class="shortcut-row"><kbd>8</kbd><span>Password Checker</span></div>
-        <div class="shortcut-row"><kbd>9</kbd><span>Settings</span></div>
-        <div class="shortcut-row"><kbd>T</kbd><span>Toggle Theme</span></div>
-        <div class="shortcut-row"><kbd>?</kbd><span>Show Shortcuts</span></div>
-        <div class="shortcut-row"><kbd>Esc</kbd><span>Close / Clear Search</span></div>
-      </div>
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Keyboard Shortcuts</h2>
+                <button id="shortcuts-close" class="modal-close">×</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-row"><kbd>1</kbd><span>Dashboard</span></div>
+                <div class="shortcut-row"><kbd>2</kbd><span>Charts</span></div>
+                <div class="shortcut-row"><kbd>3</kbd><span>Log Analyzer</span></div>
+                <div class="shortcut-row"><kbd>4</kbd><span>Port Scanner</span></div>
+                <div class="shortcut-row"><kbd>5</kbd><span>IP Lookup</span></div>
+                <div class="shortcut-row"><kbd>6</kbd><span>Blocklist</span></div>
+                <div class="shortcut-row"><kbd>7</kbd><span>Hash Generator</span></div>
+                <div class="shortcut-row"><kbd>8</kbd><span>Password Checker</span></div>
+                <div class="shortcut-row"><kbd>9</kbd><span>Settings</span></div>
+                <div class="shortcut-row"><kbd>T</kbd><span>Toggle Theme</span></div>
+                <div class="shortcut-row"><kbd>?</kbd><span>Show Shortcuts</span></div>
+                <div class="shortcut-row"><kbd>Esc</kbd><span>Close / Clear Search</span></div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="layout">
+    <div class="layout">
 
-    <!-- Mobile Hamburger -->
-    <button id="hamburger" class="hamburger" aria-label="Open menu">☰</button>
+        <!-- Mobile Hamburger -->
+        <button id="hamburger" class="hamburger" aria-label="Open menu">☰</button>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-icon">N</div>
-        <span class="logo-text">NetWatch</span>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">⬛</span>Dashboard</a>
-        <a href="#" class="nav-item" data-page="charts"><span class="nav-icon">▲</span>Charts</a>
-        <a href="#" class="nav-item" data-page="logs"><span class="nav-icon">◆</span>Log Analyzer</a>
-        <a href="#" class="nav-item" data-page="ports"><span class="nav-icon">●</span>Port Scanner</a>
-        <a href="#" class="nav-item" data-page="ips"><span class="nav-icon">⬡</span>IP Lookup</a>
-        <a href="#" class="nav-item" data-page="blocklist"><span class="nav-icon">⬛</span>Blocklist</a>
-        <div class="nav-divider"></div>
-        <a href="#" class="nav-item" data-page="hash"><span class="nav-icon">#</span>Hash Generator</a>
-        <a href="#" class="nav-item" data-page="password"><span class="nav-icon">*</span>Password Checker</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="system-status"><div class="status-dot"></div><span>System Online</span></div>
-        <a href="#" class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</a>
-        <div class="shortcut-hint" onclick="toggleShortcutsModal()">Press <kbd class="kbd-mini">?</kbd> for shortcuts</div>
-      </div>
-    </aside>
-
-    <!-- Main -->
-    <main class="main">
-
-      <header class="topbar">
-        <div class="topbar-left">
-          <h1 class="page-title" id="page-title">Dashboard</h1>
-          <span class="page-sub" id="page-sub">Overview / Real-time</span>
-        </div>
-        <div class="topbar-right">
-          <div class="search-wrap">
-            <input type="text" id="global-search" class="search-input" placeholder="Search... (or press 1-9)" />
-            <div id="search-results" class="search-results" style="display:none"></div>
-          </div>
-          <div class="badge badge-danger">3 Critical</div>
-          <div class="badge badge-warn">7 Warnings</div>
-          <div class="badge badge-success">Live</div>
-          <button id="theme-toggle" class="theme-btn">☀ Light</button>
-          <button id="export-report-btn" class="theme-btn">⬇ Export</button>
-          <div class="topbar-time" id="clock">--:--:--</div>
-        </div>
-      </header>
-
-      <!-- PAGE: DASHBOARD -->
-      <div id="page-dashboard" class="page active">
-        <section class="metrics">
-          <div class="metric-card">
-            <div class="metric-header"><span class="metric-label">Total Threats</span><span class="metric-trend danger">+12%</span></div>
-            <div class="metric-value danger" id="counter-threats">0</div>
-            <div class="metric-bar"><div class="metric-bar-fill danger" style="width:72%"></div></div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-header"><span class="metric-label">Open Ports</span><span class="metric-trend warn">+3</span></div>
-            <div class="metric-value warn" id="counter-ports">0</div>
-            <div class="metric-bar"><div class="metric-bar-fill warn" style="width:45%"></div></div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-header"><span class="metric-label">Blocked IPs</span><span class="metric-trend success">↑</span></div>
-            <div class="metric-value" id="blocked-metric-val">0</div>
-            <div class="metric-bar"><div class="metric-bar-fill info" style="width:60%"></div></div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-header"><span class="metric-label">Uptime</span><span class="metric-trend success">Stable</span></div>
-            <div class="metric-value success" id="counter-uptime">0</div>
-            <div class="metric-bar"><div class="metric-bar-fill success" style="width:99%"></div></div>
-          </div>
-        </section>
-
-        <section class="panels">
-          <div class="panel">
-            <div class="panel-header">
-              <h2 class="panel-title">Recent Alerts</h2>
-              <div style="display:flex;gap:8px">
-                <input type="text" id="alert-search" class="inline-search" placeholder="Filter alerts..." />
-                <button class="panel-btn">View all</button>
-              </div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">N</div>
+                <span class="logo-text">NetWatch</span>
             </div>
-            <div class="alert-list" id="alert-list">
-              <div class="alert-row" data-text="ssh brute force 192.168.1.104"><div class="alert-dot danger"></div><div class="alert-info"><span class="alert-msg">SSH brute force detected</span><span class="alert-meta">192.168.1.104 — 47 attempts</span></div><div class="alert-badge danger">Critical</div><span class="alert-time">2m ago</span></div>
-              <div class="alert-row" data-text="port scan 10.0.0.53 tcp syn flood"><div class="alert-dot danger"></div><div class="alert-info"><span class="alert-msg">Port scan from unknown host</span><span class="alert-meta">10.0.0.53 — TCP SYN flood</span></div><div class="alert-badge danger">Critical</div><span class="alert-time">11m ago</span></div>
-              <div class="alert-row" data-text="outbound traffic spike 172.16.8.22"><div class="alert-dot warn"></div><div class="alert-info"><span class="alert-msg">Unusual outbound traffic spike</span><span class="alert-meta">172.16.8.22 — 3.2 GB sent</span></div><div class="alert-badge warn">Warning</div><span class="alert-time">34m ago</span></div>
-              <div class="alert-row" data-text="login unrecognised country cn 10.0.0.88"><div class="alert-dot warn"></div><div class="alert-info"><span class="alert-msg">Login from unrecognised country</span><span class="alert-meta">10.0.0.88 — Origin: CN</span></div><div class="alert-badge warn">Warning</div><span class="alert-time">1h ago</span></div>
-              <div class="alert-row" data-text="firewall rule updated 192.168.1.1"><div class="alert-dot success"></div><div class="alert-info"><span class="alert-msg">Firewall rule updated</span><span class="alert-meta">192.168.1.1 — Rule #44 applied</span></div><div class="alert-badge success">Info</div><span class="alert-time">2h ago</span></div>
-            </div>
-          </div>
-
-          <div class="right-col">
-            <div class="panel">
-              <div class="panel-header"><h2 class="panel-title">Open Ports</h2><button class="panel-btn" onclick="navigateTo('ports')">Scan now</button></div>
-              <div class="port-list">
-                <div class="port-row"><span class="port-num">22</span><span class="port-name">SSH</span><div class="port-bar-wrap"><div class="port-bar danger" style="width:85%"></div></div><div class="alert-badge danger">High</div></div>
-                <div class="port-row"><span class="port-num">21</span><span class="port-name">FTP</span><div class="port-bar-wrap"><div class="port-bar danger" style="width:70%"></div></div><div class="alert-badge danger">High</div></div>
-                <div class="port-row"><span class="port-num">3306</span><span class="port-name">MySQL</span><div class="port-bar-wrap"><div class="port-bar warn" style="width:55%"></div></div><div class="alert-badge warn">Med</div></div>
-                <div class="port-row"><span class="port-num">80</span><span class="port-name">HTTP</span><div class="port-bar-wrap"><div class="port-bar warn" style="width:45%"></div></div><div class="alert-badge warn">Med</div></div>
-                <div class="port-row"><span class="port-num">443</span><span class="port-name">HTTPS</span><div class="port-bar-wrap"><div class="port-bar success" style="width:30%"></div></div><div class="alert-badge success">Safe</div></div>
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-header"><h2 class="panel-title">Blocklist</h2><button class="panel-btn" onclick="navigateTo('blocklist')">Manage</button></div>
-              <div id="dash-blocklist"><div style="color:var(--text-muted);font-size:13px;padding:4px 0">No IPs blocked yet.</div></div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <!-- PAGE: CHARTS -->
-      <div id="page-charts" class="page">
-        <section class="charts-grid">
-          <div class="panel chart-panel full-width">
-            <div class="panel-header"><h2 class="panel-title">Network Traffic — Last 24h</h2><div style="display:flex;gap:16px;align-items:center"><span class="legend-item"><span class="legend-dot" style="background:#388bfd"></span>Inbound</span><span class="legend-item"><span class="legend-dot" style="background:#f85149"></span>Suspicious</span></div></div>
-            <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
-          </div>
-          <div class="panel chart-panel"><div class="panel-header"><h2 class="panel-title">Port Activity</h2></div><div class="chart-wrap"><canvas id="portChart"></canvas></div></div>
-          <div class="panel chart-panel"><div class="panel-header"><h2 class="panel-title">Threat Breakdown</h2></div><div class="chart-wrap doughnut-wrap"><canvas id="threatChart"></canvas><div class="doughnut-center"><span class="doughnut-num">42</span><span class="doughnut-sub">threats</span></div></div></div>
-          <div class="panel chart-panel full-width"><div class="panel-header"><h2 class="panel-title">Weekly Threat Summary</h2></div><div class="chart-wrap"><canvas id="weeklyChart"></canvas></div></div>
-        </section>
-      </div>
-
-      <!-- PAGE: LOG ANALYZER -->
-      <div id="page-logs" class="page">
-        <div class="log-analyzer">
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Paste Raw Logs</h2><div style="display:flex;gap:8px"><button class="panel-btn" id="load-sample-btn">Load sample</button><button class="panel-btn" id="clear-btn">Clear</button></div></div>
-            <textarea id="log-input" class="log-textarea" placeholder="Paste your raw log output here and click Analyze..."></textarea>
-            <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="analyze-btn" id="analyze-btn">Analyze Logs</button></div>
-          </div>
-          <div class="panel" id="results-panel" style="display:none">
-            <div class="panel-header"><h2 class="panel-title">Analysis Results</h2><div id="results-summary" style="display:flex;gap:8px"></div></div>
-            <div id="results-list" class="results-list"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAGE: PORT SCANNER -->
-      <div id="page-ports" class="page">
-        <div class="tool-layout">
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Port Scanner</h2><div class="alert-badge info">Simulation Mode</div></div>
-            <p class="tool-desc">Enter a target IP or hostname and select a port range to simulate a scan.</p>
-            <div class="input-row">
-              <div class="input-group"><label class="input-label">Target Host</label><input type="text" id="scan-host" class="tool-input" placeholder="e.g. 192.168.1.1" /></div>
-              <div class="input-group" style="max-width:160px"><label class="input-label">Port Range</label><select id="scan-range" class="tool-input"><option value="common">Common (Top 20)</option><option value="extended">Extended (Top 50)</option><option value="full">Full (1–1024)</option></select></div>
-              <button class="analyze-btn" id="scan-btn" style="align-self:flex-end">Start Scan</button>
-            </div>
-            <div id="scan-progress" style="display:none"><div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div><div class="progress-label" id="progress-label">Scanning...</div></div>
-          </div>
-          <div class="panel" id="scan-results-panel" style="display:none">
-            <div class="panel-header"><h2 class="panel-title">Scan Results</h2><div id="scan-summary" style="display:flex;gap:8px;align-items:center"></div></div>
-            <table class="ip-table"><thead><tr><th>Port</th><th>Service</th><th>State</th><th>Risk</th><th>Description</th></tr></thead><tbody id="scan-tbody"></tbody></table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAGE: IP LOOKUP -->
-      <div id="page-ips" class="page">
-        <div class="tool-layout">
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">IP Lookup</h2><div class="alert-badge info">Live API</div></div>
-            <p class="tool-desc">Enter any IP address to fetch its geolocation, ISP, and threat indicators.</p>
-            <div class="input-row">
-              <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="ip-input" class="tool-input" placeholder="e.g. 45.33.32.156" /></div>
-              <button class="analyze-btn" id="lookup-btn" style="align-self:flex-end">Lookup</button>
-            </div>
-            <div class="quick-ips"><span class="quick-label">Quick test:</span><button class="quick-btn" data-ip="8.8.8.8">8.8.8.8</button><button class="quick-btn" data-ip="1.1.1.1">1.1.1.1</button><button class="quick-btn" data-ip="45.33.32.156">45.33.32.156</button><button class="quick-btn" data-ip="185.220.101.5">185.220.101.5</button></div>
-          </div>
-          <div id="ip-result-panel" style="display:none">
-            <div class="ip-result-grid">
-              <div class="panel ip-result-main">
-                <div class="ip-result-header"><div><div class="ip-address-display" id="result-ip">—</div><div class="ip-org" id="result-org">—</div></div><div id="result-risk-badge"></div></div>
-                <div class="ip-details-grid">
-                  <div class="ip-detail"><span class="ip-detail-label">Country</span><span class="ip-detail-val" id="result-country">—</span></div>
-                  <div class="ip-detail"><span class="ip-detail-label">Region</span><span class="ip-detail-val" id="result-region">—</span></div>
-                  <div class="ip-detail"><span class="ip-detail-label">City</span><span class="ip-detail-val" id="result-city">—</span></div>
-                  <div class="ip-detail"><span class="ip-detail-label">Timezone</span><span class="ip-detail-val" id="result-timezone">—</span></div>
-                  <div class="ip-detail"><span class="ip-detail-label">ISP</span><span class="ip-detail-val" id="result-isp">—</span></div>
-                  <div class="ip-detail"><span class="ip-detail-label">Coordinates</span><span class="ip-detail-val" id="result-coords">—</span></div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">⬛</span>Dashboard</a>
+                <a href="#" class="nav-item" data-page="charts"><span class="nav-icon">▲</span>Charts</a>
+                <a href="#" class="nav-item" data-page="logs"><span class="nav-icon">◆</span>Log Analyzer</a>
+                <a href="#" class="nav-item" data-page="ports"><span class="nav-icon">●</span>Port Scanner</a>
+                <a href="#" class="nav-item" data-page="ips"><span class="nav-icon">⬡</span>IP Lookup</a>
+                <a href="#" class="nav-item" data-page="blocklist"><span class="nav-icon">⬛</span>Blocklist</a>
+                <div class="nav-divider"></div>
+                <a href="#" class="nav-item" data-page="hash"><span class="nav-icon">#</span>Hash Generator</a>
+                <a href="#" class="nav-item" data-page="password"><span class="nav-icon">*</span>Password Checker</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-dot"></div><span>System Online</span>
                 </div>
-              </div>
-              <div class="panel"><div class="panel-header"><h2 class="panel-title">Actions</h2></div><div style="display:flex;flex-direction:column;gap:10px;margin-top:4px"><button class="action-btn danger" id="block-ip-btn">Add to Blocklist</button><button class="action-btn warn" id="watch-ip-btn">Add to Watchlist</button><button class="action-btn" id="copy-report-btn">Copy Report</button></div></div>
+                <a href="#" class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</a>
+                <div class="shortcut-hint" onclick="toggleShortcutsModal()">Press <kbd class="kbd-mini">?</kbd> for
+                    shortcuts</div>
             </div>
-          </div>
-          <div id="ip-error" style="display:none" class="panel"><div style="color:var(--danger);font-size:13px;text-align:center;padding:16px" id="ip-error-msg"></div></div>
-          <div id="ip-loading" style="display:none" class="panel"><div class="loading-row"><div class="spinner"></div><span>Looking up IP...</span></div></div>
-        </div>
-      </div>
+        </aside>
 
-      <!-- PAGE: BLOCKLIST -->
-      <div id="page-blocklist" class="page">
-        <div class="tool-layout">
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Blocklist Manager</h2><div style="display:flex;gap:8px"><button class="panel-btn" id="export-btn">Export</button><button class="panel-btn danger-btn" id="clear-all-btn">Clear All</button></div></div>
-            <p class="tool-desc">Add IP addresses to your blocklist. Data is saved locally in your browser.</p>
-            <div class="input-row">
-              <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="block-ip-input" class="tool-input" placeholder="e.g. 192.168.1.104" /></div>
-              <div class="input-group" style="flex:1.5"><label class="input-label">Reason (optional)</label><input type="text" id="block-reason-input" class="tool-input" placeholder="e.g. SSH brute force" /></div>
-              <div class="input-group" style="max-width:140px"><label class="input-label">Severity</label><select id="block-severity" class="tool-input"><option value="danger">Critical</option><option value="warn">Warning</option><option value="info">Info</option></select></div>
-              <button class="analyze-btn" id="add-block-btn" style="align-self:flex-end">Block IP</button>
+        <!-- Main -->
+        <main class="main">
+
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 class="page-title" id="page-title">Dashboard</h1>
+                    <span class="page-sub" id="page-sub">Overview / Real-time</span>
+                </div>
+                <div class="topbar-right">
+                    <div class="search-wrap">
+                        <input type="text" id="global-search" class="search-input"
+                            placeholder="Search... (or press 1-9)" />
+                        <div id="search-results" class="search-results" style="display:none"></div>
+                    </div>
+                    <div class="badge badge-danger">3 Critical</div>
+                    <div class="badge badge-warn">7 Warnings</div>
+                    <div class="badge badge-success">Live</div>
+                    <button id="theme-toggle" class="theme-btn">☀ Light</button>
+                    <button id="export-report-btn" class="theme-btn">⬇ Export</button>
+                    <div class="topbar-time" id="clock">--:--:--</div>
+                </div>
+            </header>
+
+            <!-- PAGE: DASHBOARD -->
+            <div id="page-dashboard" class="page active">
+                <section class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-header"><span class="metric-label">Total Threats</span><span
+                                class="metric-trend danger">+12%</span></div>
+                        <div class="metric-value danger" id="counter-threats">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill danger" style="width:72%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header"><span class="metric-label">Open Ports</span><span
+                                class="metric-trend warn">+3</span></div>
+                        <div class="metric-value warn" id="counter-ports">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill warn" style="width:45%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header"><span class="metric-label">Blocked IPs</span><span
+                                class="metric-trend success">↑</span></div>
+                        <div class="metric-value" id="blocked-metric-val">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill info" style="width:60%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header"><span class="metric-label">Uptime</span><span
+                                class="metric-trend success">Stable</span></div>
+                        <div class="metric-value success" id="counter-uptime">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-bar-fill success" style="width:99%"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panels">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Recent Alerts</h2>
+                            <div style="display:flex;gap:8px">
+                                <input type="text" id="alert-search" class="inline-search"
+                                    placeholder="Filter alerts..." />
+                                <button class="panel-btn">View all</button>
+                            </div>
+                        </div>
+                        <div class="alert-list" id="alert-list">
+                            <div class="alert-row" data-text="ssh brute force 192.168.1.104">
+                                <div class="alert-dot danger"></div>
+                                <div class="alert-info"><span class="alert-msg">SSH brute force detected</span><span
+                                        class="alert-meta">192.168.1.104 — 47 attempts</span></div>
+                                <div class="alert-badge danger">Critical</div><span class="alert-time">2m ago</span>
+                            </div>
+                            <div class="alert-row" data-text="port scan 10.0.0.53 tcp syn flood">
+                                <div class="alert-dot danger"></div>
+                                <div class="alert-info"><span class="alert-msg">Port scan from unknown host</span><span
+                                        class="alert-meta">10.0.0.53 — TCP SYN flood</span></div>
+                                <div class="alert-badge danger">Critical</div><span class="alert-time">11m ago</span>
+                            </div>
+                            <div class="alert-row" data-text="outbound traffic spike 172.16.8.22">
+                                <div class="alert-dot warn"></div>
+                                <div class="alert-info"><span class="alert-msg">Unusual outbound traffic
+                                        spike</span><span class="alert-meta">172.16.8.22 — 3.2 GB sent</span></div>
+                                <div class="alert-badge warn">Warning</div><span class="alert-time">34m ago</span>
+                            </div>
+                            <div class="alert-row" data-text="login unrecognised country cn 10.0.0.88">
+                                <div class="alert-dot warn"></div>
+                                <div class="alert-info"><span class="alert-msg">Login from unrecognised
+                                        country</span><span class="alert-meta">10.0.0.88 — Origin: CN</span></div>
+                                <div class="alert-badge warn">Warning</div><span class="alert-time">1h ago</span>
+                            </div>
+                            <div class="alert-row" data-text="firewall rule updated 192.168.1.1">
+                                <div class="alert-dot success"></div>
+                                <div class="alert-info"><span class="alert-msg">Firewall rule updated</span><span
+                                        class="alert-meta">192.168.1.1 — Rule #44 applied</span></div>
+                                <div class="alert-badge success">Info</div><span class="alert-time">2h ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-col">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h2 class="panel-title">Open Ports</h2><button class="panel-btn"
+                                    onclick="navigateTo('ports')">Scan now</button>
+                            </div>
+                            <div class="port-list">
+                                <div class="port-row"><span class="port-num">22</span><span class="port-name">SSH</span>
+                                    <div class="port-bar-wrap">
+                                        <div class="port-bar danger" style="width:85%"></div>
+                                    </div>
+                                    <div class="alert-badge danger">High</div>
+                                </div>
+                                <div class="port-row"><span class="port-num">21</span><span class="port-name">FTP</span>
+                                    <div class="port-bar-wrap">
+                                        <div class="port-bar danger" style="width:70%"></div>
+                                    </div>
+                                    <div class="alert-badge danger">High</div>
+                                </div>
+                                <div class="port-row"><span class="port-num">3306</span><span
+                                        class="port-name">MySQL</span>
+                                    <div class="port-bar-wrap">
+                                        <div class="port-bar warn" style="width:55%"></div>
+                                    </div>
+                                    <div class="alert-badge warn">Med</div>
+                                </div>
+                                <div class="port-row"><span class="port-num">80</span><span
+                                        class="port-name">HTTP</span>
+                                    <div class="port-bar-wrap">
+                                        <div class="port-bar warn" style="width:45%"></div>
+                                    </div>
+                                    <div class="alert-badge warn">Med</div>
+                                </div>
+                                <div class="port-row"><span class="port-num">443</span><span
+                                        class="port-name">HTTPS</span>
+                                    <div class="port-bar-wrap">
+                                        <div class="port-bar success" style="width:30%"></div>
+                                    </div>
+                                    <div class="alert-badge success">Safe</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h2 class="panel-title">Blocklist</h2><button class="panel-btn"
+                                    onclick="navigateTo('blocklist')">Manage</button>
+                            </div>
+                            <div id="dash-blocklist">
+                                <div style="color:var(--text-muted);font-size:13px;padding:4px 0">No IPs blocked yet.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-          </div>
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Blocked IPs</h2><div style="display:flex;gap:8px;align-items:center"><input type="text" id="blocklist-search" class="inline-search" placeholder="Filter IPs..." /><span id="blocklist-count" class="alert-badge info">0 entries</span></div></div>
-            <div id="blocklist-empty" style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">No IPs blocked yet.</div>
-            <table class="ip-table" id="blocklist-table" style="display:none"><thead><tr><th>IP Address</th><th>Reason</th><th>Severity</th><th>Added</th><th>Action</th></tr></thead><tbody id="blocklist-tbody"></tbody></table>
-          </div>
-        </div>
-      </div>
 
-      <!-- PAGE: HASH GENERATOR -->
-      <div id="page-hash" class="page">
-        <div class="tool-layout">
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Hash Generator</h2><div class="alert-badge info">Web Crypto API</div></div>
-            <p class="tool-desc">Generate SHA-256, SHA-1, and SHA-512 hashes from any text. Hashes update live as you type.</p>
-            <div class="input-group">
-              <label class="input-label">Input Text</label>
-              <textarea id="hash-input" class="log-textarea" style="height:100px" placeholder="Type or paste text to hash..."></textarea>
-            </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-              <button class="panel-btn" id="clear-hash-btn">Clear</button>
-              <button class="analyze-btn" id="hash-btn">Generate Hashes</button>
-            </div>
-          </div>
-
-          <div class="panel" id="hash-results" style="display:none">
-            <div class="panel-header"><h2 class="panel-title">Hash Results</h2></div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Verify Hash</h2></div>
-            <p class="tool-desc">Check if a string matches a known hash — useful for verifying file integrity.</p>
-            <div class="input-row" style="flex-direction:column">
-              <div class="input-group"><label class="input-label">Original Text</label><input type="text" id="verify-input" class="tool-input" placeholder="Enter the original text..." /></div>
-              <div class="input-row">
-                <div class="input-group"><label class="input-label">Expected Hash</label><input type="text" id="verify-hash" class="tool-input" placeholder="Paste the hash to verify against..." /></div>
-                <div class="input-group" style="max-width:140px"><label class="input-label">Algorithm</label><select id="verify-algo" class="tool-input"><option value="sha256">SHA-256</option><option value="sha1">SHA-1</option><option value="sha512">SHA-512</option></select></div>
-                <button class="analyze-btn" id="verify-btn" style="align-self:flex-end">Verify</button>
-              </div>
-            </div>
-            <div id="verify-result" class="verify-result" style="display:none"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAGE: PASSWORD CHECKER -->
-      <div id="page-password" class="page">
-        <div class="tool-layout">
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Password Strength Checker</h2></div>
-            <p class="tool-desc">Analyze your password against security rules and estimate how long it would take to crack.</p>
-            <div class="input-group">
-              <label class="input-label">Password</label>
-              <div class="pw-input-wrap">
-                <input type="password" id="pw-input" class="tool-input" placeholder="Enter a password to analyze..." />
-                <button id="pw-show-btn" class="pw-action-btn">Show</button>
-                <button id="pw-copy-btn" class="pw-action-btn">Copy</button>
-                <button id="pw-gen-btn" class="analyze-btn" style="padding:9px 16px">Generate</button>
-              </div>
+            <!-- PAGE: CHARTS -->
+            <div id="page-charts" class="page">
+                <section class="charts-grid">
+                    <div class="panel chart-panel full-width">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Network Traffic — Last 24h</h2>
+                            <div style="display:flex;gap:16px;align-items:center"><span class="legend-item"><span
+                                        class="legend-dot" style="background:#388bfd"></span>Inbound</span><span
+                                    class="legend-item"><span class="legend-dot"
+                                        style="background:#f85149"></span>Suspicious</span></div>
+                        </div>
+                        <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
+                    </div>
+                    <div class="panel chart-panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Port Activity</h2>
+                        </div>
+                        <div class="chart-wrap"><canvas id="portChart"></canvas></div>
+                    </div>
+                    <div class="panel chart-panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Threat Breakdown</h2>
+                        </div>
+                        <div class="chart-wrap doughnut-wrap"><canvas id="threatChart"></canvas>
+                            <div class="doughnut-center"><span class="doughnut-num">42</span><span
+                                    class="doughnut-sub">threats</span></div>
+                        </div>
+                    </div>
+                    <div class="panel chart-panel full-width">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Weekly Threat Summary</h2>
+                        </div>
+                        <div class="chart-wrap"><canvas id="weeklyChart"></canvas></div>
+                    </div>
+                </section>
             </div>
 
-            <div class="strength-bar-wrap">
-              <div class="strength-track"><div id="strength-bar" class="strength-fill" style="width:0%"></div></div>
-              <span id="strength-label" class="strength-label-text">—</span>
+            <!-- PAGE: LOG ANALYZER -->
+            <div id="page-logs" class="page">
+                <div class="log-analyzer">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Paste Raw Logs</h2>
+                            <div style="display:flex;gap:8px"><button class="panel-btn" id="load-sample-btn">Load
+                                    sample</button><button class="panel-btn" id="clear-btn">Clear</button></div>
+                        </div>
+                        <textarea id="log-input" class="log-textarea"
+                            placeholder="Paste your raw log output here and click Analyze..."></textarea>
+                        <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="analyze-btn"
+                                id="analyze-btn">Analyze Logs</button></div>
+                    </div>
+                    <div class="panel" id="results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Analysis Results</h2>
+                            <div id="results-summary" style="display:flex;gap:8px"></div>
+                        </div>
+                        <div id="results-list" class="results-list"></div>
+                    </div>
+                </div>
             </div>
 
-            <div class="pw-stats">
-              <div class="pw-stat"><span class="pw-stat-label">Entropy</span><span class="pw-stat-val" id="entropy-val">—</span></div>
-              <div class="pw-stat"><span class="pw-stat-label">Est. Crack Time</span><span class="pw-stat-val" id="crack-time">—</span></div>
+            <!-- PAGE: PORT SCANNER -->
+            <div id="page-ports" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Port Scanner</h2>
+                            <div class="alert-badge info">Simulation Mode</div>
+                        </div>
+                        <p class="tool-desc">Enter a target IP or hostname and select a port range to simulate a scan.
+                        </p>
+                        <div class="input-row">
+                            <div class="input-group"><label class="input-label">Target Host</label><input type="text"
+                                    id="scan-host" class="tool-input" placeholder="e.g. 192.168.1.1" /></div>
+                            <div class="input-group" style="max-width:160px"><label class="input-label">Port
+                                    Range</label><select id="scan-range" class="tool-input">
+                                    <option value="common">Common (Top 20)</option>
+                                    <option value="extended">Extended (Top 50)</option>
+                                    <option value="full">Full (1–1024)</option>
+                                </select></div>
+                            <button class="analyze-btn" id="scan-btn" style="align-self:flex-end">Start Scan</button>
+                        </div>
+                        <div id="scan-progress" style="display:none">
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" id="progress-fill"></div>
+                            </div>
+                            <div class="progress-label" id="progress-label">Scanning...</div>
+                        </div>
+                    </div>
+                    <div class="panel" id="scan-results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Scan Results</h2>
+                            <div id="scan-summary" style="display:flex;gap:8px;align-items:center"></div>
+                        </div>
+                        <table class="ip-table">
+                            <thead>
+                                <tr>
+                                    <th>Port</th>
+                                    <th>Service</th>
+                                    <th>State</th>
+                                    <th>Risk</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scan-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-          </div>
 
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Security Rules</h2></div>
-            <div id="rules-list" class="rules-list">
-              <div style="color:var(--text-muted);font-size:13px;padding:8px 0">Enter a password above to see the analysis.</div>
+            <!-- PAGE: IP LOOKUP -->
+            <div id="page-ips" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">IP Lookup</h2>
+                            <div class="alert-badge info">Live API</div>
+                        </div>
+                        <p class="tool-desc">Enter any IP address to fetch its geolocation, ISP, and threat indicators.
+                        </p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input
+                                    type="text" id="ip-input" class="tool-input" placeholder="e.g. 45.33.32.156" />
+                            </div>
+                            <button class="analyze-btn" id="lookup-btn" style="align-self:flex-end">Lookup</button>
+                        </div>
+                        <div class="quick-ips"><span class="quick-label">Quick test:</span><button class="quick-btn"
+                                data-ip="8.8.8.8">8.8.8.8</button><button class="quick-btn"
+                                data-ip="1.1.1.1">1.1.1.1</button><button class="quick-btn"
+                                data-ip="45.33.32.156">45.33.32.156</button><button class="quick-btn"
+                                data-ip="185.220.101.5">185.220.101.5</button></div>
+                    </div>
+                    <div id="ip-result-panel" style="display:none">
+                        <div class="ip-result-grid">
+                            <div class="panel ip-result-main">
+                                <div class="ip-result-header">
+                                    <div>
+                                        <div class="ip-address-display" id="result-ip">—</div>
+                                        <div class="ip-org" id="result-org">—</div>
+                                    </div>
+                                    <div id="result-risk-badge"></div>
+                                </div>
+                                <div class="ip-details-grid">
+                                    <div class="ip-detail"><span class="ip-detail-label">Country</span><span
+                                            class="ip-detail-val" id="result-country">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Region</span><span
+                                            class="ip-detail-val" id="result-region">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">City</span><span
+                                            class="ip-detail-val" id="result-city">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Timezone</span><span
+                                            class="ip-detail-val" id="result-timezone">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">ISP</span><span
+                                            class="ip-detail-val" id="result-isp">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Coordinates</span><span
+                                            class="ip-detail-val" id="result-coords">—</span></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <h2 class="panel-title">Actions</h2>
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px"><button
+                                        class="action-btn danger" id="block-ip-btn">Add to Blocklist</button><button
+                                        class="action-btn warn" id="watch-ip-btn">Add to Watchlist</button><button
+                                        class="action-btn" id="copy-report-btn">Copy Report</button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ip-error" style="display:none" class="panel">
+                        <div style="color:var(--danger);font-size:13px;text-align:center;padding:16px"
+                            id="ip-error-msg"></div>
+                    </div>
+                    <div id="ip-loading" style="display:none" class="panel">
+                        <div class="loading-row">
+                            <div class="spinner"></div><span>Looking up IP...</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- PAGE: SETTINGS -->
-      <div id="page-settings" class="page">
-        <div class="tool-layout">
-
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Appearance</h2></div>
-            <div class="settings-row">
-              <div class="settings-info"><span class="settings-label">Dark Mode</span><span class="settings-desc">Toggle between dark and light theme</span></div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="settings-theme" />
-                <span class="toggle-slider"></span>
-              </label>
+            <!-- PAGE: BLOCKLIST -->
+            <div id="page-blocklist" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Blocklist Manager</h2>
+                            <div style="display:flex;gap:8px"><button class="panel-btn"
+                                    id="export-btn">Export</button><button class="panel-btn danger-btn"
+                                    id="clear-all-btn">Clear All</button></div>
+                        </div>
+                        <p class="tool-desc">Add IP addresses to your blocklist. Data is saved locally in your browser.
+                        </p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input
+                                    type="text" id="block-ip-input" class="tool-input"
+                                    placeholder="e.g. 192.168.1.104" /></div>
+                            <div class="input-group" style="flex:1.5"><label class="input-label">Reason
+                                    (optional)</label><input type="text" id="block-reason-input" class="tool-input"
+                                    placeholder="e.g. SSH brute force" /></div>
+                            <div class="input-group" style="max-width:140px"><label
+                                    class="input-label">Severity</label><select id="block-severity" class="tool-input">
+                                    <option value="danger">Critical</option>
+                                    <option value="warn">Warning</option>
+                                    <option value="info">Info</option>
+                                </select></div>
+                            <button class="analyze-btn" id="add-block-btn" style="align-self:flex-end">Block IP</button>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Blocked IPs</h2>
+                            <div style="display:flex;gap:8px;align-items:center"><input type="text"
+                                    id="blocklist-search" class="inline-search" placeholder="Filter IPs..." /><span
+                                    id="blocklist-count" class="alert-badge info">0 entries</span></div>
+                        </div>
+                        <div id="blocklist-empty"
+                            style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">No IPs
+                            blocked yet.</div>
+                        <table class="ip-table" id="blocklist-table" style="display:none">
+                            <thead>
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Reason</th>
+                                    <th>Severity</th>
+                                    <th>Added</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blocklist-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-          </div>
 
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">Data Management</h2></div>
-            <div class="settings-row">
-              <div class="settings-info"><span class="settings-label">Clear Blocklist</span><span class="settings-desc">Remove all blocked IPs from local storage</span></div>
-              <button class="panel-btn danger-btn" id="settings-clear-blocklist">Clear</button>
+            <!-- PAGE: HASH GENERATOR -->
+            <div id="page-hash" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Hash Generator</h2>
+                            <div class="alert-badge info">Web Crypto API</div>
+                        </div>
+                        <p class="tool-desc">Generate SHA-256, SHA-1, and SHA-512 hashes from any text. Hashes update
+                            live as you type.</p>
+                        <div class="input-group">
+                            <label class="input-label">Input Text</label>
+                            <textarea id="hash-input" class="log-textarea" style="height:100px"
+                                placeholder="Type or paste text to hash..."></textarea>
+                        </div>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+                            <button class="panel-btn" id="clear-hash-btn">Clear</button>
+                            <button class="analyze-btn" id="hash-btn">Generate Hashes</button>
+                        </div>
+                    </div>
+
+                    <div class="panel" id="hash-results" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Hash Results</h2>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Verify Hash</h2>
+                        </div>
+                        <p class="tool-desc">Check if a string matches a known hash — useful for verifying file
+                            integrity.</p>
+                        <div class="input-row" style="flex-direction:column">
+                            <div class="input-group"><label class="input-label">Original Text</label><input type="text"
+                                    id="verify-input" class="tool-input" placeholder="Enter the original text..." />
+                            </div>
+                            <div class="input-row">
+                                <div class="input-group"><label class="input-label">Expected Hash</label><input
+                                        type="text" id="verify-hash" class="tool-input"
+                                        placeholder="Paste the hash to verify against..." /></div>
+                                <div class="input-group" style="max-width:140px"><label
+                                        class="input-label">Algorithm</label><select id="verify-algo"
+                                        class="tool-input">
+                                        <option value="sha256">SHA-256</option>
+                                        <option value="sha1">SHA-1</option>
+                                        <option value="sha512">SHA-512</option>
+                                    </select></div>
+                                <button class="analyze-btn" id="verify-btn" style="align-self:flex-end">Verify</button>
+                            </div>
+                        </div>
+                        <div id="verify-result" class="verify-result" style="display:none"></div>
+                    </div>
+                </div>
             </div>
-            <div class="settings-row">
-              <div class="settings-info"><span class="settings-label">Clear All Data</span><span class="settings-desc">Reset all settings and local data</span></div>
-              <button class="panel-btn danger-btn" id="settings-clear-data">Reset</button>
+
+            <!-- PAGE: PASSWORD CHECKER -->
+            <div id="page-password" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Password Strength Checker</h2>
+                        </div>
+                        <p class="tool-desc">Analyze your password against security rules and estimate how long it would
+                            take to crack.</p>
+                        <div class="input-group">
+                            <label class="input-label">Password</label>
+                            <div class="pw-input-wrap">
+                                <input type="password" id="pw-input" class="tool-input"
+                                    placeholder="Enter a password to analyze..." />
+                                <button id="pw-show-btn" class="pw-action-btn">Show</button>
+                                <button id="pw-copy-btn" class="pw-action-btn">Copy</button>
+                                <button id="pw-gen-btn" class="analyze-btn" style="padding:9px 16px">Generate</button>
+                            </div>
+                        </div>
+
+                        <div class="strength-bar-wrap">
+                            <div class="strength-track">
+                                <div id="strength-bar" class="strength-fill" style="width:0%"></div>
+                            </div>
+                            <span id="strength-label" class="strength-label-text">—</span>
+                        </div>
+
+                        <div class="pw-stats">
+                            <div class="pw-stat"><span class="pw-stat-label">Entropy</span><span class="pw-stat-val"
+                                    id="entropy-val">—</span></div>
+                            <div class="pw-stat"><span class="pw-stat-label">Est. Crack Time</span><span
+                                    class="pw-stat-val" id="crack-time">—</span></div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Security Rules</h2>
+                        </div>
+                        <div id="rules-list" class="rules-list">
+                            <div style="color:var(--text-muted);font-size:13px;padding:8px 0">Enter a password above to
+                                see the analysis.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
 
-          <div class="panel">
-            <div class="panel-header"><h2 class="panel-title">About</h2></div>
-            <div class="settings-row"><div class="settings-info"><span class="settings-label">Version</span><span class="settings-desc" id="settings-version">—</span></div></div>
-            <div class="settings-row"><div class="settings-info"><span class="settings-label">Tools</span><span class="settings-desc">Dashboard · Charts · Log Analyzer · Port Scanner · IP Lookup · Blocklist · Hash Generator · Password Checker</span></div></div>
-            <div class="settings-row"><div class="settings-info"><span class="settings-label">Tech Stack</span><span class="settings-desc">HTML5 · CSS3 · Vanilla JS · Chart.js · Web Crypto API · ip-api.com</span></div></div>
-            <div class="settings-row"><div class="settings-info"><span class="settings-label">Shortcuts</span><span class="settings-desc">Press <kbd class="kbd-mini">?</kbd> anywhere to view keyboard shortcuts</span></div></div>
-          </div>
+            <!-- PAGE: SETTINGS -->
+            <div id="page-settings" class="page">
+                <div class="tool-layout">
 
-        </div>
-      </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Appearance</h2>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Dark Mode</span><span
+                                    class="settings-desc">Toggle between dark and light theme</span></div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="settings-theme" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
 
-    </main>
-  </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Data Management</h2>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Clear Blocklist</span><span
+                                    class="settings-desc">Remove all blocked IPs from local storage</span></div>
+                            <button class="panel-btn danger-btn" id="settings-clear-blocklist">Clear</button>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Clear All Data</span><span
+                                    class="settings-desc">Reset all settings and local data</span></div>
+                            <button class="panel-btn danger-btn" id="settings-clear-data">Reset</button>
+                        </div>
+                    </div>
 
-  <script src="toast.js"></script>
-  <script src="main.js"></script>
-  <script src="charts.js"></script>
-  <script src="log_parser.js"></script>
-  <script src="port_scanner.js"></script>
-  <script src="ip_lookup.js"></script>
-  <script src="blocklist.js"></script>
-  <script src="search_filter.js"></script>
-  <script src="hash_generator.js"></script>
-  <script src="password_checker.js"></script>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">About</h2>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Version</span><span
+                                    class="settings-desc" id="settings-version">—</span></div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Tools</span><span
+                                    class="settings-desc">Dashboard · Charts · Log Analyzer · Port Scanner · IP Lookup ·
+                                    Blocklist · Hash Generator · Password Checker</span></div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Tech Stack</span><span
+                                    class="settings-desc">HTML5 · CSS3 · Vanilla JS · Chart.js · Web Crypto API ·
+                                    ip-api.com</span></div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Shortcuts</span><span
+                                    class="settings-desc">Press <kbd class="kbd-mini">?</kbd> anywhere to view keyboard
+                                    shortcuts</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="toast.js"></script>
+    <script src="main.js"></script>
+    <script src="charts.js"></script>
+    <script src="log-parser.js"></script>
+    <script src="port-scanner.js"></script>
+    <script src="ip-lookup.js"></script>
+    <script src="blocklist.js"></script>
+    <script src="search-filter.js"></script>
+    <script src="hash-generator.js"></script>
+    <script src="password-checker.js"></script>
 </body>
+
 </html>

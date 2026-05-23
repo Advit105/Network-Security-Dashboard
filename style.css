@@ -29,6 +29,9 @@
     --info-bg: #0d1f38;
     --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     --modal-overlay: rgba(0, 0, 0, 0.7);
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* ── Light Theme ──────────────────────────────────── */
@@ -75,7 +78,7 @@ body {
 }
 
 body {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-body);
     background: var(--bg);
     color: var(--text-primary);
     font-size: 14px;
@@ -148,6 +151,7 @@ a {
 }
 
 .logo-text {
+    font-family: var(--font-display);
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -297,7 +301,14 @@ a {
     gap: 12px;
 }
 
+.topbar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
 .page-title {
+    font-family: var(--font-display);
     font-size: 20px;
     font-weight: 800;
     line-height: 1.2;
@@ -317,25 +328,32 @@ a {
 }
 
 .topbar-time {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 12px;
     color: var(--text-secondary);
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 5px 12px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
 }
 
 /* ── Theme/Export Buttons ─────────────────────────── */
 .theme-btn {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     font-weight: 600;
     background: var(--bg-card);
     color: var(--text-secondary);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 5px 12px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
     cursor: pointer;
 }
 
@@ -350,21 +368,23 @@ a {
 }
 
 .search-input {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
     background: var(--bg-card);
     color: var(--text-primary);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 5px 14px;
-    width: 190px;
+    height: 30px;
+    padding: 0 14px;
+    width: 240px;
     outline: none;
+    box-sizing: border-box;
     transition: border-color 0.2s, width 0.2s;
 }
 
 .search-input:focus {
     border-color: var(--info);
-    width: 230px;
+    width: 280px;
 }
 
 .search-input::placeholder {
@@ -426,11 +446,16 @@ a {
 .alert-badge {
     font-size: 11px;
     font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-    padding: 3px 10px;
+    font-family: var(--font-mono);
+    padding: 0 10px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 20px;
     letter-spacing: 0.02em;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .badge-danger,
@@ -516,8 +541,9 @@ a {
 }
 
 .metric-value {
-    font-size: 28px;
-    font-weight: 800;
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 12px;
     line-height: 1;
@@ -608,6 +634,7 @@ a {
 }
 
 .panel-title {
+    font-family: var(--font-display);
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
@@ -615,7 +642,7 @@ a {
 }
 
 .panel-btn {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-body);
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
@@ -839,22 +866,30 @@ a {
 
 .doughnut-center {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     pointer-events: none;
+    text-align: center;
 }
 
 .doughnut-num {
-    font-size: 28px;
-    font-weight: 800;
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .doughnut-sub {
-    font-size: 11px;
+    font-family: var(--font-display);
+    font-size: 10px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    margin-top: 2px;
 }
 
 .legend-item {
@@ -948,7 +983,7 @@ a {
 }
 
 .analyze-btn {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-display);
     font-size: 13px;
     font-weight: 700;
     background: var(--info);
@@ -1134,7 +1169,7 @@ a {
 }
 
 .action-btn {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-display);
     font-size: 13px;
     font-weight: 600;
     padding: 10px 16px;
@@ -1233,7 +1268,7 @@ a {
 }
 
 .copy-hash-btn {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-body);
     font-size: 11px;
     font-weight: 600;
     background: var(--bg-hover);
@@ -1290,7 +1325,7 @@ a {
 }
 
 .pw-action-btn {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     font-weight: 600;
     background: var(--bg-hover);
@@ -1520,7 +1555,7 @@ a {
     border-radius: 10px;
     font-size: 13px;
     font-weight: 500;
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-body);
     min-width: 240px;
     max-width: 340px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
