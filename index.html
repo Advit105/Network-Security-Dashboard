@@ -10,7 +10,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -67,9 +66,7 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">⬛</span>Dashboard</a>
-                <a href="#" class="nav-item" data-page="charts"><span class="nav-icon">▲</span>Charts</a>
                 <a href="#" class="nav-item" data-page="logs"><span class="nav-icon">◆</span>Log Analyzer</a>
-                <a href="#" class="nav-item" data-page="ports"><span class="nav-icon">●</span>Port Scanner</a>
                 <a href="#" class="nav-item" data-page="ips"><span class="nav-icon">⬡</span>IP Lookup</a>
                 <a href="#" class="nav-item" data-page="blocklist"><span class="nav-icon">⬛</span>Blocklist</a>
                 <div class="nav-divider"></div>
@@ -97,11 +94,9 @@
                 <div class="topbar-right">
                     <div class="search-wrap">
                         <input type="text" id="global-search" class="search-input"
-                            placeholder="Search... (or press 1-9)" />
+                            placeholder="Search... (or press 1-7)" />
                         <div id="search-results" class="search-results" style="display:none"></div>
                     </div>
-                    <div class="badge badge-danger">3 Critical</div>
-                    <div class="badge badge-warn">7 Warnings</div>
                     <div class="badge badge-success">Live</div>
                     <button id="theme-toggle" class="theme-btn">☀ Light</button>
                     <button id="export-report-btn" class="theme-btn">⬇ Export</button>
@@ -111,249 +106,80 @@
 
             <!-- PAGE: DASHBOARD -->
             <div id="page-dashboard" class="page active">
-                <section class="metrics">
-                    <div class="metric-card">
-                        <div class="metric-header"><span class="metric-label">Total Threats</span><span
-                                class="metric-trend danger">+12%</span></div>
-                        <div class="metric-value danger" id="counter-threats">0</div>
-                        <div class="metric-bar">
-                            <div class="metric-bar-fill danger" style="width:72%"></div>
+                <section class="dash-welcome">
+                    <div class="panel welcome-panel">
+                        <div class="welcome-text">
+                            <h2 class="welcome-title">Welcome to <span style="color:var(--info)">SentinelX</span></h2>
+                            <p class="welcome-desc">A real-time security toolkit powered by live APIs and browser-native cryptography. Every tool below operates on actual data — no simulations.</p>
+                        </div>
+                        <div class="welcome-stats">
+                            <div class="welcome-stat">
+                                <span class="welcome-stat-num" id="dash-blocked-count">0</span>
+                                <span class="welcome-stat-label">Blocked IPs</span>
+                            </div>
+                            <div class="welcome-stat">
+                                <span class="welcome-stat-num" id="dash-uptime">0s</span>
+                                <span class="welcome-stat-label">Session</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-header"><span class="metric-label">Open Ports</span><span
-                                class="metric-trend warn">+3</span></div>
-                        <div class="metric-value warn" id="counter-ports">0</div>
-                        <div class="metric-bar">
-                            <div class="metric-bar-fill warn" style="width:45%"></div>
+                </section>
+
+                <section class="tools-grid">
+                    <div class="tool-card" onclick="navigateTo('logs')">
+                        <div class="tool-card-icon">◆</div>
+                        <div class="tool-card-body">
+                            <h3 class="tool-card-title">Log Analyzer</h3>
+                            <p class="tool-card-desc">Parse raw server logs with regex pattern matching. Detects brute force, port scans, privilege escalation, and more.</p>
                         </div>
+                        <div class="alert-badge info">Real Parsing</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-header"><span class="metric-label">Blocked IPs</span><span
-                                class="metric-trend success">↑</span></div>
-                        <div class="metric-value" id="blocked-metric-val">0</div>
-                        <div class="metric-bar">
-                            <div class="metric-bar-fill info" style="width:60%"></div>
+                    <div class="tool-card" onclick="navigateTo('ips')">
+                        <div class="tool-card-icon">⬡</div>
+                        <div class="tool-card-body">
+                            <h3 class="tool-card-title">IP Lookup</h3>
+                            <p class="tool-card-desc">Fetch real-time geolocation, ISP, and threat indicators for any IP address using the ip-api.com live API.</p>
                         </div>
+                        <div class="alert-badge success">Live API</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-header"><span class="metric-label">Uptime</span><span
-                                class="metric-trend success">Stable</span></div>
-                        <div class="metric-value success" id="counter-uptime">0</div>
-                        <div class="metric-bar">
-                            <div class="metric-bar-fill success" style="width:99%"></div>
+                    <div class="tool-card" onclick="navigateTo('blocklist')">
+                        <div class="tool-card-icon">⬛</div>
+                        <div class="tool-card-body">
+                            <h3 class="tool-card-title">Blocklist Manager</h3>
+                            <p class="tool-card-desc">Manage blocked IP addresses stored in your browser's local storage. Export, filter, and organize entries.</p>
                         </div>
+                        <div class="alert-badge warn">Local Storage</div>
+                    </div>
+                    <div class="tool-card" onclick="navigateTo('hash')">
+                        <div class="tool-card-icon">#</div>
+                        <div class="tool-card-body">
+                            <h3 class="tool-card-title">Hash Generator</h3>
+                            <p class="tool-card-desc">Generate cryptographically accurate SHA-256, SHA-1, and SHA-512 hashes using the browser's native Web Crypto API.</p>
+                        </div>
+                        <div class="alert-badge info">Web Crypto</div>
+                    </div>
+                    <div class="tool-card" onclick="navigateTo('password')">
+                        <div class="tool-card-icon">*</div>
+                        <div class="tool-card-body">
+                            <h3 class="tool-card-title">Password Checker</h3>
+                            <p class="tool-card-desc">Analyze password strength with real entropy calculations and estimated crack time. Generate strong passwords.</p>
+                        </div>
+                        <div class="alert-badge success">Real Analysis</div>
                     </div>
                 </section>
 
                 <section class="panels">
-                    <div class="panel">
+                    <div class="panel" style="flex:1">
                         <div class="panel-header">
-                            <h2 class="panel-title">Recent Alerts</h2>
-                            <div style="display:flex;gap:8px">
-                                <input type="text" id="alert-search" class="inline-search"
-                                    placeholder="Filter alerts..." />
-                                <button class="panel-btn">View all</button>
-                            </div>
+                            <h2 class="panel-title">Blocklist</h2><button class="panel-btn"
+                                onclick="navigateTo('blocklist')">Manage</button>
                         </div>
-                        <div class="alert-list" id="alert-list">
-                            <div class="alert-row" data-text="ssh brute force 192.168.1.104">
-                                <div class="alert-dot danger"></div>
-                                <div class="alert-info"><span class="alert-msg">SSH brute force detected</span><span
-                                        class="alert-meta">192.168.1.104 — 47 attempts</span></div>
-                                <div class="alert-badge danger">Critical</div><span class="alert-time">2m ago</span>
-                            </div>
-                            <div class="alert-row" data-text="port scan 10.0.0.53 tcp syn flood">
-                                <div class="alert-dot danger"></div>
-                                <div class="alert-info"><span class="alert-msg">Port scan from unknown host</span><span
-                                        class="alert-meta">10.0.0.53 — TCP SYN flood</span></div>
-                                <div class="alert-badge danger">Critical</div><span class="alert-time">11m ago</span>
-                            </div>
-                            <div class="alert-row" data-text="outbound traffic spike 172.16.8.22">
-                                <div class="alert-dot warn"></div>
-                                <div class="alert-info"><span class="alert-msg">Unusual outbound traffic
-                                        spike</span><span class="alert-meta">172.16.8.22 — 3.2 GB sent</span></div>
-                                <div class="alert-badge warn">Warning</div><span class="alert-time">34m ago</span>
-                            </div>
-                            <div class="alert-row" data-text="login unrecognised country cn 10.0.0.88">
-                                <div class="alert-dot warn"></div>
-                                <div class="alert-info"><span class="alert-msg">Login from unrecognised
-                                        country</span><span class="alert-meta">10.0.0.88 — Origin: CN</span></div>
-                                <div class="alert-badge warn">Warning</div><span class="alert-time">1h ago</span>
-                            </div>
-                            <div class="alert-row" data-text="firewall rule updated 192.168.1.1">
-                                <div class="alert-dot success"></div>
-                                <div class="alert-info"><span class="alert-msg">Firewall rule updated</span><span
-                                        class="alert-meta">192.168.1.1 — Rule #44 applied</span></div>
-                                <div class="alert-badge success">Info</div><span class="alert-time">2h ago</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="right-col">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <h2 class="panel-title">Open Ports</h2><button class="panel-btn"
-                                    onclick="navigateTo('ports')">Scan now</button>
-                            </div>
-                            <div class="port-list">
-                                <div class="port-row"><span class="port-num">22</span><span class="port-name">SSH</span>
-                                    <div class="port-bar-wrap">
-                                        <div class="port-bar danger" style="width:85%"></div>
-                                    </div>
-                                    <div class="alert-badge danger">High</div>
-                                </div>
-                                <div class="port-row"><span class="port-num">21</span><span class="port-name">FTP</span>
-                                    <div class="port-bar-wrap">
-                                        <div class="port-bar danger" style="width:70%"></div>
-                                    </div>
-                                    <div class="alert-badge danger">High</div>
-                                </div>
-                                <div class="port-row"><span class="port-num">3306</span><span
-                                        class="port-name">MySQL</span>
-                                    <div class="port-bar-wrap">
-                                        <div class="port-bar warn" style="width:55%"></div>
-                                    </div>
-                                    <div class="alert-badge warn">Med</div>
-                                </div>
-                                <div class="port-row"><span class="port-num">80</span><span
-                                        class="port-name">HTTP</span>
-                                    <div class="port-bar-wrap">
-                                        <div class="port-bar warn" style="width:45%"></div>
-                                    </div>
-                                    <div class="alert-badge warn">Med</div>
-                                </div>
-                                <div class="port-row"><span class="port-num">443</span><span
-                                        class="port-name">HTTPS</span>
-                                    <div class="port-bar-wrap">
-                                        <div class="port-bar success" style="width:30%"></div>
-                                    </div>
-                                    <div class="alert-badge success">Safe</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <h2 class="panel-title">Blocklist</h2><button class="panel-btn"
-                                    onclick="navigateTo('blocklist')">Manage</button>
-                            </div>
-                            <div id="dash-blocklist">
-                                <div style="color:var(--text-muted);font-size:13px;padding:4px 0">No IPs blocked yet.
-                                </div>
+                        <div id="dash-blocklist">
+                            <div style="color:var(--text-muted);font-size:13px;padding:4px 0">No IPs blocked yet.
                             </div>
                         </div>
                     </div>
                 </section>
-            </div>
-
-            <!-- PAGE: CHARTS -->
-            <div id="page-charts" class="page">
-                <section class="charts-grid">
-                    <div class="panel chart-panel full-width">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Network Traffic — Last 24h</h2>
-                            <div style="display:flex;gap:16px;align-items:center"><span class="legend-item"><span
-                                        class="legend-dot" style="background:#388bfd"></span>Inbound</span><span
-                                    class="legend-item"><span class="legend-dot"
-                                        style="background:#f85149"></span>Suspicious</span></div>
-                        </div>
-                        <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
-                    </div>
-                    <div class="panel chart-panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Port Activity</h2>
-                        </div>
-                        <div class="chart-wrap"><canvas id="portChart"></canvas></div>
-                    </div>
-                    <div class="panel chart-panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Threat Breakdown</h2>
-                        </div>
-                        <div class="chart-wrap doughnut-wrap"><canvas id="threatChart"></canvas>
-                            <div class="doughnut-center"><span class="doughnut-num">42</span><span
-                                    class="doughnut-sub">threats</span></div>
-                        </div>
-                    </div>
-                    <div class="panel chart-panel full-width">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Weekly Threat Summary</h2>
-                        </div>
-                        <div class="chart-wrap"><canvas id="weeklyChart"></canvas></div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- PAGE: LOG ANALYZER -->
-            <div id="page-logs" class="page">
-                <div class="log-analyzer">
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Paste Raw Logs</h2>
-                            <div style="display:flex;gap:8px"><button class="panel-btn" id="load-sample-btn">Load
-                                    sample</button><button class="panel-btn" id="clear-btn">Clear</button></div>
-                        </div>
-                        <textarea id="log-input" class="log-textarea"
-                            placeholder="Paste your raw log output here and click Analyze..."></textarea>
-                        <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="analyze-btn"
-                                id="analyze-btn">Analyze Logs</button></div>
-                    </div>
-                    <div class="panel" id="results-panel" style="display:none">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Analysis Results</h2>
-                            <div id="results-summary" style="display:flex;gap:8px"></div>
-                        </div>
-                        <div id="results-list" class="results-list"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PAGE: PORT SCANNER -->
-            <div id="page-ports" class="page">
-                <div class="tool-layout">
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Port Scanner</h2>
-                            <div class="alert-badge info">Simulation Mode</div>
-                        </div>
-                        <p class="tool-desc">Enter a target IP or hostname and select a port range to simulate a scan.
-                        </p>
-                        <div class="input-row">
-                            <div class="input-group"><label class="input-label">Target Host</label><input type="text"
-                                    id="scan-host" class="tool-input" placeholder="e.g. 192.168.1.1" /></div>
-                            <div class="input-group" style="max-width:160px"><label class="input-label">Port
-                                    Range</label><select id="scan-range" class="tool-input">
-                                    <option value="common">Common (Top 20)</option>
-                                    <option value="extended">Extended (Top 50)</option>
-                                    <option value="full">Full (1–1024)</option>
-                                </select></div>
-                            <button class="analyze-btn" id="scan-btn" style="align-self:flex-end">Start Scan</button>
-                        </div>
-                        <div id="scan-progress" style="display:none">
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" id="progress-fill"></div>
-                            </div>
-                            <div class="progress-label" id="progress-label">Scanning...</div>
-                        </div>
-                    </div>
-                    <div class="panel" id="scan-results-panel" style="display:none">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Scan Results</h2>
-                            <div id="scan-summary" style="display:flex;gap:8px;align-items:center"></div>
-                        </div>
-                        <table class="ip-table">
-                            <thead>
-                                <tr>
-                                    <th>Port</th>
-                                    <th>Service</th>
-                                    <th>State</th>
-                                    <th>Risk</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody id="scan-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
             <!-- PAGE: IP LOOKUP -->
@@ -627,12 +453,12 @@
                         </div>
                         <div class="settings-row">
                             <div class="settings-info"><span class="settings-label">Tools</span><span
-                                    class="settings-desc">Dashboard · Charts · Log Analyzer · Port Scanner · IP Lookup ·
+                                    class="settings-desc">Log Analyzer · IP Lookup ·
                                     Blocklist · Hash Generator · Password Checker</span></div>
                         </div>
                         <div class="settings-row">
                             <div class="settings-info"><span class="settings-label">Tech Stack</span><span
-                                    class="settings-desc">HTML5 · CSS3 · Vanilla JS · Chart.js · Web Crypto API ·
+                                    class="settings-desc">HTML5 · CSS3 · Vanilla JS · Web Crypto API ·
                                     ip-api.com</span></div>
                         </div>
                         <div class="settings-row">
@@ -650,9 +476,7 @@
 
     <script src="toast.js"></script>
     <script src="main.js"></script>
-    <script src="charts.js"></script>
     <script src="log-parser.js"></script>
-    <script src="port-scanner.js"></script>
     <script src="ip-lookup.js"></script>
     <script src="blocklist.js"></script>
     <script src="search-filter.js"></script>

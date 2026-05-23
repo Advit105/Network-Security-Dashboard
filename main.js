@@ -1,9 +1,7 @@
 // ── Page Titles ────────────────────────────────────
 const pageTitles = {
-  dashboard: { title: 'Dashboard',         sub: 'Overview / Real-time' },
-  charts:    { title: 'Network Charts',    sub: 'Traffic / Threat Analysis' },
+  dashboard: { title: 'Dashboard',         sub: 'Security Toolkit / Real-time' },
   logs:      { title: 'Log Analyzer',      sub: 'Raw parsing / Pattern matching' },
-  ports:     { title: 'Port Scanner',      sub: 'Live scanning / Mapping' },
   ips:       { title: 'IP Lookup',         sub: 'Geo / ASN / Threat intel' },
   blocklist: { title: 'Blocklist Manager', sub: 'Local firewall simulation' },
   hash:      { title: 'Hash Generator',    sub: 'Crypto / Verification' },
@@ -33,7 +31,6 @@ function navigateTo(pageId) {
   // Close mobile sidebar
   document.querySelector('.sidebar')?.classList.remove('sidebar-open');
 
-  if (pageId === 'charts'    && typeof initCharts     === 'function') initCharts();
   if (pageId === 'blocklist' && typeof renderBlocklist === 'function') renderBlocklist();
 }
 
@@ -97,6 +94,42 @@ function updateClock() {
 setInterval(updateClock, 1000);
 document.addEventListener('DOMContentLoaded', updateClock);
 
+// ── Session Uptime (real) ──────────────────────────
+let sessionStart = Date.now();
+
+function updateSessionUptime() {
+  const el = document.getElementById('dash-uptime');
+  if (!el) return;
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  if (h > 0) {
+    el.textContent = `${h}h ${m}m ${s}s`;
+  } else if (m > 0) {
+    el.textContent = `${m}m ${s}s`;
+  } else {
+    el.textContent = `${s}s`;
+  }
+}
+setInterval(updateSessionUptime, 1000);
+document.addEventListener('DOMContentLoaded', updateSessionUptime);
+
+// ── Dashboard Blocked Count (real) ─────────────────
+function updateDashBlockedCount() {
+  const el = document.getElementById('dash-blocked-count');
+  if (!el) return;
+  try {
+    const list = JSON.parse(localStorage.getItem('sentinelx_blocklist')) || [];
+    el.textContent = list.length;
+  } catch {
+    el.textContent = '0';
+  }
+}
+document.addEventListener('DOMContentLoaded', updateDashBlockedCount);
+// Re-check every 2 seconds in case blocklist changes
+setInterval(updateDashBlockedCount, 2000);
+
 // ── Keyboard Shortcuts ─────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('shortcuts-modal');
@@ -128,8 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key.toLowerCase() === 't') { e.preventDefault(); themeToggle?.click(); }
     if (e.key === 'Escape' && modal?.style.display === 'flex') toggleShortcutsModal();
 
-    // Map 1-9 to navigation pages
-    const keys = { '1': 'dashboard', '2': 'charts', '3': 'logs', '4': 'ports', '5': 'ips', '6': 'blocklist', '7': 'hash', '8': 'password', '9': 'settings' };
+    // Map 1-7 to navigation pages (real pages only)
+    const keys = { '1': 'dashboard', '2': 'logs', '3': 'ips', '4': 'blocklist', '5': 'hash', '6': 'password', '7': 'settings' };
     if (keys[e.key]) {
       e.preventDefault();
       navigateTo(keys[e.key]);
@@ -184,59 +217,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ── Live Metrics Simulation ────────────────────────
-let threats = 42;
-let ports = 7;
-let uptime = 0;
-
-function simulateLiveMetrics() {
-  uptime += 3;
-  const elUptime = document.getElementById('counter-uptime');
-  if (elUptime) {
-    const h = Math.floor(uptime / 3600);
-    const m = Math.floor((uptime % 3600) / 60);
-    const s = uptime % 60;
-    elUptime.textContent = `${h}h ${m}m ${s}s`;
-  }
-
-  if (Math.random() > 0.7) {
-    threats += Math.floor(Math.random() * 3);
-    const elThreats = document.getElementById('counter-threats');
-    if (elThreats) {
-      elThreats.textContent = threats;
-      elThreats.classList.add('flash');
-      setTimeout(() => elThreats.classList.remove('flash'), 300);
-    }
-  }
-
-  if (Math.random() > 0.9) {
-    ports += 1;
-    const elPorts = document.getElementById('counter-ports');
-    if (elPorts) {
-      elPorts.textContent = ports;
-      elPorts.classList.add('flash-warn');
-      setTimeout(() => elPorts.classList.remove('flash-warn'), 300);
-    }
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  setInterval(simulateLiveMetrics, 3000);
-});
-
 // ── Export Report ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const exportBtn = document.getElementById('export-report-btn');
   if (!exportBtn) return;
 
   exportBtn.addEventListener('click', () => {
+    let blockedCount = 0;
+    try {
+      blockedCount = (JSON.parse(localStorage.getItem('sentinelx_blocklist')) || []).length;
+    } catch {}
+
     const reportData = `SentinelX Security Report
 Generated: ${new Date().toLocaleString()}
 
-Metrics:
-- Threats: ${document.getElementById('counter-threats')?.textContent || 0}
-- Open Ports: ${document.getElementById('counter-ports')?.textContent || 0}
-- Blocked IPs: ${document.getElementById('blocked-metric-val')?.textContent || 0}
+Blocked IPs: ${blockedCount}
+
+Available Tools:
+- Log Analyzer (Real regex parsing)
+- IP Lookup (Live ip-api.com)
+- Blocklist Manager (Local storage)
+- Hash Generator (Web Crypto API)
+- Password Checker (Real entropy analysis)
 
 This report was auto-generated by the SentinelX dashboard.`;
 
@@ -253,12 +255,13 @@ This report was auto-generated by the SentinelX dashboard.`;
 
 // ── Settings Page Logic ────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('settings-version')?.replaceChildren('1.5.0 (Phase 5)');
+  document.getElementById('settings-version')?.replaceChildren('2.0.0 (Real-time Only)');
   
   document.getElementById('settings-clear-blocklist')?.addEventListener('click', () => {
     if (confirm('Are you sure you want to clear the blocklist?')) {
-      localStorage.removeItem('nsd_blocklist');
+      localStorage.removeItem('sentinelx_blocklist');
       if (typeof renderBlocklist === 'function') renderBlocklist();
+      updateDashBlockedCount();
       if (typeof showToast === 'function') showToast('Blocklist cleared', 'warn');
     }
   });
