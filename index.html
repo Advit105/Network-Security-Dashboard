@@ -182,6 +182,30 @@
                 </section>
             </div>
 
+            <!-- PAGE: LOG ANALYZER -->
+            <div id="page-logs" class="page">
+                <div class="log-analyzer">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Paste Raw Logs</h2>
+                            <div style="display:flex;gap:8px"><button class="panel-btn" id="load-sample-btn">Load
+                                    sample</button><button class="panel-btn" id="clear-btn">Clear</button></div>
+                        </div>
+                        <textarea id="log-input" class="log-textarea"
+                            placeholder="Paste your raw log output here and click Analyze..."></textarea>
+                        <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="analyze-btn"
+                                id="analyze-btn">Analyze Logs</button></div>
+                    </div>
+                    <div class="panel" id="results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Analysis Results</h2>
+                            <div id="results-summary" style="display:flex;gap:8px"></div>
+                        </div>
+                        <div id="results-list" class="results-list"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- PAGE: IP LOOKUP -->
             <div id="page-ips" class="page">
                 <div class="tool-layout">
