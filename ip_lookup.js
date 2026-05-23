@@ -80,7 +80,7 @@ async function lookupIP(ip) {
 
         document.getElementById('copy-report-btn').onclick = () => {
             const report = `
-IP Lookup Report — NetWatch
+IP Lookup Report — SentinelX
 ============================
 IP Address : ${data.query}
 Country    : ${data.country} (${data.countryCode})

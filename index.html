@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NetWatch — Security Dashboard</title>
+    <title>SentinelX — Security Dashboard</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -50,8 +50,20 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <div class="logo-icon">N</div>
-                <span class="logo-text">NetWatch</span>
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" style="width: 18px; height: 18px;">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#388bfd" />
+                                <stop offset="100%" stop-color="#a855f7" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 139, 253, 0.05)"/>
+                        <path d="M14.5 9.5l-5 5" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9.5 9.5l5 5" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="logo-text">SentinelX</span>
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">⬛</span>Dashboard</a>

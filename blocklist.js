@@ -1,10 +1,18 @@
 // ── Storage Key ────────────────────────────────────
-const STORAGE_KEY = 'netwatch_blocklist';
+const STORAGE_KEY = 'sentinelx_blocklist';
 
 // ── Load / Save ────────────────────────────────────
 function loadBlocklist() {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let data = localStorage.getItem(STORAGE_KEY);
+        if (!data) {
+            data = localStorage.getItem('netwatch_blocklist');
+            if (data) {
+                localStorage.setItem(STORAGE_KEY, data);
+                localStorage.removeItem('netwatch_blocklist');
+            }
+        }
+        return JSON.parse(data) || [];
     } catch {
         return [];
     }
@@ -139,7 +147,7 @@ function exportBlocklist() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'netwatch-blocklist.txt';
+    a.download = 'sentinelx-blocklist.txt';
     a.click();
     URL.revokeObjectURL(url);
 }
