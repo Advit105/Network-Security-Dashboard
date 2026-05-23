@@ -161,7 +161,24 @@ function buildThreatChart() {
                     bodyColor: '#7d8fa3',
                 }
             }
-        }
+        },
+        plugins: [{
+            id: 'doughnutCenter',
+            afterDraw: (chart) => {
+                const meta = chart.getDatasetMeta(0);
+                if (meta && meta.data[0]) {
+                    const x = meta.data[0].x;
+                    const y = meta.data[0].y;
+                    const centerEl = chart.canvas.parentNode.querySelector('.doughnut-center');
+                    if (centerEl) {
+                        centerEl.style.left = `${x}px`;
+                        centerEl.style.top = `${y}px`;
+                        centerEl.style.position = 'absolute';
+                        centerEl.style.transform = 'translate(-50%, -50%)';
+                    }
+                }
+            }
+        }]
     });
 }
 
