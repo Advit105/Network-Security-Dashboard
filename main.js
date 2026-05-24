@@ -1,13 +1,15 @@
-// ── Page Titles ────────────────────────────────────
 const pageTitles = {
-  dashboard: { title: 'Dashboard',         sub: 'Security Toolkit / Real-time' },
-  logs:      { title: 'Log Analyzer',      sub: 'Raw parsing / Pattern matching' },
-  ips:       { title: 'IP Lookup',         sub: 'Geo / ASN / Threat intel' },
-  dns:       { title: 'DNS Lookup',        sub: 'Records / Domain intelligence' },
-  blocklist: { title: 'Blocklist Manager', sub: 'Local firewall simulation' },
-  hash:      { title: 'Hash Generator',    sub: 'Crypto / Verification' },
-  password:  { title: 'Password Checker',  sub: 'Strength / Breach detection' },
-  settings:  { title: 'Settings',          sub: 'Preferences / Data management' }
+  dashboard:  { title: 'SOC Dashboard',      sub: 'SentinelX · Real-time Monitoring' },
+  logs:       { title: 'Log Analyzer',       sub: 'Raw parsing / Pattern matching' },
+  ips:        { title: 'IP Lookup',          sub: 'Geo / ASN / Threat intel' },
+  dns:        { title: 'DNS Lookup',         sub: 'Records / Domain intelligence' },
+  blocklist:  { title: 'Blocklist Manager',  sub: 'Local firewall simulation' },
+  hash:       { title: 'Hash Generator',     sub: 'Crypto / Verification' },
+  password:   { title: 'Password Checker',   sub: 'Strength / Breach detection' },
+  cve:        { title: 'CVE Live Feed',      sub: 'NVD / Real-time vulnerabilities' },
+  ssl:        { title: 'SSL / TLS Inspector',sub: 'crt.sh / Certificate Transparency' },
+  abuseipdb:  { title: 'AbuseIPDB',          sub: 'IP Reputation / Threat intelligence' },
+  settings:   { title: 'Settings',           sub: 'Preferences / Data management' }
 };
 
 // ── Navigation (SPA) ───────────────────────────────
@@ -163,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && modal?.style.display === 'flex') toggleShortcutsModal();
 
     // Map 1-8 to navigation pages (real pages only)
-    const keys = { '1': 'dashboard', '2': 'logs', '3': 'ips', '4': 'dns', '5': 'blocklist', '6': 'hash', '7': 'password', '8': 'settings' };
+    const keys = { '1': 'dashboard', '2': 'logs', '3': 'ips', '4': 'dns', '5': 'blocklist', '6': 'hash', '7': 'password', '8': 'cve', '9': 'ssl', '0': 'abuseipdb' };
     if (keys[e.key]) {
       e.preventDefault();
       navigateTo(keys[e.key]);
