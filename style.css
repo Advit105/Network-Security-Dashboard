@@ -538,6 +538,22 @@ a { text-decoration: none; color: inherit; }
 .atk-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green-glow); animation-delay: 1s; }
 .atk-dot.green::before { border-color: rgba(0,208,156,0.3); animation-delay: 1s; }
 
+/* City labels on attack dots */
+.atk-label {
+    position: absolute;
+    bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    font-family: var(--f-mono); font-size: 8.5px; font-weight: 700;
+    letter-spacing: 0.06em; color: var(--cyan);
+    white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity 0.2s, transform 0.2s;
+    text-shadow: 0 0 6px rgba(0,229,255,0.5);
+}
+.atk-dot:hover .atk-label { opacity: 1; transform: translateX(-50%) translateY(0); }
+.atk-dot.red .atk-label   { color: var(--red);   text-shadow: 0 0 6px rgba(255,79,107,0.5); }
+.atk-dot.amber .atk-label { color: var(--amber); text-shadow: 0 0 6px rgba(245,158,11,0.5); }
+.atk-dot.green .atk-label  { color: var(--green); text-shadow: 0 0 6px rgba(0,208,156,0.5); }
+
 /* Attack connection lines via SVG overlay */
 .map-lines-svg {
     position: absolute; inset: 0; width: 100%; height: 100%;

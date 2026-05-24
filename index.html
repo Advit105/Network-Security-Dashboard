@@ -142,47 +142,15 @@
                  ════════════════════════════════ -->
             <div id="page-dashboard" class="page active">
 
-                <!-- 4 KPI Cards -->
-                <div class="kpi-row">
-                    <div class="kpi-card red">
-                        <div class="kpi-header">
-                            <span class="kpi-label">Total Threats</span>
-                            <span class="kpi-dot red"></span>
-                        </div>
-                        <div class="kpi-value" id="kpi-threats">2,847</div>
-                        <div class="kpi-chart">
-                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="grad-red" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#ff4f6b" stop-opacity="0.3"/>
-                                        <stop offset="100%" stop-color="#ff4f6b" stop-opacity="0"/>
-                                    </linearGradient>
-                                </defs>
-                                <path d="M0,32 C20,28 30,36 50,24 C70,12 80,30 100,22 C120,14 130,34 150,20 C170,8 185,28 200,18" stroke="#ff4f6b" stroke-width="1.5" fill="none"/>
-                                <path d="M0,32 C20,28 30,36 50,24 C70,12 80,30 100,22 C120,14 130,34 150,20 C170,8 185,28 200,18 L200,44 L0,44Z" fill="url(#grad-red)"/>
-                            </svg>
-                        </div>
-                        <div class="kpi-trend"><span class="kpi-trend-val">+12.4%</span><span>vs last hour</span></div>
-                    </div>
+                <!-- Real-time KPI Cards (only real data) -->
+                <div class="kpi-row" style="grid-template-columns: repeat(3,1fr)">
                     <div class="kpi-card green">
                         <div class="kpi-header">
-                            <span class="kpi-label">Blocked</span>
+                            <span class="kpi-label">Blocked IPs</span>
                             <span class="kpi-dot green"></span>
                         </div>
                         <div class="kpi-value" id="kpi-blocked">0</div>
-                        <div class="kpi-chart">
-                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="grad-green" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#00d09c" stop-opacity="0.3"/>
-                                        <stop offset="100%" stop-color="#00d09c" stop-opacity="0"/>
-                                    </linearGradient>
-                                </defs>
-                                <path d="M0,38 C20,34 40,40 60,30 C80,20 100,36 120,28 C140,20 160,32 180,24 C190,20 196,26 200,22" stroke="#00d09c" stroke-width="1.5" fill="none"/>
-                                <path d="M0,38 C20,34 40,40 60,30 C80,20 100,36 120,28 C140,20 160,32 180,24 C190,20 196,26 200,22 L200,44 L0,44Z" fill="url(#grad-green)"/>
-                            </svg>
-                        </div>
-                        <div class="kpi-trend"><span class="kpi-trend-val" id="kpi-blocked-count-label">0</span><span>IPs blocked</span></div>
+                        <div class="kpi-trend"><span class="kpi-trend-val" id="kpi-blocked-count-label">0</span><span>entries in blocklist</span></div>
                     </div>
                     <div class="kpi-card cyan">
                         <div class="kpi-header">
@@ -190,223 +158,161 @@
                             <span class="kpi-dot cyan"></span>
                         </div>
                         <div class="kpi-value" id="dash-uptime" style="font-size:24px">0s</div>
-                        <div class="kpi-chart">
-                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="grad-cyan" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.3"/>
-                                        <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
-                                    </linearGradient>
-                                </defs>
-                                <path d="M0,40 L30,36 L60,32 L90,26 L120,20 L150,14 L180,8 L200,4" stroke="#00e5ff" stroke-width="1.5" fill="none"/>
-                                <path d="M0,40 L30,36 L60,32 L90,26 L120,20 L150,14 L180,8 L200,4 L200,44 L0,44Z" fill="url(#grad-cyan)"/>
-                            </svg>
-                        </div>
                         <div class="kpi-trend"><span class="kpi-trend-val" id="dash-myip" style="font-size:11px;font-weight:500">detecting...</span></div>
                     </div>
                     <div class="kpi-card amber">
                         <div class="kpi-header">
-                            <span class="kpi-label">Risk Score</span>
+                            <span class="kpi-label">Tools Available</span>
                             <span class="kpi-dot amber"></span>
                         </div>
-                        <div class="kpi-value">73<span style="font-size:18px;opacity:0.7">%</span></div>
-                        <div class="kpi-chart">
-                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
-                                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
-                                    </linearGradient>
-                                </defs>
-                                <path d="M0,20 C20,22 30,16 50,20 C70,24 80,14 100,18 C120,22 140,10 160,16 C180,22 190,14 200,18" stroke="#f59e0b" stroke-width="1.5" fill="none"/>
-                                <path d="M0,20 C20,22 30,16 50,20 C70,24 80,14 100,18 C120,22 140,10 160,16 C180,22 190,14 200,18 L200,44 L0,44Z" fill="url(#grad-amber)"/>
-                            </svg>
-                        </div>
-                        <div class="kpi-trend"><span class="kpi-trend-val">HIGH</span><span>risk level</span></div>
+                        <div class="kpi-value">9</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val">All Live</span><span>real-time APIs</span></div>
                     </div>
                 </div>
 
-                <!-- Middle Row: World Map + Right Panel -->
-                <div class="mid-row">
-
-                    <!-- World Map -->
-                    <div class="map-panel">
-                        <div class="panel-header-row">
-                            <span class="panel-heading">Attack Vectors — Global</span>
-                            <span class="panel-badge live">● Live</span>
-                        </div>
-                        <div class="world-map-wrap" id="world-map-wrap">
-                            <!-- SVG World Map outline (simplified) -->
-                            <svg class="world-map-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Attack connection lines -->
-                                <svg class="map-lines-svg" viewBox="0 0 1000 500">
-                                    <line x1="180" y1="160" x2="500" y2="250" class="atk-line" stroke="#ff4f6b" stroke-width="0.8"/>
-                                    <line x1="750" y1="140" x2="500" y2="250" class="atk-line" stroke="#00e5ff" stroke-width="0.8" style="animation-delay:-0.5s"/>
-                                    <line x1="820" y1="200" x2="500" y2="250" class="atk-line" stroke="#f59e0b" stroke-width="0.8" style="animation-delay:-1s"/>
-                                    <line x1="350" y1="130" x2="500" y2="250" class="atk-line" stroke="#00d09c" stroke-width="0.8" style="animation-delay:-1.5s"/>
-                                    <line x1="620" y1="320" x2="500" y2="250" class="atk-line" stroke="#7c3aed" stroke-width="0.8" style="animation-delay:-2s"/>
-                                    <line x1="280" y1="340" x2="500" y2="250" class="atk-line" stroke="#00e5ff" stroke-width="0.8" style="animation-delay:-0.8s"/>
-                                </svg>
-                                <!-- Simplified world map paths in cyan -->
-                                <!-- North America -->
-                                <path d="M 80 120 L 130 110 L 200 100 L 250 110 L 270 140 L 280 180 L 260 220 L 230 250 L 200 260 L 170 270 L 140 260 L 120 230 L 100 200 L 85 170 Z" fill="none" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
-                                <!-- South America -->
-                                <path d="M 210 290 L 240 285 L 260 300 L 270 340 L 265 380 L 250 410 L 230 420 L 210 410 L 195 380 L 190 340 L 200 310 Z" fill="none" stroke="rgba(0,229,255,0.20)" stroke-width="1"/>
-                                <!-- Europe -->
-                                <path d="M 420 100 L 470 95 L 510 105 L 520 130 L 500 150 L 470 155 L 440 145 L 420 130 Z" fill="none" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
-                                <!-- Africa -->
-                                <path d="M 440 180 L 490 170 L 520 185 L 530 230 L 525 280 L 510 320 L 490 340 L 470 335 L 450 310 L 440 270 L 435 230 Z" fill="none" stroke="rgba(0,229,255,0.20)" stroke-width="1"/>
-                                <!-- Asia -->
-                                <path d="M 530 80 L 620 70 L 720 80 L 800 100 L 840 130 L 850 170 L 820 200 L 780 220 L 720 230 L 660 220 L 600 200 L 550 170 L 530 140 L 525 110 Z" fill="none" stroke="rgba(0,229,255,0.22)" stroke-width="1"/>
-                                <!-- Australia -->
-                                <path d="M 740 310 L 800 300 L 840 320 L 850 360 L 830 390 L 790 400 L 755 385 L 740 355 Z" fill="none" stroke="rgba(0,229,255,0.18)" stroke-width="1"/>
-                                <!-- Grid dot pattern on continents -->
-                                <g fill="rgba(0,229,255,0.12)">
-                                    <circle cx="150" cy="170" r="2"/><circle cx="200" cy="160" r="2"/><circle cx="250" cy="180" r="2"/>
-                                    <circle cx="460" cy="120" r="2"/><circle cx="490" cy="115" r="2"/><circle cx="470" cy="200" r="2"/>
-                                    <circle cx="600" cy="130" r="2"/><circle cx="680" cy="140" r="2"/><circle cx="750" cy="160" r="2"/>
-                                    <circle cx="230" cy="330" r="2"/><circle cx="250" cy="360" r="2"/>
-                                    <circle cx="790" cy="345" r="2"/>
-                                </g>
-                            </svg>
-                            <!-- Attack dots positioned on map -->
-                            <div class="atk-dot red" style="left:18%;top:32%"></div>
-                            <div class="atk-dot" style="left:50%;top:50%"></div>
-                            <div class="atk-dot amber" style="left:75%;top:28%"></div>
-                            <div class="atk-dot green" style="left:82%;top:40%"></div>
-                            <div class="atk-dot" style="left:35%;top:26%;animation-delay:0.8s"></div>
-                            <div class="atk-dot red" style="left:62%;top:64%;animation-delay:1.2s"></div>
-                            <div class="atk-dot" style="left:28%;top:68%;animation-delay:0.4s"></div>
-                        </div>
-                    </div>
-
-                    <!-- Right column: Threat feed + Donut -->
-                    <div class="right-col">
-
-                        <!-- Threat Feed -->
-                        <div class="threat-feed">
-                            <div class="panel-header-row">
-                                <span class="panel-heading">Threat Feed</span>
-                                <span class="panel-badge live">● Live</span>
-                            </div>
-                            <div class="feed-list" id="threat-feed-list">
-                                <div class="feed-item">
-                                    <span class="feed-sev critical">Critical</span>
-                                    <div class="feed-body">
-                                        <div class="feed-title">SSH Brute Force</div>
-                                        <div class="feed-meta">185.220.101.5 → :22</div>
-                                    </div>
-                                    <span class="feed-time">0:02</span>
-                                </div>
-                                <div class="feed-item">
-                                    <span class="feed-sev critical">Critical</span>
-                                    <div class="feed-body">
-                                        <div class="feed-title">SQL Injection</div>
-                                        <div class="feed-meta">45.33.32.156 → :3306</div>
-                                    </div>
-                                    <span class="feed-time">0:14</span>
-                                </div>
-                                <div class="feed-item">
-                                    <span class="feed-sev high">High</span>
-                                    <div class="feed-body">
-                                        <div class="feed-title">Port Scan Detected</div>
-                                        <div class="feed-meta">103.14.156.201 → all</div>
-                                    </div>
-                                    <span class="feed-time">0:32</span>
-                                </div>
-                                <div class="feed-item">
-                                    <span class="feed-sev high">High</span>
-                                    <div class="feed-body">
-                                        <div class="feed-title">XSS Attempt</div>
-                                        <div class="feed-meta">89.248.167.131 → :443</div>
-                                    </div>
-                                    <span class="feed-time">1:05</span>
-                                </div>
-                                <div class="feed-item">
-                                    <span class="feed-sev medium">Med</span>
-                                    <div class="feed-body">
-                                        <div class="feed-title">Failed Auth (×47)</div>
-                                        <div class="feed-meta">198.44.170.19 → :8080</div>
-                                    </div>
-                                    <span class="feed-time">2:18</span>
-                                </div>
-                                <div class="feed-item">
-                                    <span class="feed-sev low">Low</span>
-                                    <div class="feed-body">
-                                        <div class="feed-title">Unusual DNS Query</div>
-                                        <div class="feed-meta">172.16.254.1 → DNS</div>
-                                    </div>
-                                    <span class="feed-time">3:44</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Attack Type Donut -->
-                        <div class="donut-panel panel">
-                            <div class="panel-header">
-                                <span class="panel-title">Attack Types</span>
-                            </div>
-                            <div class="donut-wrap">
-                                <svg class="donut-svg" viewBox="0 0 80 80">
-                                    <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="12"/>
-                                    <!-- Brute Force 35% -->
-                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#ff4f6b" stroke-width="12" stroke-dasharray="65.97 122.52" stroke-dashoffset="0" transform="rotate(-90 40 40)"/>
-                                    <!-- SQLi 22% -->
-                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="41.47 147.02" stroke-dashoffset="-65.97" transform="rotate(-90 40 40)"/>
-                                    <!-- Port Scan 18% -->
-                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#00e5ff" stroke-width="12" stroke-dasharray="33.93 154.56" stroke-dashoffset="-107.44" transform="rotate(-90 40 40)"/>
-                                    <!-- XSS 14% -->
-                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#7c3aed" stroke-width="12" stroke-dasharray="26.39 162.10" stroke-dashoffset="-141.37" transform="rotate(-90 40 40)"/>
-                                    <!-- Other 11% -->
-                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#00d09c" stroke-width="12" stroke-dasharray="20.73 167.76" stroke-dashoffset="-167.76" transform="rotate(-90 40 40)"/>
-                                    <text x="40" y="36" text-anchor="middle" fill="#e8eeff" font-size="9" font-family="JetBrains Mono" font-weight="700">5</text>
-                                    <text x="40" y="47" text-anchor="middle" fill="#6b7da8" font-size="5.5" font-family="Inter">types</text>
-                                </svg>
-                                <div class="donut-legend">
-                                    <div class="legend-row"><div class="legend-dot" style="background:#ff4f6b"></div>Brute Force<span class="legend-pct" style="color:#ff4f6b">35%</span></div>
-                                    <div class="legend-row"><div class="legend-dot" style="background:#f59e0b"></div>Injection<span class="legend-pct" style="color:#f59e0b">22%</span></div>
-                                    <div class="legend-row"><div class="legend-dot" style="background:#00e5ff"></div>Port Scan<span class="legend-pct" style="color:#00e5ff">18%</span></div>
-                                    <div class="legend-row"><div class="legend-dot" style="background:#7c3aed"></div>XSS<span class="legend-pct" style="color:#7c3aed">14%</span></div>
-                                    <div class="legend-row"><div class="legend-dot" style="background:#00d09c"></div>Other<span class="legend-pct" style="color:#00d09c">11%</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Traffic Volume Chart -->
-                <div class="traffic-panel">
+                <!-- World Map — Full Width Centerpiece -->
+                <div class="map-panel" style="min-height: 420px">
                     <div class="panel-header-row">
-                        <span class="panel-heading">Traffic Volume — Last 24h</span>
-                        <span style="font-size:10.5px;color:var(--text-3);font-family:var(--f-mono)">Packets / sec</span>
+                        <span class="panel-heading">Global Network Map</span>
+                        <div style="display:flex;gap:12px;align-items:center">
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#ff4f6b;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Attack</span></div>
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#00e5ff;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Scan</span></div>
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#f59e0b;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Suspicious</span></div>
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#00d09c;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Monitored</span></div>
+                        </div>
                     </div>
-                    <div class="chart-wrap-traffic">
-                        <svg viewBox="0 0 900 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                    <div class="world-map-wrap" id="world-map-wrap">
+                        <svg class="world-map-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
                             <defs>
-                                <linearGradient id="traffic-grad" x1="0" y1="0" x2="1" y2="0">
-                                    <stop offset="0%" stop-color="#3b82f6"/>
-                                    <stop offset="50%" stop-color="#7c3aed"/>
-                                    <stop offset="100%" stop-color="#7c3aed"/>
-                                </linearGradient>
-                                <linearGradient id="traffic-fill" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
-                                    <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.03"/>
-                                </linearGradient>
+                                <radialGradient id="map-glow-center" cx="50%" cy="50%" r="35%">
+                                    <stop offset="0%" stop-color="rgba(0,229,255,0.06)"/>
+                                    <stop offset="100%" stop-color="rgba(0,229,255,0)"/>
+                                </radialGradient>
+                                <filter id="glow-line">
+                                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
                             </defs>
-                            <path d="M0,70 C30,68 50,72 80,60 C110,48 130,65 160,50 C190,35 210,55 250,40 C290,25 310,58 360,35 C400,15 420,45 460,30 C500,15 530,48 570,35 C610,22 640,55 680,38 C720,22 750,52 800,35 C840,22 870,45 900,30"
-                                  stroke="url(#traffic-grad)" stroke-width="2" fill="none"/>
-                            <path d="M0,70 C30,68 50,72 80,60 C110,48 130,65 160,50 C190,35 210,55 250,40 C290,25 310,58 360,35 C400,15 420,45 460,30 C500,15 530,48 570,35 C610,22 640,55 680,38 C720,22 750,52 800,35 C840,22 870,45 900,30 L900,80 L0,80Z"
-                                  fill="url(#traffic-fill)"/>
-                            <!-- Y grid lines -->
-                            <line x1="0" y1="20" x2="900" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                            <line x1="0" y1="40" x2="900" y2="40" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                            <line x1="0" y1="60" x2="900" y2="60" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+                            <!-- Ambient glow -->
+                            <rect width="1000" height="500" fill="url(#map-glow-center)"/>
+
+                            <!-- Graticule grid -->
+                            <g stroke="rgba(0,229,255,0.04)" stroke-width="0.5" fill="none">
+                                <line x1="0" y1="100" x2="1000" y2="100"/>
+                                <line x1="0" y1="200" x2="1000" y2="200"/>
+                                <line x1="0" y1="250" x2="1000" y2="250"/>
+                                <line x1="0" y1="300" x2="1000" y2="300"/>
+                                <line x1="0" y1="400" x2="1000" y2="400"/>
+                                <line x1="100" y1="0" x2="100" y2="500"/>
+                                <line x1="200" y1="0" x2="200" y2="500"/>
+                                <line x1="300" y1="0" x2="300" y2="500"/>
+                                <line x1="400" y1="0" x2="400" y2="500"/>
+                                <line x1="500" y1="0" x2="500" y2="500"/>
+                                <line x1="600" y1="0" x2="600" y2="500"/>
+                                <line x1="700" y1="0" x2="700" y2="500"/>
+                                <line x1="800" y1="0" x2="800" y2="500"/>
+                                <line x1="900" y1="0" x2="900" y2="500"/>
+                            </g>
+                            <!-- Equator -->
+                            <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(0,229,255,0.08)" stroke-width="0.8" stroke-dasharray="6,4"/>
+
+                            <!-- ─── Detailed Continent Outlines ─── -->
+                            <!-- North America -->
+                            <path d="M60,60 L75,50 L110,42 L145,38 L180,45 L200,42 L230,50 L250,65 L265,80 L270,100 L275,120 L280,145 L278,165 L268,180 L255,190 L240,210 L230,220 L218,235 L200,245 L185,252 L168,258 L155,260 L148,245 L140,240 L125,220 L115,198 L105,180 L95,158 L85,140 L75,118 L68,95 L60,78 Z" fill="rgba(0,229,255,0.04)" stroke="rgba(0,229,255,0.2)" stroke-width="1.2"/>
+                            <!-- Greenland -->
+                            <path d="M280,30 L310,25 L340,30 L355,45 L350,65 L335,78 L310,80 L290,70 L278,55 L275,40 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
+                            <!-- Central America -->
+                            <path d="M148,245 L155,260 L160,268 L168,278 L172,284 L178,288 L185,290" fill="none" stroke="rgba(0,229,255,0.18)" stroke-width="1"/>
+                            <!-- South America -->
+                            <path d="M200,290 L215,285 L235,288 L250,295 L262,310 L270,330 L275,350 L272,370 L265,390 L258,408 L248,418 L235,425 L220,428 L210,420 L200,405 L192,385 L188,362 L186,340 L188,318 L192,302 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="1.2"/>
+                            <!-- Europe -->
+                            <path d="M410,90 L425,82 L445,78 L465,80 L480,75 L498,80 L512,88 L522,100 L528,115 L525,130 L518,142 L505,150 L492,155 L478,158 L462,155 L448,148 L435,140 L422,128 L415,115 L410,100 Z" fill="rgba(0,229,255,0.04)" stroke="rgba(0,229,255,0.22)" stroke-width="1.2"/>
+                            <!-- UK -->
+                            <path d="M398,88 L405,82 L412,85 L410,95 L404,100 L398,95 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="0.8"/>
+                            <!-- Scandinavia -->
+                            <path d="M465,45 L475,38 L485,42 L492,55 L488,72 L480,78 L470,75 L462,62 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
+                            <!-- Africa -->
+                            <path d="M430,175 L445,168 L465,162 L485,160 L505,165 L520,175 L530,190 L538,210 L542,235 L540,260 L535,285 L525,310 L512,330 L498,345 L482,352 L468,348 L455,338 L445,320 L438,298 L432,270 L428,242 L425,215 L426,195 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="1.2"/>
+                            <!-- Madagascar -->
+                            <path d="M555,310 L562,305 L568,315 L565,330 L558,335 L552,325 Z" fill="rgba(0,229,255,0.02)" stroke="rgba(0,229,255,0.12)" stroke-width="0.6"/>
+                            <!-- Middle East -->
+                            <path d="M530,145 L555,138 L575,145 L585,160 L578,178 L565,185 L548,180 L535,170 L528,158 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
+                            <!-- Russia / Central Asia -->
+                            <path d="M530,50 L580,42 L640,38 L710,42 L770,50 L820,62 L850,78 L855,95 L845,108 L830,115 L800,110 L760,105 L710,95 L660,88 L610,82 L565,78 L535,72 Z" fill="rgba(0,229,255,0.025)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
+                            <!-- South/SE Asia -->
+                            <path d="M620,140 L660,132 L700,128 L740,135 L775,148 L795,165 L800,185 L790,205 L770,218 L745,225 L720,228 L695,222 L670,212 L648,198 L635,178 L625,158 Z" fill="rgba(0,229,255,0.035)" stroke="rgba(0,229,255,0.2)" stroke-width="1.2"/>
+                            <!-- China/East Asia -->
+                            <path d="M700,90 L745,85 L785,92 L810,105 L818,120 L812,138 L795,148 L775,148 L740,135 L715,125 L700,110 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="1"/>
+                            <!-- Japan -->
+                            <path d="M842,100 L850,95 L858,100 L860,115 L855,128 L848,132 L840,125 L838,110 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.2)" stroke-width="0.8"/>
+                            <!-- Indonesia -->
+                            <path d="M730,255 L760,248 L790,252 L810,260 L825,270 L818,278 L800,275 L775,272 L750,268 L735,262 Z" fill="rgba(0,229,255,0.025)" stroke="rgba(0,229,255,0.14)" stroke-width="0.8"/>
+                            <!-- Australia -->
+                            <path d="M755,310 L785,298 L815,295 L845,305 L860,322 L865,345 L858,368 L842,388 L820,398 L795,402 L770,395 L752,378 L745,355 L748,330 Z" fill="rgba(0,229,255,0.035)" stroke="rgba(0,229,255,0.2)" stroke-width="1.2"/>
+                            <!-- New Zealand -->
+                            <path d="M895,375 L902,370 L908,378 L905,392 L898,398 L892,390 Z" fill="rgba(0,229,255,0.025)" stroke="rgba(0,229,255,0.14)" stroke-width="0.6"/>
+
+                            <!-- ─── City Dots ─── -->
+                            <g fill="rgba(0,229,255,0.18)">
+                                <!-- NA cities -->
+                                <circle cx="130" cy="145" r="2.5"/><text x="130" y="140" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">SF</text>
+                                <circle cx="175" cy="130" r="2"/><text x="175" y="125" text-anchor="middle" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">NY</text>
+                                <circle cx="145" cy="160" r="1.8"/>
+                                <circle cx="110" cy="120" r="1.5"/>
+                                <!-- SA cities -->
+                                <circle cx="240" cy="345" r="2"/><text x="250" y="342" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">SP</text>
+                                <circle cx="220" cy="310" r="1.5"/>
+                                <!-- EU cities -->
+                                <circle cx="460" cy="105" r="2.5"/><text x="460" y="100" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">LON</text>
+                                <circle cx="480" cy="115" r="2"/>
+                                <circle cx="500" cy="108" r="1.8"/>
+                                <circle cx="445" cy="128" r="1.5"/>
+                                <!-- Asia cities -->
+                                <circle cx="720" cy="110" r="2.5"/><text x="720" y="105" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">BJ</text>
+                                <circle cx="760" cy="145" r="2"/><text x="772" y="143" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">MUM</text>
+                                <circle cx="845" cy="110" r="2.2"/><text x="845" y="105" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">TYO</text>
+                                <circle cx="680" cy="165" r="1.8"/>
+                                <circle cx="740" cy="180" r="1.5"/>
+                                <!-- Africa -->
+                                <circle cx="478" cy="235" r="1.5"/>
+                                <circle cx="510" cy="300" r="1.5"/>
+                                <!-- Australia -->
+                                <circle cx="825" cy="360" r="2"/><text x="825" y="355" text-anchor="middle" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">SYD</text>
+                                <circle cx="790" cy="345" r="1.5"/>
+                            </g>
+
+                            <!-- ─── Animated Attack Arc Lines ─── -->
+                            <!-- Moscow → London -->
+                            <path d="M580,72 Q520,30 460,105" class="atk-line" stroke="#ff4f6b" stroke-width="1" fill="none" filter="url(#glow-line)"/>
+                            <!-- Beijing → SF -->
+                            <path d="M720,110 Q500,20 130,145" class="atk-line" stroke="#00e5ff" stroke-width="1" fill="none" filter="url(#glow-line)" style="animation-delay:-0.5s"/>
+                            <!-- São Paulo → NY -->
+                            <path d="M240,345 Q220,230 175,130" class="atk-line" stroke="#f59e0b" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-1s"/>
+                            <!-- Tokyo → Mumbai -->
+                            <path d="M845,110 Q800,150 760,145" class="atk-line" stroke="#00d09c" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-1.5s"/>
+                            <!-- Johannesburg → London -->
+                            <path d="M510,300 Q480,200 460,105" class="atk-line" stroke="#7c3aed" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-2s"/>
+                            <!-- Lagos → Beijing -->
+                            <path d="M445,230 Q580,120 720,110" class="atk-line" stroke="#ff4f6b" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-0.3s"/>
+                            <!-- Sydney → Tokyo -->
+                            <path d="M825,360 Q860,220 845,110" class="atk-line" stroke="#00e5ff" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-1.8s"/>
+                            <!-- NY → São Paulo -->
+                            <path d="M175,130 Q200,240 240,345" class="atk-line" stroke="#7c3aed" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-2.5s"/>
                         </svg>
-                    </div>
-                    <div class="chart-labels">
-                        <span>00:00</span><span>02:00</span><span>04:00</span><span>06:00</span>
-                        <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span>
-                        <span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>Now</span>
+
+                        <!-- Attack Dots (positioned over map) -->
+                        <div class="atk-dot red" style="left:13%;top:29%"><span class="atk-label">SF</span></div>
+                        <div class="atk-dot red" style="left:17.5%;top:26%"><span class="atk-label">NY</span></div>
+                        <div class="atk-dot amber" style="left:24%;top:69%"><span class="atk-label">SP</span></div>
+                        <div class="atk-dot" style="left:46%;top:21%"><span class="atk-label">LON</span></div>
+                        <div class="atk-dot" style="left:58%;top:14.5%;animation-delay:0.5s"><span class="atk-label">MSK</span></div>
+                        <div class="atk-dot green" style="left:72%;top:22%;animation-delay:0.8s"><span class="atk-label">BJ</span></div>
+                        <div class="atk-dot amber" style="left:76%;top:29%;animation-delay:0.3s"><span class="atk-label">MUM</span></div>
+                        <div class="atk-dot" style="left:84.5%;top:22%;animation-delay:1.2s"><span class="atk-label">TYO</span></div>
+                        <div class="atk-dot red" style="left:44.5%;top:47%;animation-delay:0.6s"><span class="atk-label">LGS</span></div>
+                        <div class="atk-dot green" style="left:51%;top:60%;animation-delay:1.5s"><span class="atk-label">JHB</span></div>
+                        <div class="atk-dot" style="left:82.5%;top:72%;animation-delay:0.9s"><span class="atk-label">SYD</span></div>
                     </div>
                 </div>
 
