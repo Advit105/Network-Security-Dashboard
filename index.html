@@ -197,139 +197,8 @@
                             <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#00d09c;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Monitored</span></div>
                         </div>
                     </div>
-                    <div class="world-map-wrap" id="world-map-wrap">
-                        <svg class="world-map-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <radialGradient id="map-glow-center" cx="50%" cy="50%" r="35%">
-                                    <stop offset="0%" stop-color="rgba(0,229,255,0.06)"/>
-                                    <stop offset="100%" stop-color="rgba(0,229,255,0)"/>
-                                </radialGradient>
-                                <filter id="glow-line">
-                                    <feGaussianBlur stdDeviation="2" result="blur"/>
-                                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                                </filter>
-                            </defs>
-
-                            <!-- Ambient glow -->
-                            <rect width="1000" height="500" fill="url(#map-glow-center)"/>
-
-                            <!-- Graticule grid -->
-                            <g stroke="rgba(0,229,255,0.04)" stroke-width="0.5" fill="none">
-                                <line x1="0" y1="100" x2="1000" y2="100"/>
-                                <line x1="0" y1="200" x2="1000" y2="200"/>
-                                <line x1="0" y1="250" x2="1000" y2="250"/>
-                                <line x1="0" y1="300" x2="1000" y2="300"/>
-                                <line x1="0" y1="400" x2="1000" y2="400"/>
-                                <line x1="100" y1="0" x2="100" y2="500"/>
-                                <line x1="200" y1="0" x2="200" y2="500"/>
-                                <line x1="300" y1="0" x2="300" y2="500"/>
-                                <line x1="400" y1="0" x2="400" y2="500"/>
-                                <line x1="500" y1="0" x2="500" y2="500"/>
-                                <line x1="600" y1="0" x2="600" y2="500"/>
-                                <line x1="700" y1="0" x2="700" y2="500"/>
-                                <line x1="800" y1="0" x2="800" y2="500"/>
-                                <line x1="900" y1="0" x2="900" y2="500"/>
-                            </g>
-                            <!-- Equator -->
-                            <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(0,229,255,0.08)" stroke-width="0.8" stroke-dasharray="6,4"/>
-
-                            <!-- ─── Detailed Continent Outlines ─── -->
-                            <!-- North America -->
-                            <path d="M60,60 L75,50 L110,42 L145,38 L180,45 L200,42 L230,50 L250,65 L265,80 L270,100 L275,120 L280,145 L278,165 L268,180 L255,190 L240,210 L230,220 L218,235 L200,245 L185,252 L168,258 L155,260 L148,245 L140,240 L125,220 L115,198 L105,180 L95,158 L85,140 L75,118 L68,95 L60,78 Z" fill="rgba(0,229,255,0.04)" stroke="rgba(0,229,255,0.2)" stroke-width="1.2"/>
-                            <!-- Greenland -->
-                            <path d="M280,30 L310,25 L340,30 L355,45 L350,65 L335,78 L310,80 L290,70 L278,55 L275,40 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
-                            <!-- Central America -->
-                            <path d="M148,245 L155,260 L160,268 L168,278 L172,284 L178,288 L185,290" fill="none" stroke="rgba(0,229,255,0.18)" stroke-width="1"/>
-                            <!-- South America -->
-                            <path d="M200,290 L215,285 L235,288 L250,295 L262,310 L270,330 L275,350 L272,370 L265,390 L258,408 L248,418 L235,425 L220,428 L210,420 L200,405 L192,385 L188,362 L186,340 L188,318 L192,302 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="1.2"/>
-                            <!-- Europe -->
-                            <path d="M410,90 L425,82 L445,78 L465,80 L480,75 L498,80 L512,88 L522,100 L528,115 L525,130 L518,142 L505,150 L492,155 L478,158 L462,155 L448,148 L435,140 L422,128 L415,115 L410,100 Z" fill="rgba(0,229,255,0.04)" stroke="rgba(0,229,255,0.22)" stroke-width="1.2"/>
-                            <!-- UK -->
-                            <path d="M398,88 L405,82 L412,85 L410,95 L404,100 L398,95 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="0.8"/>
-                            <!-- Scandinavia -->
-                            <path d="M465,45 L475,38 L485,42 L492,55 L488,72 L480,78 L470,75 L462,62 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
-                            <!-- Africa -->
-                            <path d="M430,175 L445,168 L465,162 L485,160 L505,165 L520,175 L530,190 L538,210 L542,235 L540,260 L535,285 L525,310 L512,330 L498,345 L482,352 L468,348 L455,338 L445,320 L438,298 L432,270 L428,242 L425,215 L426,195 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="1.2"/>
-                            <!-- Madagascar -->
-                            <path d="M555,310 L562,305 L568,315 L565,330 L558,335 L552,325 Z" fill="rgba(0,229,255,0.02)" stroke="rgba(0,229,255,0.12)" stroke-width="0.6"/>
-                            <!-- Middle East -->
-                            <path d="M530,145 L555,138 L575,145 L585,160 L578,178 L565,185 L548,180 L535,170 L528,158 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
-                            <!-- Russia / Central Asia -->
-                            <path d="M530,50 L580,42 L640,38 L710,42 L770,50 L820,62 L850,78 L855,95 L845,108 L830,115 L800,110 L760,105 L710,95 L660,88 L610,82 L565,78 L535,72 Z" fill="rgba(0,229,255,0.025)" stroke="rgba(0,229,255,0.15)" stroke-width="0.8"/>
-                            <!-- South/SE Asia -->
-                            <path d="M620,140 L660,132 L700,128 L740,135 L775,148 L795,165 L800,185 L790,205 L770,218 L745,225 L720,228 L695,222 L670,212 L648,198 L635,178 L625,158 Z" fill="rgba(0,229,255,0.035)" stroke="rgba(0,229,255,0.2)" stroke-width="1.2"/>
-                            <!-- China/East Asia -->
-                            <path d="M700,90 L745,85 L785,92 L810,105 L818,120 L812,138 L795,148 L775,148 L740,135 L715,125 L700,110 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.18)" stroke-width="1"/>
-                            <!-- Japan -->
-                            <path d="M842,100 L850,95 L858,100 L860,115 L855,128 L848,132 L840,125 L838,110 Z" fill="rgba(0,229,255,0.03)" stroke="rgba(0,229,255,0.2)" stroke-width="0.8"/>
-                            <!-- Indonesia -->
-                            <path d="M730,255 L760,248 L790,252 L810,260 L825,270 L818,278 L800,275 L775,272 L750,268 L735,262 Z" fill="rgba(0,229,255,0.025)" stroke="rgba(0,229,255,0.14)" stroke-width="0.8"/>
-                            <!-- Australia -->
-                            <path d="M755,310 L785,298 L815,295 L845,305 L860,322 L865,345 L858,368 L842,388 L820,398 L795,402 L770,395 L752,378 L745,355 L748,330 Z" fill="rgba(0,229,255,0.035)" stroke="rgba(0,229,255,0.2)" stroke-width="1.2"/>
-                            <!-- New Zealand -->
-                            <path d="M895,375 L902,370 L908,378 L905,392 L898,398 L892,390 Z" fill="rgba(0,229,255,0.025)" stroke="rgba(0,229,255,0.14)" stroke-width="0.6"/>
-
-                            <!-- ─── City Dots ─── -->
-                            <g fill="rgba(0,229,255,0.18)">
-                                <!-- NA cities -->
-                                <circle cx="130" cy="145" r="2.5"/><text x="130" y="140" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">SF</text>
-                                <circle cx="175" cy="130" r="2"/><text x="175" y="125" text-anchor="middle" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">NY</text>
-                                <circle cx="145" cy="160" r="1.8"/>
-                                <circle cx="110" cy="120" r="1.5"/>
-                                <!-- SA cities -->
-                                <circle cx="240" cy="345" r="2"/><text x="250" y="342" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">SP</text>
-                                <circle cx="220" cy="310" r="1.5"/>
-                                <!-- EU cities -->
-                                <circle cx="460" cy="105" r="2.5"/><text x="460" y="100" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">LON</text>
-                                <circle cx="480" cy="115" r="2"/>
-                                <circle cx="500" cy="108" r="1.8"/>
-                                <circle cx="445" cy="128" r="1.5"/>
-                                <!-- Asia cities -->
-                                <circle cx="720" cy="110" r="2.5"/><text x="720" y="105" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">BJ</text>
-                                <circle cx="760" cy="145" r="2"/><text x="772" y="143" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">MUM</text>
-                                <circle cx="845" cy="110" r="2.2"/><text x="845" y="105" text-anchor="middle" fill="rgba(0,229,255,0.3)" font-size="7" font-family="Inter">TYO</text>
-                                <circle cx="680" cy="165" r="1.8"/>
-                                <circle cx="740" cy="180" r="1.5"/>
-                                <!-- Africa -->
-                                <circle cx="478" cy="235" r="1.5"/>
-                                <circle cx="510" cy="300" r="1.5"/>
-                                <!-- Australia -->
-                                <circle cx="825" cy="360" r="2"/><text x="825" y="355" text-anchor="middle" fill="rgba(0,229,255,0.25)" font-size="6.5" font-family="Inter">SYD</text>
-                                <circle cx="790" cy="345" r="1.5"/>
-                            </g>
-
-                            <!-- ─── Animated Attack Arc Lines ─── -->
-                            <!-- Moscow → London -->
-                            <path d="M580,72 Q520,30 460,105" class="atk-line" stroke="#ff4f6b" stroke-width="1" fill="none" filter="url(#glow-line)"/>
-                            <!-- Beijing → SF -->
-                            <path d="M720,110 Q500,20 130,145" class="atk-line" stroke="#00e5ff" stroke-width="1" fill="none" filter="url(#glow-line)" style="animation-delay:-0.5s"/>
-                            <!-- São Paulo → NY -->
-                            <path d="M240,345 Q220,230 175,130" class="atk-line" stroke="#f59e0b" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-1s"/>
-                            <!-- Tokyo → Mumbai -->
-                            <path d="M845,110 Q800,150 760,145" class="atk-line" stroke="#00d09c" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-1.5s"/>
-                            <!-- Johannesburg → London -->
-                            <path d="M510,300 Q480,200 460,105" class="atk-line" stroke="#7c3aed" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-2s"/>
-                            <!-- Lagos → Beijing -->
-                            <path d="M445,230 Q580,120 720,110" class="atk-line" stroke="#ff4f6b" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-0.3s"/>
-                            <!-- Sydney → Tokyo -->
-                            <path d="M825,360 Q860,220 845,110" class="atk-line" stroke="#00e5ff" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-1.8s"/>
-                            <!-- NY → São Paulo -->
-                            <path d="M175,130 Q200,240 240,345" class="atk-line" stroke="#7c3aed" stroke-width="0.8" fill="none" filter="url(#glow-line)" style="animation-delay:-2.5s"/>
-                        </svg>
-
-                        <!-- Attack Dots (positioned over map) -->
-                        <div class="atk-dot red" style="left:13%;top:29%"><span class="atk-label">SF</span></div>
-                        <div class="atk-dot red" style="left:17.5%;top:26%"><span class="atk-label">NY</span></div>
-                        <div class="atk-dot amber" style="left:24%;top:69%"><span class="atk-label">SP</span></div>
-                        <div class="atk-dot" style="left:46%;top:21%"><span class="atk-label">LON</span></div>
-                        <div class="atk-dot" style="left:58%;top:14.5%;animation-delay:0.5s"><span class="atk-label">MSK</span></div>
-                        <div class="atk-dot green" style="left:72%;top:22%;animation-delay:0.8s"><span class="atk-label">BJ</span></div>
-                        <div class="atk-dot amber" style="left:76%;top:29%;animation-delay:0.3s"><span class="atk-label">MUM</span></div>
-                        <div class="atk-dot" style="left:84.5%;top:22%;animation-delay:1.2s"><span class="atk-label">TYO</span></div>
-                        <div class="atk-dot red" style="left:44.5%;top:47%;animation-delay:0.6s"><span class="atk-label">LGS</span></div>
-                        <div class="atk-dot green" style="left:51%;top:60%;animation-delay:1.5s"><span class="atk-label">JHB</span></div>
-                        <div class="atk-dot" style="left:82.5%;top:72%;animation-delay:0.9s"><span class="atk-label">SYD</span></div>
-                    </div>
+                    <!-- Rendered dynamically by world_map.js -->
+                    <div class="world-map-wrap" id="world-map-wrap"></div>
                 </div>
 
             </div><!-- end page-dashboard -->
@@ -847,6 +716,7 @@
 
     <script src="toast.js"></script>
     <script src="main.js"></script>
+    <script src="world_map.js"></script>
     <script src="log_parser.js"></script>
     <script src="ip_lookup.js"></script>
     <script src="dns_lookup.js"></script>
