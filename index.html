@@ -4,30 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SentinelX — Security Dashboard</title>
+    <title>SentinelX — SOC Security Dashboard</title>
+    <meta name="description" content="Real-time security operations center dashboard with threat monitoring, IP lookup, DNS analysis, and cryptographic tools." />
     <link rel="stylesheet" href="style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-
-    <!-- HUD Grid and Overlay elements -->
+    <!-- Ambient background -->
     <div class="hud-grid"></div>
     <div class="scanlines"></div>
-
-    <!-- Background Glow Blobs -->
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
     <div class="bg-glow bg-glow-3"></div>
 
-    <!-- Toast Container -->
+    <!-- Toast -->
     <div id="toast-container"></div>
 
-    <!-- Keyboard Shortcuts Modal -->
+    <!-- Shortcuts Modal -->
     <div id="shortcuts-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -46,177 +42,383 @@
                 <div class="shortcut-row"><kbd>9</kbd><span>Settings</span></div>
                 <div class="shortcut-row"><kbd>T</kbd><span>Toggle Theme</span></div>
                 <div class="shortcut-row"><kbd>?</kbd><span>Show Shortcuts</span></div>
-                <div class="shortcut-row"><kbd>Esc</kbd><span>Close / Clear Search</span></div>
+                <div class="shortcut-row"><kbd>Esc</kbd><span>Close / Clear</span></div>
             </div>
         </div>
     </div>
 
     <div class="layout">
 
-        <!-- Mobile Hamburger -->
+        <!-- Hamburger -->
         <button id="hamburger" class="hamburger" aria-label="Open menu">☰</button>
 
-        <!-- Sidebar -->
+        <!-- ════════════════════════════════════
+             SIDEBAR — Icon-only compact nav
+             ════════════════════════════════════ -->
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <div class="logo-icon">
-                    <svg viewBox="0 0 24 24" fill="none" style="width: 18px; height: 18px;">
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
                         <defs>
-                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#388bfd" />
-                                <stop offset="100%" stop-color="#a855f7" />
+                            <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00e5ff"/>
+                                <stop offset="100%" stop-color="#7c3aed"/>
                             </linearGradient>
                         </defs>
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(56, 139, 253, 0.05)"/>
-                        <path d="M14.5 9.5l-5 5" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M9.5 9.5l5 5" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="url(#lg)" stroke-width="1.75" fill="rgba(0,229,255,0.06)" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 12l2 2 4-4" stroke="url(#lg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <span class="logo-text">SentinelX</span>
             </div>
+
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Dashboard</a>
-                <a href="#" class="nav-item" data-page="logs"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>Log Analyzer</a>
-                <a href="#" class="nav-item" data-page="ips"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg></span>IP Lookup</a>
-                <a href="#" class="nav-item" data-page="dns"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg></span>DNS Lookup</a>
-                <a href="#" class="nav-item" data-page="blocklist"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M4.93 4.93l14.14 14.14"/></svg></span>Blocklist</a>
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+                </a>
+                <a href="#" class="nav-item" data-page="logs">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+                </a>
+                <a href="#" class="nav-item" data-page="ips">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+                </a>
+                <a href="#" class="nav-item" data-page="dns">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 3c-3.5 4-3.5 14 0 18M12 3c3.5 4 3.5 14 0 18M3 12h18"/></svg></span>
+                </a>
+                <a href="#" class="nav-item" data-page="blocklist">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M4.93 4.93l14.14 14.14"/></svg></span>
+                </a>
                 <div class="nav-divider"></div>
-                <a href="#" class="nav-item" data-page="hash"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></span>Hash Generator</a>
-                <a href="#" class="nav-item" data-page="password"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>Password Checker</a>
+                <a href="#" class="nav-item" data-page="hash">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></span>
+                </a>
+                <a href="#" class="nav-item" data-page="password">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
+                </a>
             </nav>
+
             <div class="sidebar-footer">
-                <div class="system-status">
-                    <div class="status-dot"></div><span>System Online</span>
-                </div>
-                <a href="#" class="nav-item" data-page="settings"><span class="nav-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>Settings</a>
-                <div class="shortcut-hint" onclick="toggleShortcutsModal()">Press <kbd class="kbd-mini">?</kbd> for shortcuts</div>
+                <div class="system-status"><div class="status-dot"></div></div>
+                <a href="#" class="nav-item" data-page="settings">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+                </a>
             </div>
         </aside>
 
-        <!-- Main -->
+        <!-- ════════════════════════════════════
+             MAIN CONTENT
+             ════════════════════════════════════ -->
         <main class="main">
 
+            <!-- Topbar -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <h1 class="page-title" id="page-title">Dashboard</h1>
-                    <span class="page-sub" id="page-sub">Overview / Real-time</span>
+                    <h1 class="page-title" id="page-title">SOC Dashboard</h1>
+                    <span class="page-sub" id="page-sub">SentinelX · Real-time Monitoring</span>
                 </div>
                 <div class="topbar-right">
                     <div class="search-wrap">
-                        <input type="text" id="global-search" class="search-input"
-                            placeholder="Search... (or press 1-8)" />
+                        <input type="text" id="global-search" class="search-input" placeholder="Search tools..." />
                         <div id="search-results" class="search-results" style="display:none"></div>
                     </div>
-                    <div class="badge badge-success">Live</div>
+                    <div class="badge badge-danger" style="animation: badge-pulse 2s infinite;">● LIVE</div>
                     <button id="theme-toggle" class="theme-btn">☀ Light</button>
-                    <button id="export-report-btn" class="theme-btn">⬇ Export</button>
+                    <button id="export-report-btn" class="theme-btn">↓ Export</button>
                     <div class="topbar-time" id="clock">--:--:--</div>
                 </div>
             </header>
 
-            <!-- PAGE: DASHBOARD -->
+            <!-- ════════════════════════════════
+                 PAGE: DASHBOARD — SOC Layout
+                 ════════════════════════════════ -->
             <div id="page-dashboard" class="page active">
-                <section class="dash-welcome">
-                    <div class="panel welcome-panel">
-                        <div class="welcome-text">
-                            <h2 class="welcome-title">Welcome to <span class="grad-text">SentinelX</span></h2>
-                            <p class="welcome-desc">A real-time security toolkit powered by live APIs and browser-native cryptography. Every tool below operates on actual data — no simulations.</p>
-                        </div>
-                        <div class="welcome-stats">
-                            <div class="welcome-stat">
-                                <span class="welcome-stat-num" id="dash-myip" style="font-size:14px">detecting...</span>
-                                <span class="welcome-stat-label">Your IP</span>
-                            </div>
-                            <div class="welcome-stat">
-                                <span class="welcome-stat-num" id="dash-blocked-count">0</span>
-                                <span class="welcome-stat-label">Blocked IPs</span>
-                            </div>
-                            <div class="welcome-stat">
-                                <span class="welcome-stat-num" id="dash-uptime">0s</span>
-                                <span class="welcome-stat-label">Session</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
-                <section class="tools-grid">
-                    <div class="tool-card tc-orange" onclick="navigateTo('logs')">
-                        <div class="tool-card-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
-                        <div class="tool-card-body">
-                            <h3 class="tool-card-title">Log Analyzer</h3>
-                            <p class="tool-card-desc">Parse raw server logs with regex pattern matching. Detects brute force, port scans, privilege escalation, and more.</p>
+                <!-- 4 KPI Cards -->
+                <div class="kpi-row">
+                    <div class="kpi-card red">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Total Threats</span>
+                            <span class="kpi-dot red"></span>
                         </div>
-                        <div class="alert-badge warn">Real Parsing</div>
-                    </div>
-                    <div class="tool-card tc-cyan" onclick="navigateTo('ips')">
-                        <div class="tool-card-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg></div>
-                        <div class="tool-card-body">
-                            <h3 class="tool-card-title">IP Lookup</h3>
-                            <p class="tool-card-desc">Fetch real-time geolocation, ISP, and threat indicators for any IP address using the ip-api.com live API.</p>
+                        <div class="kpi-value" id="kpi-threats">2,847</div>
+                        <div class="kpi-chart">
+                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="grad-red" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#ff4f6b" stop-opacity="0.3"/>
+                                        <stop offset="100%" stop-color="#ff4f6b" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,32 C20,28 30,36 50,24 C70,12 80,30 100,22 C120,14 130,34 150,20 C170,8 185,28 200,18" stroke="#ff4f6b" stroke-width="1.5" fill="none"/>
+                                <path d="M0,32 C20,28 30,36 50,24 C70,12 80,30 100,22 C120,14 130,34 150,20 C170,8 185,28 200,18 L200,44 L0,44Z" fill="url(#grad-red)"/>
+                            </svg>
                         </div>
-                        <div class="alert-badge info">Live API</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val">+12.4%</span><span>vs last hour</span></div>
                     </div>
-                    <div class="tool-card tc-rose" onclick="navigateTo('blocklist')">
-                        <div class="tool-card-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M4.93 4.93l14.14 14.14"/></svg></div>
-                        <div class="tool-card-body">
-                            <h3 class="tool-card-title">Blocklist Manager</h3>
-                            <p class="tool-card-desc">Manage blocked IP addresses stored in your browser's local storage. Export, filter, and organize entries.</p>
+                    <div class="kpi-card green">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Blocked</span>
+                            <span class="kpi-dot green"></span>
                         </div>
-                        <div class="alert-badge danger">Local Storage</div>
-                    </div>
-                    <div class="tool-card tc-green" onclick="navigateTo('hash')">
-                        <div class="tool-card-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></div>
-                        <div class="tool-card-body">
-                            <h3 class="tool-card-title">Hash Generator</h3>
-                            <p class="tool-card-desc">Generate cryptographically accurate SHA-256, SHA-1, and SHA-512 hashes using the browser's native Web Crypto API.</p>
+                        <div class="kpi-value" id="kpi-blocked">0</div>
+                        <div class="kpi-chart">
+                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="grad-green" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#00d09c" stop-opacity="0.3"/>
+                                        <stop offset="100%" stop-color="#00d09c" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,38 C20,34 40,40 60,30 C80,20 100,36 120,28 C140,20 160,32 180,24 C190,20 196,26 200,22" stroke="#00d09c" stroke-width="1.5" fill="none"/>
+                                <path d="M0,38 C20,34 40,40 60,30 C80,20 100,36 120,28 C140,20 160,32 180,24 C190,20 196,26 200,22 L200,44 L0,44Z" fill="url(#grad-green)"/>
+                            </svg>
                         </div>
-                        <div class="alert-badge success">Web Crypto</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val" id="kpi-blocked-count-label">0</span><span>IPs blocked</span></div>
                     </div>
-                    <div class="tool-card tc-pink" onclick="navigateTo('password')">
-                        <div class="tool-card-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-                        <div class="tool-card-body">
-                            <h3 class="tool-card-title">Password Checker</h3>
-                            <p class="tool-card-desc">Analyze password strength with real entropy calculations and estimated crack time. Generate strong passwords.</p>
+                    <div class="kpi-card cyan">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Session Uptime</span>
+                            <span class="kpi-dot cyan"></span>
                         </div>
-                        <div class="alert-badge danger">Real Analysis</div>
-                    </div>
-                    <div class="tool-card tc-violet" onclick="navigateTo('dns')">
-                        <div class="tool-card-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg></div>
-                        <div class="tool-card-body">
-                            <h3 class="tool-card-title">DNS Lookup</h3>
-                            <p class="tool-card-desc">Query real DNS records (A, AAAA, MX, TXT, NS, CNAME) for any domain using Google's public DNS API.</p>
+                        <div class="kpi-value" id="dash-uptime" style="font-size:24px">0s</div>
+                        <div class="kpi-chart">
+                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="grad-cyan" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.3"/>
+                                        <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,40 L30,36 L60,32 L90,26 L120,20 L150,14 L180,8 L200,4" stroke="#00e5ff" stroke-width="1.5" fill="none"/>
+                                <path d="M0,40 L30,36 L60,32 L90,26 L120,20 L150,14 L180,8 L200,4 L200,44 L0,44Z" fill="url(#grad-cyan)"/>
+                            </svg>
                         </div>
-                        <div class="alert-badge info">Live API</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val" id="dash-myip" style="font-size:11px;font-weight:500">detecting...</span></div>
                     </div>
-                </section>
+                    <div class="kpi-card amber">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Risk Score</span>
+                            <span class="kpi-dot amber"></span>
+                        </div>
+                        <div class="kpi-value">73<span style="font-size:18px;opacity:0.7">%</span></div>
+                        <div class="kpi-chart">
+                            <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+                                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,20 C20,22 30,16 50,20 C70,24 80,14 100,18 C120,22 140,10 160,16 C180,22 190,14 200,18" stroke="#f59e0b" stroke-width="1.5" fill="none"/>
+                                <path d="M0,20 C20,22 30,16 50,20 C70,24 80,14 100,18 C120,22 140,10 160,16 C180,22 190,14 200,18 L200,44 L0,44Z" fill="url(#grad-amber)"/>
+                            </svg>
+                        </div>
+                        <div class="kpi-trend"><span class="kpi-trend-val">HIGH</span><span>risk level</span></div>
+                    </div>
+                </div>
 
-                <section class="panels">
-                    <div class="panel" style="flex:1">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Blocklist</h2><button class="panel-btn"
-                                onclick="navigateTo('blocklist')">Manage</button>
+                <!-- Middle Row: World Map + Right Panel -->
+                <div class="mid-row">
+
+                    <!-- World Map -->
+                    <div class="map-panel">
+                        <div class="panel-header-row">
+                            <span class="panel-heading">Attack Vectors — Global</span>
+                            <span class="panel-badge live">● Live</span>
                         </div>
-                        <div id="dash-blocklist">
-                            <div style="color:var(--text-muted);font-size:13px;padding:4px 0">No IPs blocked yet.
+                        <div class="world-map-wrap" id="world-map-wrap">
+                            <!-- SVG World Map outline (simplified) -->
+                            <svg class="world-map-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Attack connection lines -->
+                                <svg class="map-lines-svg" viewBox="0 0 1000 500">
+                                    <line x1="180" y1="160" x2="500" y2="250" class="atk-line" stroke="#ff4f6b" stroke-width="0.8"/>
+                                    <line x1="750" y1="140" x2="500" y2="250" class="atk-line" stroke="#00e5ff" stroke-width="0.8" style="animation-delay:-0.5s"/>
+                                    <line x1="820" y1="200" x2="500" y2="250" class="atk-line" stroke="#f59e0b" stroke-width="0.8" style="animation-delay:-1s"/>
+                                    <line x1="350" y1="130" x2="500" y2="250" class="atk-line" stroke="#00d09c" stroke-width="0.8" style="animation-delay:-1.5s"/>
+                                    <line x1="620" y1="320" x2="500" y2="250" class="atk-line" stroke="#7c3aed" stroke-width="0.8" style="animation-delay:-2s"/>
+                                    <line x1="280" y1="340" x2="500" y2="250" class="atk-line" stroke="#00e5ff" stroke-width="0.8" style="animation-delay:-0.8s"/>
+                                </svg>
+                                <!-- Simplified world map paths in cyan -->
+                                <!-- North America -->
+                                <path d="M 80 120 L 130 110 L 200 100 L 250 110 L 270 140 L 280 180 L 260 220 L 230 250 L 200 260 L 170 270 L 140 260 L 120 230 L 100 200 L 85 170 Z" fill="none" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
+                                <!-- South America -->
+                                <path d="M 210 290 L 240 285 L 260 300 L 270 340 L 265 380 L 250 410 L 230 420 L 210 410 L 195 380 L 190 340 L 200 310 Z" fill="none" stroke="rgba(0,229,255,0.20)" stroke-width="1"/>
+                                <!-- Europe -->
+                                <path d="M 420 100 L 470 95 L 510 105 L 520 130 L 500 150 L 470 155 L 440 145 L 420 130 Z" fill="none" stroke="rgba(0,229,255,0.25)" stroke-width="1"/>
+                                <!-- Africa -->
+                                <path d="M 440 180 L 490 170 L 520 185 L 530 230 L 525 280 L 510 320 L 490 340 L 470 335 L 450 310 L 440 270 L 435 230 Z" fill="none" stroke="rgba(0,229,255,0.20)" stroke-width="1"/>
+                                <!-- Asia -->
+                                <path d="M 530 80 L 620 70 L 720 80 L 800 100 L 840 130 L 850 170 L 820 200 L 780 220 L 720 230 L 660 220 L 600 200 L 550 170 L 530 140 L 525 110 Z" fill="none" stroke="rgba(0,229,255,0.22)" stroke-width="1"/>
+                                <!-- Australia -->
+                                <path d="M 740 310 L 800 300 L 840 320 L 850 360 L 830 390 L 790 400 L 755 385 L 740 355 Z" fill="none" stroke="rgba(0,229,255,0.18)" stroke-width="1"/>
+                                <!-- Grid dot pattern on continents -->
+                                <g fill="rgba(0,229,255,0.12)">
+                                    <circle cx="150" cy="170" r="2"/><circle cx="200" cy="160" r="2"/><circle cx="250" cy="180" r="2"/>
+                                    <circle cx="460" cy="120" r="2"/><circle cx="490" cy="115" r="2"/><circle cx="470" cy="200" r="2"/>
+                                    <circle cx="600" cy="130" r="2"/><circle cx="680" cy="140" r="2"/><circle cx="750" cy="160" r="2"/>
+                                    <circle cx="230" cy="330" r="2"/><circle cx="250" cy="360" r="2"/>
+                                    <circle cx="790" cy="345" r="2"/>
+                                </g>
+                            </svg>
+                            <!-- Attack dots positioned on map -->
+                            <div class="atk-dot red" style="left:18%;top:32%"></div>
+                            <div class="atk-dot" style="left:50%;top:50%"></div>
+                            <div class="atk-dot amber" style="left:75%;top:28%"></div>
+                            <div class="atk-dot green" style="left:82%;top:40%"></div>
+                            <div class="atk-dot" style="left:35%;top:26%;animation-delay:0.8s"></div>
+                            <div class="atk-dot red" style="left:62%;top:64%;animation-delay:1.2s"></div>
+                            <div class="atk-dot" style="left:28%;top:68%;animation-delay:0.4s"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Threat feed + Donut -->
+                    <div class="right-col">
+
+                        <!-- Threat Feed -->
+                        <div class="threat-feed">
+                            <div class="panel-header-row">
+                                <span class="panel-heading">Threat Feed</span>
+                                <span class="panel-badge live">● Live</span>
+                            </div>
+                            <div class="feed-list" id="threat-feed-list">
+                                <div class="feed-item">
+                                    <span class="feed-sev critical">Critical</span>
+                                    <div class="feed-body">
+                                        <div class="feed-title">SSH Brute Force</div>
+                                        <div class="feed-meta">185.220.101.5 → :22</div>
+                                    </div>
+                                    <span class="feed-time">0:02</span>
+                                </div>
+                                <div class="feed-item">
+                                    <span class="feed-sev critical">Critical</span>
+                                    <div class="feed-body">
+                                        <div class="feed-title">SQL Injection</div>
+                                        <div class="feed-meta">45.33.32.156 → :3306</div>
+                                    </div>
+                                    <span class="feed-time">0:14</span>
+                                </div>
+                                <div class="feed-item">
+                                    <span class="feed-sev high">High</span>
+                                    <div class="feed-body">
+                                        <div class="feed-title">Port Scan Detected</div>
+                                        <div class="feed-meta">103.14.156.201 → all</div>
+                                    </div>
+                                    <span class="feed-time">0:32</span>
+                                </div>
+                                <div class="feed-item">
+                                    <span class="feed-sev high">High</span>
+                                    <div class="feed-body">
+                                        <div class="feed-title">XSS Attempt</div>
+                                        <div class="feed-meta">89.248.167.131 → :443</div>
+                                    </div>
+                                    <span class="feed-time">1:05</span>
+                                </div>
+                                <div class="feed-item">
+                                    <span class="feed-sev medium">Med</span>
+                                    <div class="feed-body">
+                                        <div class="feed-title">Failed Auth (×47)</div>
+                                        <div class="feed-meta">198.44.170.19 → :8080</div>
+                                    </div>
+                                    <span class="feed-time">2:18</span>
+                                </div>
+                                <div class="feed-item">
+                                    <span class="feed-sev low">Low</span>
+                                    <div class="feed-body">
+                                        <div class="feed-title">Unusual DNS Query</div>
+                                        <div class="feed-meta">172.16.254.1 → DNS</div>
+                                    </div>
+                                    <span class="feed-time">3:44</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attack Type Donut -->
+                        <div class="donut-panel panel">
+                            <div class="panel-header">
+                                <span class="panel-title">Attack Types</span>
+                            </div>
+                            <div class="donut-wrap">
+                                <svg class="donut-svg" viewBox="0 0 80 80">
+                                    <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="12"/>
+                                    <!-- Brute Force 35% -->
+                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#ff4f6b" stroke-width="12" stroke-dasharray="65.97 122.52" stroke-dashoffset="0" transform="rotate(-90 40 40)"/>
+                                    <!-- SQLi 22% -->
+                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#f59e0b" stroke-width="12" stroke-dasharray="41.47 147.02" stroke-dashoffset="-65.97" transform="rotate(-90 40 40)"/>
+                                    <!-- Port Scan 18% -->
+                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#00e5ff" stroke-width="12" stroke-dasharray="33.93 154.56" stroke-dashoffset="-107.44" transform="rotate(-90 40 40)"/>
+                                    <!-- XSS 14% -->
+                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#7c3aed" stroke-width="12" stroke-dasharray="26.39 162.10" stroke-dashoffset="-141.37" transform="rotate(-90 40 40)"/>
+                                    <!-- Other 11% -->
+                                    <circle cx="40" cy="40" r="30" fill="none" stroke="#00d09c" stroke-width="12" stroke-dasharray="20.73 167.76" stroke-dashoffset="-167.76" transform="rotate(-90 40 40)"/>
+                                    <text x="40" y="36" text-anchor="middle" fill="#e8eeff" font-size="9" font-family="JetBrains Mono" font-weight="700">5</text>
+                                    <text x="40" y="47" text-anchor="middle" fill="#6b7da8" font-size="5.5" font-family="Inter">types</text>
+                                </svg>
+                                <div class="donut-legend">
+                                    <div class="legend-row"><div class="legend-dot" style="background:#ff4f6b"></div>Brute Force<span class="legend-pct" style="color:#ff4f6b">35%</span></div>
+                                    <div class="legend-row"><div class="legend-dot" style="background:#f59e0b"></div>Injection<span class="legend-pct" style="color:#f59e0b">22%</span></div>
+                                    <div class="legend-row"><div class="legend-dot" style="background:#00e5ff"></div>Port Scan<span class="legend-pct" style="color:#00e5ff">18%</span></div>
+                                    <div class="legend-row"><div class="legend-dot" style="background:#7c3aed"></div>XSS<span class="legend-pct" style="color:#7c3aed">14%</span></div>
+                                    <div class="legend-row"><div class="legend-dot" style="background:#00d09c"></div>Other<span class="legend-pct" style="color:#00d09c">11%</span></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
+                </div>
 
-            <!-- PAGE: LOG ANALYZER -->
+                <!-- Traffic Volume Chart -->
+                <div class="traffic-panel">
+                    <div class="panel-header-row">
+                        <span class="panel-heading">Traffic Volume — Last 24h</span>
+                        <span style="font-size:10.5px;color:var(--text-3);font-family:var(--f-mono)">Packets / sec</span>
+                    </div>
+                    <div class="chart-wrap-traffic">
+                        <svg viewBox="0 0 900 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="traffic-grad" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stop-color="#3b82f6"/>
+                                    <stop offset="50%" stop-color="#7c3aed"/>
+                                    <stop offset="100%" stop-color="#7c3aed"/>
+                                </linearGradient>
+                                <linearGradient id="traffic-fill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+                                    <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.03"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,70 C30,68 50,72 80,60 C110,48 130,65 160,50 C190,35 210,55 250,40 C290,25 310,58 360,35 C400,15 420,45 460,30 C500,15 530,48 570,35 C610,22 640,55 680,38 C720,22 750,52 800,35 C840,22 870,45 900,30"
+                                  stroke="url(#traffic-grad)" stroke-width="2" fill="none"/>
+                            <path d="M0,70 C30,68 50,72 80,60 C110,48 130,65 160,50 C190,35 210,55 250,40 C290,25 310,58 360,35 C400,15 420,45 460,30 C500,15 530,48 570,35 C610,22 640,55 680,38 C720,22 750,52 800,35 C840,22 870,45 900,30 L900,80 L0,80Z"
+                                  fill="url(#traffic-fill)"/>
+                            <!-- Y grid lines -->
+                            <line x1="0" y1="20" x2="900" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                            <line x1="0" y1="40" x2="900" y2="40" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                            <line x1="0" y1="60" x2="900" y2="60" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        </svg>
+                    </div>
+                    <div class="chart-labels">
+                        <span>00:00</span><span>02:00</span><span>04:00</span><span>06:00</span>
+                        <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span>
+                        <span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>Now</span>
+                    </div>
+                </div>
+
+            </div><!-- end page-dashboard -->
+
+            <!-- ════════════════════════════════
+                 PAGE: LOG ANALYZER
+                 ════════════════════════════════ -->
             <div id="page-logs" class="page">
-                <div class="log-analyzer">
+                <div class="tool-layout">
                     <div class="panel">
                         <div class="panel-header">
                             <h2 class="panel-title">Paste Raw Logs</h2>
-                            <div style="display:flex;gap:8px"><button class="panel-btn" id="load-sample-btn">Load
-                                    sample</button><button class="panel-btn" id="clear-btn">Clear</button></div>
+                            <div style="display:flex;gap:8px">
+                                <button class="panel-btn" id="load-sample-btn">Load Sample</button>
+                                <button class="panel-btn" id="clear-btn">Clear</button>
+                            </div>
                         </div>
-                        <textarea id="log-input" class="log-textarea"
-                            placeholder="Paste your raw log output here and click Analyze..."></textarea>
-                        <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="analyze-btn"
-                                id="analyze-btn">Analyze Logs</button></div>
+                        <textarea id="log-input" class="log-textarea" placeholder="Paste your raw log output here and click Analyze..."></textarea>
+                        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                            <button class="analyze-btn" id="analyze-btn">Analyze Logs</button>
+                        </div>
                     </div>
                     <div class="panel" id="results-panel" style="display:none">
                         <div class="panel-header">
@@ -228,7 +430,9 @@
                 </div>
             </div>
 
-            <!-- PAGE: IP LOOKUP -->
+            <!-- ════════════════════════════════
+                 PAGE: IP LOOKUP
+                 ════════════════════════════════ -->
             <div id="page-ips" class="page">
                 <div class="tool-layout">
                     <div class="panel">
@@ -236,20 +440,19 @@
                             <h2 class="panel-title">IP Lookup</h2>
                             <div class="alert-badge info">Live API</div>
                         </div>
-                        <p class="tool-desc">Enter any IP address to fetch its geolocation, ISP, and threat indicators.
-                        </p>
+                        <p class="tool-desc">Enter any IP address to fetch its geolocation, ISP, and threat indicators.</p>
                         <div class="input-row">
-                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input
-                                    type="text" id="ip-input" class="tool-input" placeholder="e.g. 45.33.32.156" />
-                            </div>
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="ip-input" class="tool-input" placeholder="e.g. 45.33.32.156"/></div>
                             <button class="analyze-btn" id="myip-btn" style="align-self:flex-end">My IP</button>
                             <button class="analyze-btn" id="lookup-btn" style="align-self:flex-end">Lookup</button>
                         </div>
-                        <div class="quick-ips"><span class="quick-label">Quick test:</span><button class="quick-btn"
-                                data-ip="8.8.8.8">8.8.8.8</button><button class="quick-btn"
-                                data-ip="1.1.1.1">1.1.1.1</button><button class="quick-btn"
-                                data-ip="45.33.32.156">45.33.32.156</button><button class="quick-btn"
-                                data-ip="185.220.101.5">185.220.101.5</button></div>
+                        <div class="quick-ips">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn" data-ip="8.8.8.8">8.8.8.8</button>
+                            <button class="quick-btn" data-ip="1.1.1.1">1.1.1.1</button>
+                            <button class="quick-btn" data-ip="45.33.32.156">45.33.32.156</button>
+                            <button class="quick-btn" data-ip="185.220.101.5">185.220.101.5</button>
+                        </div>
                     </div>
                     <div id="ip-result-panel" style="display:none">
                         <div class="ip-result-grid">
@@ -262,145 +465,114 @@
                                     <div id="result-risk-badge"></div>
                                 </div>
                                 <div class="ip-details-grid">
-                                    <div class="ip-detail"><span class="ip-detail-label">Country</span><span
-                                            class="ip-detail-val" id="result-country">—</span></div>
-                                    <div class="ip-detail"><span class="ip-detail-label">Region</span><span
-                                            class="ip-detail-val" id="result-region">—</span></div>
-                                    <div class="ip-detail"><span class="ip-detail-label">City</span><span
-                                            class="ip-detail-val" id="result-city">—</span></div>
-                                    <div class="ip-detail"><span class="ip-detail-label">Timezone</span><span
-                                            class="ip-detail-val" id="result-timezone">—</span></div>
-                                    <div class="ip-detail"><span class="ip-detail-label">ISP</span><span
-                                            class="ip-detail-val" id="result-isp">—</span></div>
-                                    <div class="ip-detail"><span class="ip-detail-label">Coordinates</span><span
-                                            class="ip-detail-val" id="result-coords">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Country</span><span class="ip-detail-val" id="result-country">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Region</span><span class="ip-detail-val" id="result-region">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">City</span><span class="ip-detail-val" id="result-city">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Timezone</span><span class="ip-detail-val" id="result-timezone">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">ISP</span><span class="ip-detail-val" id="result-isp">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Coordinates</span><span class="ip-detail-val" id="result-coords">—</span></div>
                                 </div>
                             </div>
                             <div class="panel">
-                                <div class="panel-header">
-                                    <h2 class="panel-title">Actions</h2>
+                                <div class="panel-header"><h2 class="panel-title">Actions</h2></div>
+                                <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+                                    <button class="action-btn danger" id="block-ip-btn">Add to Blocklist</button>
+                                    <button class="action-btn warn" id="watch-ip-btn">Add to Watchlist</button>
+                                    <button class="action-btn" id="copy-report-btn">Copy Report</button>
                                 </div>
-                                <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px"><button
-                                        class="action-btn danger" id="block-ip-btn">Add to Blocklist</button><button
-                                        class="action-btn warn" id="watch-ip-btn">Add to Watchlist</button><button
-                                        class="action-btn" id="copy-report-btn">Copy Report</button></div>
                             </div>
                         </div>
                     </div>
                     <div id="ip-error" style="display:none" class="panel">
-                        <div style="color:var(--danger);font-size:13px;text-align:center;padding:16px"
-                            id="ip-error-msg"></div>
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="ip-error-msg"></div>
                     </div>
                     <div id="ip-loading" style="display:none" class="panel">
-                        <div class="loading-row">
-                            <div class="spinner"></div><span>Looking up IP...</span>
-                        </div>
+                        <div class="loading-row"><div class="spinner"></div><span>Looking up IP...</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- PAGE: BLOCKLIST -->
+            <!-- ════════════════════════════════
+                 PAGE: BLOCKLIST
+                 ════════════════════════════════ -->
             <div id="page-blocklist" class="page">
                 <div class="tool-layout">
                     <div class="panel">
                         <div class="panel-header">
                             <h2 class="panel-title">Blocklist Manager</h2>
-                            <div style="display:flex;gap:8px"><button class="panel-btn"
-                                    id="export-btn">Export</button><button class="panel-btn danger-btn"
-                                    id="clear-all-btn">Clear All</button></div>
+                            <div style="display:flex;gap:8px">
+                                <button class="panel-btn" id="export-btn">Export</button>
+                                <button class="panel-btn danger-btn" id="clear-all-btn">Clear All</button>
+                            </div>
                         </div>
-                        <p class="tool-desc">Add IP addresses to your blocklist. Data is saved locally in your browser.
-                        </p>
+                        <p class="tool-desc">Add IP addresses to your blocklist. Data is saved locally in your browser.</p>
                         <div class="input-row">
-                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input
-                                    type="text" id="block-ip-input" class="tool-input"
-                                    placeholder="e.g. 192.168.1.104" /></div>
-                            <div class="input-group" style="flex:1.5"><label class="input-label">Reason
-                                    (optional)</label><input type="text" id="block-reason-input" class="tool-input"
-                                    placeholder="e.g. SSH brute force" /></div>
-                            <div class="input-group" style="max-width:140px"><label
-                                    class="input-label">Severity</label><select id="block-severity" class="tool-input">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="block-ip-input" class="tool-input" placeholder="e.g. 192.168.1.104"/></div>
+                            <div class="input-group" style="flex:1.5"><label class="input-label">Reason (optional)</label><input type="text" id="block-reason-input" class="tool-input" placeholder="e.g. SSH brute force"/></div>
+                            <div class="input-group" style="max-width:130px"><label class="input-label">Severity</label>
+                                <select id="block-severity" class="tool-input">
                                     <option value="danger">Critical</option>
                                     <option value="warn">Warning</option>
                                     <option value="info">Info</option>
-                                </select></div>
+                                </select>
+                            </div>
                             <button class="analyze-btn" id="add-block-btn" style="align-self:flex-end">Block IP</button>
                         </div>
                     </div>
                     <div class="panel">
                         <div class="panel-header">
                             <h2 class="panel-title">Blocked IPs</h2>
-                            <div style="display:flex;gap:8px;align-items:center"><input type="text"
-                                    id="blocklist-search" class="inline-search" placeholder="Filter IPs..." /><span
-                                    id="blocklist-count" class="alert-badge info">0 entries</span></div>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" id="blocklist-search" class="inline-search" placeholder="Filter IPs..."/>
+                                <span id="blocklist-count" class="alert-badge info">0 entries</span>
+                            </div>
                         </div>
-                        <div id="blocklist-empty"
-                            style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">No IPs
-                            blocked yet.</div>
+                        <div id="blocklist-empty" style="color:var(--text-3);font-size:12.5px;padding:14px 0;text-align:center">No IPs blocked yet.</div>
                         <table class="ip-table" id="blocklist-table" style="display:none">
-                            <thead>
-                                <tr>
-                                    <th>IP Address</th>
-                                    <th>Reason</th>
-                                    <th>Severity</th>
-                                    <th>Added</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>IP Address</th><th>Reason</th><th>Severity</th><th>Added</th><th>Action</th></tr></thead>
                             <tbody id="blocklist-tbody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- PAGE: HASH GENERATOR -->
+            <!-- ════════════════════════════════
+                 PAGE: HASH GENERATOR
+                 ════════════════════════════════ -->
             <div id="page-hash" class="page">
                 <div class="tool-layout">
                     <div class="panel">
                         <div class="panel-header">
                             <h2 class="panel-title">Hash Generator</h2>
-                            <div class="alert-badge info">Web Crypto API</div>
+                            <div class="alert-badge success">Web Crypto API</div>
                         </div>
-                        <p class="tool-desc">Generate SHA-256, SHA-1, and SHA-512 hashes from any text. Hashes update
-                            live as you type.</p>
+                        <p class="tool-desc">Generate SHA-256, SHA-1, and SHA-512 hashes from any text. Hashes update live as you type.</p>
                         <div class="input-group">
                             <label class="input-label">Input Text</label>
-                            <textarea id="hash-input" class="log-textarea" style="height:100px"
-                                placeholder="Type or paste text to hash..."></textarea>
+                            <textarea id="hash-input" class="log-textarea" style="height:90px" placeholder="Type or paste text to hash..."></textarea>
                         </div>
-                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
                             <button class="panel-btn" id="clear-hash-btn">Clear</button>
                             <button class="analyze-btn" id="hash-btn">Generate Hashes</button>
                         </div>
                     </div>
-
                     <div class="panel" id="hash-results" style="display:none">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Hash Results</h2>
-                        </div>
+                        <div class="panel-header"><h2 class="panel-title">Hash Results</h2></div>
                     </div>
-
                     <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Verify Hash</h2>
-                        </div>
-                        <p class="tool-desc">Check if a string matches a known hash — useful for verifying file
-                            integrity.</p>
+                        <div class="panel-header"><h2 class="panel-title">Verify Hash</h2></div>
+                        <p class="tool-desc">Check if a string matches a known hash — useful for verifying file integrity.</p>
                         <div class="input-row" style="flex-direction:column">
-                            <div class="input-group"><label class="input-label">Original Text</label><input type="text"
-                                    id="verify-input" class="tool-input" placeholder="Enter the original text..." />
-                            </div>
+                            <div class="input-group"><label class="input-label">Original Text</label><input type="text" id="verify-input" class="tool-input" placeholder="Enter the original text..."/></div>
                             <div class="input-row">
-                                <div class="input-group"><label class="input-label">Expected Hash</label><input
-                                        type="text" id="verify-hash" class="tool-input"
-                                        placeholder="Paste the hash to verify against..." /></div>
-                                <div class="input-group" style="max-width:140px"><label
-                                        class="input-label">Algorithm</label><select id="verify-algo"
-                                        class="tool-input">
+                                <div class="input-group"><label class="input-label">Expected Hash</label><input type="text" id="verify-hash" class="tool-input" placeholder="Paste the hash to verify against..."/></div>
+                                <div class="input-group" style="max-width:130px"><label class="input-label">Algorithm</label>
+                                    <select id="verify-algo" class="tool-input">
                                         <option value="sha256">SHA-256</option>
                                         <option value="sha1">SHA-1</option>
                                         <option value="sha512">SHA-512</option>
-                                    </select></div>
+                                    </select>
+                                </div>
                                 <button class="analyze-btn" id="verify-btn" style="align-self:flex-end">Verify</button>
                             </div>
                         </div>
@@ -409,56 +581,45 @@
                 </div>
             </div>
 
-            <!-- PAGE: PASSWORD CHECKER -->
+            <!-- ════════════════════════════════
+                 PAGE: PASSWORD CHECKER
+                 ════════════════════════════════ -->
             <div id="page-password" class="page">
                 <div class="tool-layout">
                     <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Password Strength Checker</h2>
-                        </div>
-                        <p class="tool-desc">Analyze your password against security rules and estimate how long it would
-                            take to crack.</p>
+                        <div class="panel-header"><h2 class="panel-title">Password Strength Checker</h2></div>
+                        <p class="tool-desc">Analyze your password against security rules and estimate how long it would take to crack.</p>
                         <div class="input-group">
                             <label class="input-label">Password</label>
                             <div class="pw-input-wrap">
-                                <input type="password" id="pw-input" class="tool-input"
-                                    placeholder="Enter a password to analyze..." />
+                                <input type="password" id="pw-input" class="tool-input" placeholder="Enter a password to analyze..."/>
                                 <button id="pw-show-btn" class="pw-action-btn">Show</button>
                                 <button id="pw-copy-btn" class="pw-action-btn">Copy</button>
-                                <button id="pw-gen-btn" class="analyze-btn" style="padding:9px 16px">Generate</button>
+                                <button id="pw-gen-btn" class="analyze-btn" style="padding:8px 14px">Generate</button>
                             </div>
                         </div>
-
                         <div class="strength-bar-wrap">
-                            <div class="strength-track">
-                                <div id="strength-bar" class="strength-fill" style="width:0%"></div>
-                            </div>
+                            <div class="strength-track"><div id="strength-bar" class="strength-fill" style="width:0%"></div></div>
                             <span id="strength-label" class="strength-label-text">—</span>
                         </div>
-
                         <div class="pw-stats">
-                            <div class="pw-stat"><span class="pw-stat-label">Entropy</span><span class="pw-stat-val"
-                                    id="entropy-val">—</span></div>
-                            <div class="pw-stat"><span class="pw-stat-label">Est. Crack Time</span><span
-                                    class="pw-stat-val" id="crack-time">—</span></div>
+                            <div class="pw-stat"><span class="pw-stat-label">Entropy</span><span class="pw-stat-val" id="entropy-val">—</span></div>
+                            <div class="pw-stat"><span class="pw-stat-label">Est. Crack Time</span><span class="pw-stat-val" id="crack-time">—</span></div>
                         </div>
-
                         <div id="breach-result" class="breach-result" style="display:none"></div>
                     </div>
-
                     <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Security Rules</h2>
-                        </div>
+                        <div class="panel-header"><h2 class="panel-title">Security Rules</h2></div>
                         <div id="rules-list" class="rules-list">
-                            <div style="color:var(--text-muted);font-size:13px;padding:8px 0">Enter a password above to
-                                see the analysis.</div>
+                            <div style="color:var(--text-3);font-size:12.5px;padding:8px 0">Enter a password above to see the analysis.</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PAGE: DNS LOOKUP -->
+            <!-- ════════════════════════════════
+                 PAGE: DNS LOOKUP
+                 ════════════════════════════════ -->
             <div id="page-dns" class="page">
                 <div class="tool-layout">
                     <div class="panel">
@@ -468,20 +629,22 @@
                         </div>
                         <p class="tool-desc">Query real DNS records for any domain. Uses Google's public DNS-over-HTTPS API — no API key required.</p>
                         <div class="input-row">
-                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input
-                                    type="text" id="dns-input" class="tool-input" placeholder="e.g. google.com" /></div>
-                            <div class="input-group" style="max-width:140px"><label class="input-label">Record Type</label><select id="dns-type" class="tool-input">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input type="text" id="dns-input" class="tool-input" placeholder="e.g. google.com"/></div>
+                            <div class="input-group" style="max-width:130px"><label class="input-label">Record Type</label>
+                                <select id="dns-type" class="tool-input">
                                     <option value="A">A (IPv4)</option>
                                     <option value="AAAA">AAAA (IPv6)</option>
                                     <option value="MX">MX (Mail)</option>
                                     <option value="TXT">TXT</option>
-                                    <option value="NS">NS (Name Server)</option>
+                                    <option value="NS">NS</option>
                                     <option value="CNAME">CNAME</option>
-                                </select></div>
+                                </select>
+                            </div>
                             <button class="analyze-btn" id="dns-lookup-btn" style="align-self:flex-end">Lookup</button>
                             <button class="panel-btn" id="dns-all-btn" style="align-self:flex-end">All Records</button>
                         </div>
-                        <div class="quick-ips" style="margin-top:8px"><span class="quick-label">Quick test:</span>
+                        <div class="quick-ips" style="margin-top:8px">
+                            <span class="quick-label">Quick test:</span>
                             <button class="quick-btn quick-domain" data-domain="google.com">google.com</button>
                             <button class="quick-btn quick-domain" data-domain="github.com">github.com</button>
                             <button class="quick-btn quick-domain" data-domain="cloudflare.com">cloudflare.com</button>
@@ -489,12 +652,10 @@
                         </div>
                     </div>
                     <div id="dns-loading" style="display:none" class="panel">
-                        <div class="loading-row">
-                            <div class="spinner"></div><span>Querying DNS records...</span>
-                        </div>
+                        <div class="loading-row"><div class="spinner"></div><span>Querying DNS records...</span></div>
                     </div>
                     <div id="dns-error" style="display:none" class="panel">
-                        <div style="color:var(--danger);font-size:13px;text-align:center;padding:16px" id="dns-error-msg"></div>
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="dns-error-msg"></div>
                     </div>
                     <div class="panel" id="dns-results-panel" style="display:none">
                         <div class="panel-header">
@@ -502,79 +663,51 @@
                             <div id="dns-summary" style="display:flex;gap:8px;align-items:center"></div>
                         </div>
                         <table class="ip-table">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Name</th>
-                                    <th>Value</th>
-                                    <th>TTL</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>Type</th><th>Name</th><th>Value</th><th>TTL</th></tr></thead>
                             <tbody id="dns-tbody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- PAGE: SETTINGS -->
+            <!-- ════════════════════════════════
+                 PAGE: SETTINGS
+                 ════════════════════════════════ -->
             <div id="page-settings" class="page">
                 <div class="tool-layout">
-
                     <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Appearance</h2>
-                        </div>
+                        <div class="panel-header"><h2 class="panel-title">Appearance</h2></div>
                         <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Dark Mode</span><span
-                                    class="settings-desc">Toggle between dark and light theme</span></div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="settings-theme" />
-                                <span class="toggle-slider"></span>
-                            </label>
+                            <div class="settings-info"><span class="settings-label">Dark Mode</span><span class="settings-desc">Toggle between dark and light theme</span></div>
+                            <label class="toggle-switch"><input type="checkbox" id="settings-theme"/><span class="toggle-slider"></span></label>
                         </div>
                     </div>
-
                     <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">Data Management</h2>
-                        </div>
+                        <div class="panel-header"><h2 class="panel-title">Data Management</h2></div>
                         <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Clear Blocklist</span><span
-                                    class="settings-desc">Remove all blocked IPs from local storage</span></div>
+                            <div class="settings-info"><span class="settings-label">Clear Blocklist</span><span class="settings-desc">Remove all blocked IPs from local storage</span></div>
                             <button class="panel-btn danger-btn" id="settings-clear-blocklist">Clear</button>
                         </div>
                         <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Clear All Data</span><span
-                                    class="settings-desc">Reset all settings and local data</span></div>
+                            <div class="settings-info"><span class="settings-label">Clear All Data</span><span class="settings-desc">Reset all settings and local data</span></div>
                             <button class="panel-btn danger-btn" id="settings-clear-data">Reset</button>
                         </div>
                     </div>
-
                     <div class="panel">
-                        <div class="panel-header">
-                            <h2 class="panel-title">About</h2>
+                        <div class="panel-header"><h2 class="panel-title">About</h2></div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Version</span><span class="settings-desc" id="settings-version">—</span></div>
                         </div>
                         <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Version</span><span
-                                    class="settings-desc" id="settings-version">—</span></div>
+                            <div class="settings-info"><span class="settings-label">Tools</span><span class="settings-desc">Log Analyzer · IP Lookup · DNS Lookup · Blocklist · Hash Generator · Password Checker</span></div>
                         </div>
                         <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Tools</span><span
-                                    class="settings-desc">Log Analyzer · IP Lookup · DNS Lookup ·
-                                    Blocklist · Hash Generator · Password Checker</span></div>
+                            <div class="settings-info"><span class="settings-label">Tech Stack</span><span class="settings-desc">HTML5 · CSS3 · Vanilla JS · Web Crypto API · ip-api.com</span></div>
                         </div>
                         <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Tech Stack</span><span
-                                    class="settings-desc">HTML5 · CSS3 · Vanilla JS · Web Crypto API ·
-                                    ip-api.com</span></div>
-                        </div>
-                        <div class="settings-row">
-                            <div class="settings-info"><span class="settings-label">Shortcuts</span><span
-                                    class="settings-desc">Press <kbd class="kbd-mini">?</kbd> anywhere to view keyboard
-                                    shortcuts</span></div>
+                            <div class="settings-info"><span class="settings-label">Shortcuts</span><span class="settings-desc">Press <kbd class="kbd-mini">?</kbd> anywhere to view keyboard shortcuts</span></div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -590,6 +723,37 @@
     <script src="search_filter.js"></script>
     <script src="hash_generator.js"></script>
     <script src="password_checker.js"></script>
-</body>
 
+    <script>
+        // Wire up KPI cards to live data
+        document.addEventListener('DOMContentLoaded', () => {
+            // Update blocked count KPI
+            function updateKPIs() {
+                const blocked = JSON.parse(localStorage.getItem('blocklist') || '[]');
+                const kpiEl = document.getElementById('kpi-blocked');
+                const labelEl = document.getElementById('kpi-blocked-count-label');
+                if (kpiEl) kpiEl.textContent = blocked.length.toLocaleString();
+                if (labelEl) labelEl.textContent = blocked.length;
+            }
+            updateKPIs();
+            // Refresh every 5s
+            setInterval(updateKPIs, 5000);
+
+            // Tooltip labels for sidebar items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const page = item.getAttribute('data-page');
+                if (page) {
+                    const labels = {
+                        dashboard: 'Dashboard', logs: 'Log Analyzer',
+                        ips: 'IP Lookup', dns: 'DNS Lookup',
+                        blocklist: 'Blocklist', hash: 'Hash Generator',
+                        password: 'Password', settings: 'Settings'
+                    };
+                    item.setAttribute('data-page', page);
+                    item.style.setProperty('--tooltip', `"${labels[page] || page}"`);
+                }
+            });
+        });
+    </script>
+</body>
 </html>
