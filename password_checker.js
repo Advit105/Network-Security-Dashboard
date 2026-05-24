@@ -94,6 +94,59 @@ function generatePassword(length = 20) {
   return Array.from(arr).map(b => chars[b % chars.length]).join('');
 }
 
+// ── Have I Been Pwned Breach Check ─────────────────
+async function checkBreach(password) {
+  const breachEl = document.getElementById('breach-result');
+  if (!breachEl) return;
+
+  if (!password) {
+    breachEl.style.display = 'none';
+    return;
+  }
+
+  breachEl.style.display = 'flex';
+  breachEl.className = 'breach-result loading';
+  breachEl.innerHTML = '<span class="breach-icon">⏳</span><span>Checking breach databases...</span>';
+
+  try {
+    // SHA-1 hash the password
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+    const prefix = hashHex.slice(0, 5);
+    const suffix = hashHex.slice(5);
+
+    // Query HIBP API with k-anonymity (only sends first 5 chars)
+    const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+    const text = await res.text();
+
+    // Check if our suffix appears in the results
+    const lines = text.split('\n');
+    let count = 0;
+    for (const line of lines) {
+      const [hashSuffix, c] = line.split(':');
+      if (hashSuffix.trim() === suffix) {
+        count = parseInt(c.trim(), 10);
+        break;
+      }
+    }
+
+    if (count > 0) {
+      breachEl.className = 'breach-result danger';
+      breachEl.innerHTML = `<span class="breach-icon">⚠</span><div><strong>Breached!</strong> This password appeared in <strong>${count.toLocaleString()}</strong> known data breaches. Do not use it.</div>`;
+    } else {
+      breachEl.className = 'breach-result safe';
+      breachEl.innerHTML = `<span class="breach-icon">✓</span><div><strong>Safe</strong> — This password has not been found in any known data breaches.</div>`;
+    }
+  } catch (err) {
+    breachEl.className = 'breach-result warn';
+    breachEl.innerHTML = `<span class="breach-icon">!</span><div>Could not check breaches. You may be offline or the API is unavailable.</div>`;
+  }
+}
+
 // ── Event Listeners ────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const input   = document.getElementById('pw-input');
@@ -103,7 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!input) return;
 
-  input.addEventListener('input', () => analyzePassword(input.value));
+  let breachTimeout;
+  input.addEventListener('input', () => {
+    analyzePassword(input.value);
+    // Debounce breach check to avoid spamming API
+    clearTimeout(breachTimeout);
+    breachTimeout = setTimeout(() => checkBreach(input.value), 600);
+  });
 
   showBtn.addEventListener('click', () => {
     const isHidden = input.type === 'password';
@@ -117,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.value    = pw;
     showBtn.textContent = 'Hide';
     analyzePassword(pw);
+    checkBreach(pw);
     showToast('Strong password generated', 'success');
   });
 

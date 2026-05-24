@@ -106,17 +106,47 @@ Risk Level : ${risk.label}
     }
 }
 
+// ── Detect My Public IP (ipify API) ────────────────
+async function detectMyIP() {
+    const input = document.getElementById('ip-input');
+    const btn = document.getElementById('myip-btn');
+    if (!input || !btn) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Detecting...';
+
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        input.value = data.ip;
+        btn.textContent = 'My IP';
+        btn.disabled = false;
+
+        // Update dashboard stat if visible
+        const dashEl = document.getElementById('dash-myip');
+        if (dashEl) dashEl.textContent = data.ip;
+
+        lookupIP(data.ip);
+    } catch {
+        btn.textContent = 'My IP';
+        btn.disabled = false;
+        if (typeof showToast === 'function') showToast('Could not detect your IP. Check internet connection.', 'warn');
+    }
+}
+
 // ── Event Listeners ────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('lookup-btn').addEventListener('click', () => {
+    document.getElementById('lookup-btn')?.addEventListener('click', () => {
         const ip = document.getElementById('ip-input').value.trim();
         if (!ip) return;
         lookupIP(ip);
     });
 
-    document.getElementById('ip-input').addEventListener('keydown', e => {
+    document.getElementById('ip-input')?.addEventListener('keydown', e => {
         if (e.key === 'Enter') lookupIP(e.target.value.trim());
     });
+
+    document.getElementById('myip-btn')?.addEventListener('click', detectMyIP);
 
     // Quick test buttons
     document.querySelectorAll('.quick-btn').forEach(btn => {
@@ -126,4 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
             lookupIP(ip);
         });
     });
+
+    // Auto-detect IP on dashboard load for the stat
+    fetch('https://api.ipify.org?format=json')
+        .then(r => r.json())
+        .then(d => {
+            const el = document.getElementById('dash-myip');
+            if (el) el.textContent = d.ip;
+        })
+        .catch(() => {});
 });

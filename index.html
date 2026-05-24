@@ -68,6 +68,7 @@
                 <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">⬛</span>Dashboard</a>
                 <a href="#" class="nav-item" data-page="logs"><span class="nav-icon">◆</span>Log Analyzer</a>
                 <a href="#" class="nav-item" data-page="ips"><span class="nav-icon">⬡</span>IP Lookup</a>
+                <a href="#" class="nav-item" data-page="dns"><span class="nav-icon">◈</span>DNS Lookup</a>
                 <a href="#" class="nav-item" data-page="blocklist"><span class="nav-icon">⬛</span>Blocklist</a>
                 <div class="nav-divider"></div>
                 <a href="#" class="nav-item" data-page="hash"><span class="nav-icon">#</span>Hash Generator</a>
@@ -94,7 +95,7 @@
                 <div class="topbar-right">
                     <div class="search-wrap">
                         <input type="text" id="global-search" class="search-input"
-                            placeholder="Search... (or press 1-7)" />
+                            placeholder="Search... (or press 1-8)" />
                         <div id="search-results" class="search-results" style="display:none"></div>
                     </div>
                     <div class="badge badge-success">Live</div>
@@ -113,6 +114,10 @@
                             <p class="welcome-desc">A real-time security toolkit powered by live APIs and browser-native cryptography. Every tool below operates on actual data — no simulations.</p>
                         </div>
                         <div class="welcome-stats">
+                            <div class="welcome-stat">
+                                <span class="welcome-stat-num" id="dash-myip" style="font-size:14px">detecting...</span>
+                                <span class="welcome-stat-label">Your IP</span>
+                            </div>
                             <div class="welcome-stat">
                                 <span class="welcome-stat-num" id="dash-blocked-count">0</span>
                                 <span class="welcome-stat-label">Blocked IPs</span>
@@ -165,6 +170,14 @@
                             <p class="tool-card-desc">Analyze password strength with real entropy calculations and estimated crack time. Generate strong passwords.</p>
                         </div>
                         <div class="alert-badge success">Real Analysis</div>
+                    </div>
+                    <div class="tool-card" onclick="navigateTo('dns')">
+                        <div class="tool-card-icon">◈</div>
+                        <div class="tool-card-body">
+                            <h3 class="tool-card-title">DNS Lookup</h3>
+                            <p class="tool-card-desc">Query real DNS records (A, AAAA, MX, TXT, NS, CNAME) for any domain using Google's public DNS API.</p>
+                        </div>
+                        <div class="alert-badge success">Live API</div>
                     </div>
                 </section>
 
@@ -220,6 +233,7 @@
                             <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input
                                     type="text" id="ip-input" class="tool-input" placeholder="e.g. 45.33.32.156" />
                             </div>
+                            <button class="analyze-btn" id="myip-btn" style="align-self:flex-end">My IP</button>
                             <button class="analyze-btn" id="lookup-btn" style="align-self:flex-end">Lookup</button>
                         </div>
                         <div class="quick-ips"><span class="quick-label">Quick test:</span><button class="quick-btn"
@@ -419,6 +433,8 @@
                             <div class="pw-stat"><span class="pw-stat-label">Est. Crack Time</span><span
                                     class="pw-stat-val" id="crack-time">—</span></div>
                         </div>
+
+                        <div id="breach-result" class="breach-result" style="display:none"></div>
                     </div>
 
                     <div class="panel">
@@ -429,6 +445,64 @@
                             <div style="color:var(--text-muted);font-size:13px;padding:8px 0">Enter a password above to
                                 see the analysis.</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: DNS LOOKUP -->
+            <div id="page-dns" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">DNS Lookup</h2>
+                            <div class="alert-badge success">Google DNS API</div>
+                        </div>
+                        <p class="tool-desc">Query real DNS records for any domain. Uses Google's public DNS-over-HTTPS API — no API key required.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input
+                                    type="text" id="dns-input" class="tool-input" placeholder="e.g. google.com" /></div>
+                            <div class="input-group" style="max-width:140px"><label class="input-label">Record Type</label><select id="dns-type" class="tool-input">
+                                    <option value="A">A (IPv4)</option>
+                                    <option value="AAAA">AAAA (IPv6)</option>
+                                    <option value="MX">MX (Mail)</option>
+                                    <option value="TXT">TXT</option>
+                                    <option value="NS">NS (Name Server)</option>
+                                    <option value="CNAME">CNAME</option>
+                                </select></div>
+                            <button class="analyze-btn" id="dns-lookup-btn" style="align-self:flex-end">Lookup</button>
+                            <button class="panel-btn" id="dns-all-btn" style="align-self:flex-end">All Records</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:8px"><span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-domain" data-domain="google.com">google.com</button>
+                            <button class="quick-btn quick-domain" data-domain="github.com">github.com</button>
+                            <button class="quick-btn quick-domain" data-domain="cloudflare.com">cloudflare.com</button>
+                            <button class="quick-btn quick-domain" data-domain="wikipedia.org">wikipedia.org</button>
+                        </div>
+                    </div>
+                    <div id="dns-loading" style="display:none" class="panel">
+                        <div class="loading-row">
+                            <div class="spinner"></div><span>Querying DNS records...</span>
+                        </div>
+                    </div>
+                    <div id="dns-error" style="display:none" class="panel">
+                        <div style="color:var(--danger);font-size:13px;text-align:center;padding:16px" id="dns-error-msg"></div>
+                    </div>
+                    <div class="panel" id="dns-results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">DNS Records</h2>
+                            <div id="dns-summary" style="display:flex;gap:8px;align-items:center"></div>
+                        </div>
+                        <table class="ip-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th>TTL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dns-tbody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -477,7 +551,7 @@
                         </div>
                         <div class="settings-row">
                             <div class="settings-info"><span class="settings-label">Tools</span><span
-                                    class="settings-desc">Log Analyzer · IP Lookup ·
+                                    class="settings-desc">Log Analyzer · IP Lookup · DNS Lookup ·
                                     Blocklist · Hash Generator · Password Checker</span></div>
                         </div>
                         <div class="settings-row">
@@ -502,6 +576,7 @@
     <script src="main.js"></script>
     <script src="log_parser.js"></script>
     <script src="ip_lookup.js"></script>
+    <script src="dns_lookup.js"></script>
     <script src="blocklist.js"></script>
     <script src="search_filter.js"></script>
     <script src="hash_generator.js"></script>

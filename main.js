@@ -3,9 +3,10 @@ const pageTitles = {
   dashboard: { title: 'Dashboard',         sub: 'Security Toolkit / Real-time' },
   logs:      { title: 'Log Analyzer',      sub: 'Raw parsing / Pattern matching' },
   ips:       { title: 'IP Lookup',         sub: 'Geo / ASN / Threat intel' },
+  dns:       { title: 'DNS Lookup',        sub: 'Records / Domain intelligence' },
   blocklist: { title: 'Blocklist Manager', sub: 'Local firewall simulation' },
   hash:      { title: 'Hash Generator',    sub: 'Crypto / Verification' },
-  password:  { title: 'Password Checker',  sub: 'Strength / Crack time estimation' },
+  password:  { title: 'Password Checker',  sub: 'Strength / Breach detection' },
   settings:  { title: 'Settings',          sub: 'Preferences / Data management' }
 };
 
@@ -161,8 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key.toLowerCase() === 't') { e.preventDefault(); themeToggle?.click(); }
     if (e.key === 'Escape' && modal?.style.display === 'flex') toggleShortcutsModal();
 
-    // Map 1-7 to navigation pages (real pages only)
-    const keys = { '1': 'dashboard', '2': 'logs', '3': 'ips', '4': 'blocklist', '5': 'hash', '6': 'password', '7': 'settings' };
+    // Map 1-8 to navigation pages (real pages only)
+    const keys = { '1': 'dashboard', '2': 'logs', '3': 'ips', '4': 'dns', '5': 'blocklist', '6': 'hash', '7': 'password', '8': 'settings' };
     if (keys[e.key]) {
       e.preventDefault();
       navigateTo(keys[e.key]);
