@@ -18,22 +18,26 @@
   function geoToSVGPath(geometry) {
     let d = '';
 
-    function projectRing(ring) {
+    function projectRing(ring, close) {
       let s = '';
       for (let i = 0; i < ring.length; i++) {
         const x = px(ring[i][0]).toFixed(1);
         const y = py(ring[i][1]).toFixed(1);
         s += (i === 0 ? 'M' : 'L') + x + ',' + y;
       }
-      return s + 'Z';
+      return close ? s + 'Z' : s;
     }
 
     if (geometry.type === 'Polygon') {
-      geometry.coordinates.forEach(ring => { d += projectRing(ring); });
+      geometry.coordinates.forEach(ring => { d += projectRing(ring, true); });
     } else if (geometry.type === 'MultiPolygon') {
       geometry.coordinates.forEach(polygon => {
-        polygon.forEach(ring => { d += projectRing(ring); });
+        polygon.forEach(ring => { d += projectRing(ring, true); });
       });
+    } else if (geometry.type === 'LineString') {
+      d += projectRing(geometry.coordinates, false);
+    } else if (geometry.type === 'MultiLineString') {
+      geometry.coordinates.forEach(line => { d += projectRing(line, false); });
     }
     return d;
   }
@@ -86,13 +90,16 @@
     wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:var(--text-3);font-size:12px;font-family:var(--f-mono);gap:8px"><div class="status-dot"></div>Loading world map…</div>';
 
     // ── Fetch real data ──
-    let countries;
+    let countries, bordersMesh, coastlineMesh;
     try {
-      const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+      const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const topo = await res.json();
-      // Use topojson-client to properly decode
       countries = topojson.feature(topo, topo.objects.countries);
+      // Internal borders (shared edges between countries)
+      bordersMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+      // Coastlines (outer edges only)
+      coastlineMesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a === b);
     } catch (err) {
       console.error('World map load failed:', err);
       wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:var(--red);font-size:12px;font-family:var(--f-mono)">⚠ Failed to load map data — check network</div>';
@@ -152,21 +159,49 @@
     }
     svg.appendChild(gridG);
 
-    // ── Render countries ──
+    // ── Render country fills ──
+    const fills = [
+      'rgba(0,229,255,0.045)',
+      'rgba(0,229,255,0.06)',
+      'rgba(0,229,255,0.035)',
+      'rgba(0,229,255,0.055)',
+    ];
     const landG = document.createElementNS(NS, 'g');
-    countries.features.forEach(feature => {
+    countries.features.forEach((feature, idx) => {
       const d = geoToSVGPath(feature.geometry);
       if (!d) return;
       const path = document.createElementNS(NS, 'path');
       path.setAttribute('d', d);
-      path.setAttribute('fill', 'rgba(0,229,255,0.04)');
-      path.setAttribute('stroke', 'rgba(0,229,255,0.18)');
-      path.setAttribute('stroke-width', '0.7');
-      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('fill', fills[idx % fills.length]);
+      path.setAttribute('stroke', 'none');
       path.classList.add('map-country');
       landG.appendChild(path);
     });
     svg.appendChild(landG);
+
+    // ── Internal country borders (thin, subtle) ──
+    const bordersD = geoToSVGPath(bordersMesh);
+    if (bordersD) {
+      const bp = document.createElementNS(NS, 'path');
+      bp.setAttribute('d', bordersD);
+      bp.setAttribute('fill', 'none');
+      bp.setAttribute('stroke', 'rgba(0,229,255,0.1)');
+      bp.setAttribute('stroke-width', '0.3');
+      bp.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(bp);
+    }
+
+    // ── Coastline outline (brighter, on top) ──
+    const coastD = geoToSVGPath(coastlineMesh);
+    if (coastD) {
+      const cp = document.createElementNS(NS, 'path');
+      cp.setAttribute('d', coastD);
+      cp.setAttribute('fill', 'none');
+      cp.setAttribute('stroke', 'rgba(0,229,255,0.25)');
+      cp.setAttribute('stroke-width', '0.6');
+      cp.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(cp);
+    }
 
     // ── City markers (SVG layer) ──
     const cityG = document.createElementNS(NS, 'g');
