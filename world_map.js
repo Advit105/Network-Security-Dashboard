@@ -161,7 +161,7 @@
       path.setAttribute('d', d);
       path.setAttribute('fill', 'rgba(0,229,255,0.04)');
       path.setAttribute('stroke', 'rgba(0,229,255,0.18)');
-      path.setAttribute('stroke-width', '0.5');
+      path.setAttribute('stroke-width', '0.7');
       path.setAttribute('stroke-linejoin', 'round');
       path.classList.add('map-country');
       landG.appendChild(path);
@@ -178,7 +178,7 @@
       // Outer glow
       const glow = document.createElementNS(NS, 'circle');
       glow.setAttribute('cx', x); glow.setAttribute('cy', y);
-      glow.setAttribute('r', '5');
+      glow.setAttribute('r', '7');
       glow.setAttribute('fill', glowColors[c.cls] || glowColors['']);
       glow.setAttribute('filter', 'url(#glow-city)');
       cityG.appendChild(glow);
@@ -186,16 +186,16 @@
       // Inner dot
       const dot = document.createElementNS(NS, 'circle');
       dot.setAttribute('cx', x); dot.setAttribute('cy', y);
-      dot.setAttribute('r', '1.8');
+      dot.setAttribute('r', '2.5');
       dot.setAttribute('fill', dotColors[c.cls] || dotColors['']);
       cityG.appendChild(dot);
 
       // Label
       const txt = document.createElementNS(NS, 'text');
-      txt.setAttribute('x', x); txt.setAttribute('y', y - 6);
+      txt.setAttribute('x', x); txt.setAttribute('y', y - 9);
       txt.setAttribute('text-anchor', 'middle');
-      txt.setAttribute('fill', 'rgba(0,229,255,0.35)');
-      txt.setAttribute('font-size', '5.5');
+      txt.setAttribute('fill', 'rgba(0,229,255,0.45)');
+      txt.setAttribute('font-size', '7');
       txt.setAttribute('font-family', 'JetBrains Mono, monospace');
       txt.setAttribute('font-weight', '600');
       txt.textContent = c.code;
@@ -213,7 +213,7 @@
       const p = document.createElementNS(NS, 'path');
       p.setAttribute('d', `M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}`);
       p.setAttribute('stroke', arc.color);
-      p.setAttribute('stroke-width', '0.7');
+      p.setAttribute('stroke-width', '0.9');
       p.setAttribute('fill', 'none');
       p.setAttribute('filter', 'url(#glow-arc)');
       p.classList.add('atk-line');
@@ -234,15 +234,15 @@
       // Animated expanding ring
       const ring = document.createElementNS(NS, 'circle');
       ring.setAttribute('cx', x); ring.setAttribute('cy', y);
-      ring.setAttribute('r', '2');
+      ring.setAttribute('r', '3');
       ring.setAttribute('fill', 'none');
       ring.setAttribute('stroke', color);
-      ring.setAttribute('stroke-width', '0.8');
+      ring.setAttribute('stroke-width', '1');
       ring.setAttribute('opacity', '0.6');
       // SVG animate for pulse
       const animR = document.createElementNS(NS, 'animate');
       animR.setAttribute('attributeName', 'r');
-      animR.setAttribute('from', '2'); animR.setAttribute('to', '8');
+      animR.setAttribute('from', '3'); animR.setAttribute('to', '10');
       animR.setAttribute('dur', '2s');
       animR.setAttribute('begin', (idx * 0.3 % 2).toFixed(1) + 's');
       animR.setAttribute('repeatCount', 'indefinite');
