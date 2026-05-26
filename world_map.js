@@ -226,21 +226,38 @@
     wrap.innerHTML = '';
     wrap.appendChild(svg);
 
-    // ── Pulsing HTML dots ──
-    cities.forEach(c => {
-      const xPct = (px(c.lon) / W) * 100;
-      const yPct = (py(c.lat) / H) * 100;
-      const el = document.createElement('div');
-      el.className = 'atk-dot' + (c.cls ? ' ' + c.cls : '');
-      el.style.left = xPct + '%';
-      el.style.top = yPct + '%';
-      el.style.animationDelay = (Math.random() * 2).toFixed(1) + 's';
-      const lbl = document.createElement('span');
-      lbl.className = 'atk-label';
-      lbl.textContent = c.code;
-      el.appendChild(lbl);
-      wrap.appendChild(el);
+    // ── SVG pulsing rings (perfectly aligned, inside the SVG) ──
+    const pulseG = document.createElementNS(NS, 'g');
+    cities.forEach((c, idx) => {
+      const x = px(c.lon), y = py(c.lat);
+      const color = dotColors[c.cls] || dotColors[''];
+      // Animated expanding ring
+      const ring = document.createElementNS(NS, 'circle');
+      ring.setAttribute('cx', x); ring.setAttribute('cy', y);
+      ring.setAttribute('r', '2');
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', color);
+      ring.setAttribute('stroke-width', '0.8');
+      ring.setAttribute('opacity', '0.6');
+      // SVG animate for pulse
+      const animR = document.createElementNS(NS, 'animate');
+      animR.setAttribute('attributeName', 'r');
+      animR.setAttribute('from', '2'); animR.setAttribute('to', '8');
+      animR.setAttribute('dur', '2s');
+      animR.setAttribute('begin', (idx * 0.3 % 2).toFixed(1) + 's');
+      animR.setAttribute('repeatCount', 'indefinite');
+      ring.appendChild(animR);
+      const animO = document.createElementNS(NS, 'animate');
+      animO.setAttribute('attributeName', 'opacity');
+      animO.setAttribute('from', '0.6'); animO.setAttribute('to', '0');
+      animO.setAttribute('dur', '2s');
+      animO.setAttribute('begin', (idx * 0.3 % 2).toFixed(1) + 's');
+      animO.setAttribute('repeatCount', 'indefinite');
+      ring.appendChild(animO);
+      pulseG.appendChild(ring);
     });
+    // Insert pulse rings BEFORE city dots so dots render on top
+    svg.insertBefore(pulseG, cityG);
 
     // ── Dynamic random attack arcs ──
     setInterval(() => {
