@@ -1,5 +1,6 @@
-// ── IP Lookup via ip-api.com ───────────────────────
-// Free tier: 45 requests/min, no API key needed
+// ── IP Lookup via ipwho.is ─────────────────────────
+// Free, keyless, works over HTTPS with CORS
+// (ip-api.com returns 403 over HTTPS on the free tier)
 
 const SUSPICIOUS_ORGS = [
     'tor', 'vpn', 'proxy', 'hosting', 'datacenter',
@@ -33,18 +34,34 @@ async function lookupIP(ip) {
     loading.style.display = 'flex';
     result.style.display = 'none';
     errBox.style.display = 'none';
+    const shodanPanel = document.getElementById('ip-shodan-panel');
+    if (shodanPanel) shodanPanel.style.display = 'none';
 
     try {
-        const res = await fetch(`https://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,org,query`);
-        const data = await res.json();
+        const res = await fetch(`https://ipwho.is/${ip}`);
+        const raw = await res.json();
 
         loading.style.display = 'none';
 
-        if (data.status === 'fail') {
-            document.getElementById('ip-error-msg').textContent = `Lookup failed: ${data.message || 'Invalid IP address'}`;
+        if (!raw.success) {
+            document.getElementById('ip-error-msg').textContent = `Lookup failed: ${raw.message || 'Invalid IP address'}`;
             errBox.style.display = 'flex';
             return;
         }
+
+        // Normalize to the field names the rest of this file expects
+        const data = {
+            query: raw.ip,
+            country: raw.country,
+            countryCode: raw.country_code,
+            regionName: raw.region,
+            city: raw.city,
+            lat: raw.latitude,
+            lon: raw.longitude,
+            timezone: raw.timezone?.id || '—',
+            isp: raw.connection?.isp || '',
+            org: raw.connection?.org || '',
+        };
 
         const risk = assessRisk(data);
 
@@ -62,6 +79,9 @@ async function lookupIP(ip) {
             `<div class="alert-badge ${risk.level}">${risk.label}</div>`;
 
         result.style.display = 'block';
+
+        // Real exposure data from Shodan's free InternetDB (keyless, CORS-open)
+        lookupExposure(data.query);
 
         // Wire up action buttons with current IP data
         document.getElementById('block-ip-btn').onclick = () => {
@@ -101,9 +121,102 @@ Risk Level : ${risk.label}
 
     } catch (err) {
         loading.style.display = 'none';
-        document.getElementById('ip-error-msg').textContent = 'Network error — could not reach ip-api.com. Check your internet connection.';
+        document.getElementById('ip-error-msg').textContent = 'Network error — could not reach ipwho.is. Check your internet connection.';
         errBox.style.display = 'flex';
     }
+}
+
+// ── Exposure via Shodan InternetDB ─────────────────
+// Free, keyless endpoint: open ports, known CVEs, tags, hostnames
+// from Shodan's own internet-wide scans (no scanning done by us).
+const KNOWN_PORTS = {
+    21: 'FTP', 22: 'SSH', 23: 'Telnet', 25: 'SMTP', 53: 'DNS',
+    80: 'HTTP', 110: 'POP3', 143: 'IMAP', 443: 'HTTPS', 445: 'SMB',
+    993: 'IMAPS', 995: 'POP3S', 1433: 'MSSQL', 3306: 'MySQL',
+    3389: 'RDP', 5432: 'PostgreSQL', 5900: 'VNC', 6379: 'Redis',
+    8080: 'HTTP-Alt', 9200: 'Elasticsearch', 27017: 'MongoDB',
+};
+
+async function lookupExposure(ip) {
+    const panel = document.getElementById('ip-shodan-panel');
+    const body = document.getElementById('ip-shodan-body');
+    if (!panel || !body) return;
+
+    panel.style.display = 'block';
+    body.innerHTML = '<div class="loading-row"><div class="spinner"></div><span>Querying exposure data…</span></div>';
+
+    let d;
+    try {
+        const res = await fetch(`https://internetdb.shodan.io/${ip}`);
+        if (res.status === 404) {
+            body.innerHTML = '<div class="exposure-clean">✓ No exposed services found in Shodan\'s scan data for this IP.</div>';
+            return;
+        }
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        d = await res.json();
+    } catch {
+        body.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:8px 0">Exposure data unavailable (network error).</div>';
+        return;
+    }
+
+    const ports = (d.ports || []).sort((a, b) => a - b);
+    const vulns = d.vulns || [];
+    const tags = d.tags || [];
+    const hostnames = d.hostnames || [];
+
+    if (!ports.length && !vulns.length && !tags.length) {
+        body.innerHTML = '<div class="exposure-clean">✓ No exposed services, CVEs, or tags in Shodan\'s scan data.</div>';
+        return;
+    }
+
+    let html = '<div class="exposure-grid">';
+
+    // Open ports
+    html += '<div class="exposure-block"><span class="exposure-label">Open Ports</span><div class="exposure-tags">';
+    html += ports.length
+        ? ports.map(p => {
+            const name = KNOWN_PORTS[p];
+            const risky = [23, 3389, 445, 5900, 6379, 27017, 9200, 3306, 5432, 1433].includes(p);
+            return `<span class="port-tag${risky ? ' risky' : ''}" title="${name || 'port ' + p}">${p}${name ? ' · ' + name : ''}</span>`;
+        }).join('')
+        : '<span class="exposure-none">none</span>';
+    html += '</div></div>';
+
+    // Vulnerabilities
+    html += '<div class="exposure-block"><span class="exposure-label">Known Vulnerabilities</span><div class="exposure-tags">';
+    html += vulns.length
+        ? vulns.slice(0, 20).map(v =>
+            `<a class="cve-tag" href="https://nvd.nist.gov/vuln/detail/${v}" target="_blank" rel="noopener">${v}</a>`
+          ).join('') + (vulns.length > 20 ? `<span class="exposure-none">+${vulns.length - 20} more</span>` : '')
+        : '<span class="exposure-none">none reported</span>';
+    html += '</div></div>';
+
+    // Tags
+    if (tags.length) {
+        html += '<div class="exposure-block"><span class="exposure-label">Tags</span><div class="exposure-tags">';
+        html += tags.map(t => `<span class="port-tag${['malware','c2','compromised','honeypot'].includes(t) ? ' risky' : ''}">${t}</span>`).join('');
+        html += '</div></div>';
+    }
+
+    // Hostnames
+    if (hostnames.length) {
+        html += '<div class="exposure-block"><span class="exposure-label">Hostnames</span><div class="exposure-tags">';
+        html += hostnames.slice(0, 8).map(h => `<span class="host-tag">${h}</span>`).join('');
+        html += '</div></div>';
+    }
+
+    html += '</div>';
+
+    // Summary line
+    const flags = [];
+    if (vulns.length) flags.push(`<strong style="color:var(--red)">${vulns.length} known CVE${vulns.length === 1 ? '' : 's'}</strong>`);
+    if (ports.length) flags.push(`${ports.length} open port${ports.length === 1 ? '' : 's'}`);
+    if (tags.some(t => ['malware','c2','compromised'].includes(t))) flags.push(`<strong style="color:var(--red)">flagged malicious</strong>`);
+    if (flags.length) {
+        html = `<div class="exposure-summary">${flags.join(' · ')}</div>` + html;
+    }
+
+    body.innerHTML = html;
 }
 
 // ── Detect My Public IP (ipify API) ────────────────

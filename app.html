@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SentinelX — SOC Security Dashboard</title>
+    <meta name="description" content="Real-time security operations center dashboard with threat monitoring, IP lookup, DNS analysis, and cryptographic tools." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' stroke='%234589ff' stroke-width='1.75' fill='rgba(69,137,255,0.12)' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M9 12l2 2 4-4' stroke='%234589ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="css/style.css?v=20260717" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Ambient Kali dragon watermark — static, glow fluctuates -->
+    <div class="bg-kali" aria-hidden="true">
+        <svg viewBox="10 115 492 330" xmlns="http://www.w3.org/2000/svg"><path transform="translate(2.0107)" d="m69.929 127.71c-29.464.0337-48.949 2.4206-48.949 2.4206s107.73-5.1706 194.03 29.769c2.9338 13.122 11.759 34.976 16.513 45.481-13.602 9.4041-28.94 18.249-31.328 49.612-2.3877 31.362 24.576 58.947 58.013 59.798 31.751 1.6913 53.688 1.9323 80.277 15.718 25.38 14.034 46.192 56.794 48.251 95.252 2.2244-28.534-8.4845-89.895-58.453-108.53 69.826 12.219 75.982 63.973 75.984 63.994 0 0 5.2056-59.754-88.677-73.531-11.899-1.7458-26.947-3.0899-42.168-3.1283-75.246.99487-77.989-86.786-21.288-91.218 23.499-1.9389 51.556 10.738 78.986 23.512-.10182 3.4068.0404 6.4339 2.2787 9.2314 2.2375 2.7966 10.832 5.8474 13.579 7.4233 2.7464 1.5764 11.545 7.1715 16.937 14.189 1.1692-2.1872 10.933-8.5432 10.933-8.5432s-2.3391.0507-7.781-1.9832c-5.4426-2.0339-11.9-8.1876-12.053-8.5432-.15246-.35625-.25501-.91601 1.0169-1.1705.96572-.81305-1.2209-3.4575-2.1873-4.4232-.96572-.96636-7.4247-11.95-7.5769-12.204-.15245-.25447-.20376-.50931-.66105-.81465-1.4244-.45805-7.6799.66106-7.6799.66106s-9.6211-4.7252-12.937-14.913c.0482 1.7844-1.6497 3.734 0 7.8335-5.0162-2.122-9.325-5.7416-12.723-14.685-2.0227 5.0868 0 8.3215 0 8.3215s-11.811-3.3016-13.701-14.195c-2.0742 4.8902 0 7.8316 0 7.8316s-19.258-10.048-51.255-10.194c-21.422-1.965-25.882-39.65-23.897-45.994 0 0-30.899-16.285-91.723-23.479-22.809-2.6982-44.081-3.5238-61.76-3.5036zm71.276 32.521c-9.2697.0699-19.22.41577-29.674 1.1588-55.751 3.9628-112.04 23.477-112.04 23.477s115.18-28.98 211.77-11.971h.002l-2.512-8.1057s-27.373-4.5594-67.542-4.5594zm68.293 17.263c-9.75-.0412-40.02 1.1848-85.564 15.436-57.124 17.874-89.522 43.21-89.522 43.21s85.141-47.539 181.24-50.24l-2.7492-8.3176s-1.1564-.0779-3.4064-.0875zm62.559-.13932c26.38 10.723 49.34 24.931 67.165 44.514l.002.002 4.2794-.27998s-24.518-29.746-71.446-44.236zm74.662 61.731c.85796.17286 2.4779 3.3567 3.9644 5.6306.13054.18477.26356.38112.38886.53662.002.0138.003.0234.006.037.16796.23967.33693.4887.49774.68826.0812.47558.21641.76558-.89631.53663-.0936-.48886-.25471-.62995-.25471-.62995s-2.686-1.5982-3.5094-2.7317c-.82408-1.1335-.96948-3.1153-.56774-3.8672z"/></svg>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-container"></div>
+
+    <!-- Command Palette (⌘K) -->
+    <div id="cmdk" class="cmdk-overlay">
+        <div class="cmdk-box">
+            <div class="cmdk-input-wrap">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" style="color:var(--text-3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="cmdk-input" class="cmdk-input" placeholder="Jump to a tool or run an action…" autocomplete="off" spellcheck="false"/>
+                <kbd class="cmdk-esc">ESC</kbd>
+            </div>
+            <div id="cmdk-list" class="cmdk-list"></div>
+        </div>
+    </div>
+
+    <!-- Auth Modal (login / register / MFA) -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-box auth-box">
+            <div class="modal-header">
+                <h2 class="modal-title" id="auth-title">Sign in to SentinelX</h2>
+                <button id="auth-close" class="modal-close">×</button>
+            </div>
+            <p class="auth-sub" id="auth-sub">Sync your blocklist across devices. Optional — the app works without an account.</p>
+
+            <div id="auth-form-step">
+                <div class="input-group" style="margin-bottom:12px">
+                    <label class="input-label">Email</label>
+                    <input type="email" id="auth-email" class="tool-input" placeholder="you@company.com" autocomplete="username"/>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" id="auth-password" class="tool-input" placeholder="••••••••••••" autocomplete="current-password"/>
+                    <div class="auth-hint" id="auth-pw-hint" style="display:none">Min 12 chars with upper, lower, number &amp; symbol.</div>
+                </div>
+                <div id="auth-error" class="auth-error" style="display:none"></div>
+                <button class="analyze-btn auth-submit" id="auth-submit" style="width:100%;margin-top:14px">Sign In</button>
+                <div class="auth-toggle">
+                    <span id="auth-toggle-text">No account?</span>
+                    <a href="#" id="auth-toggle-link">Create one</a>
+                </div>
+            </div>
+
+            <div id="auth-mfa-step" style="display:none">
+                <div class="input-group">
+                    <label class="input-label">Authenticator Code</label>
+                    <input type="text" id="auth-mfa-code" class="tool-input" placeholder="123456" inputmode="numeric" maxlength="6" style="letter-spacing:0.3em;text-align:center;font-size:16px"/>
+                </div>
+                <div id="auth-mfa-error" class="auth-error" style="display:none"></div>
+                <button class="analyze-btn" id="auth-mfa-submit" style="width:100%;margin-top:14px">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MFA enroll / disable Modal -->
+    <div id="mfa-modal" class="modal-overlay">
+        <div class="modal-box auth-box">
+            <div class="modal-header">
+                <h2 class="modal-title" id="mfa-modal-title">Enable Two-Factor Authentication</h2>
+                <button id="mfa-modal-close" class="modal-close">×</button>
+            </div>
+            <div id="mfa-enroll-step">
+                <p class="auth-sub">Scan this QR code with your authenticator app (Google Authenticator, 1Password, Authy…), then enter the 6-digit code it shows.</p>
+                <div id="mfa-qr" style="display:flex;justify-content:center;margin:0 auto 10px;padding:10px;background:#fff;border-radius:8px;width:fit-content"></div>
+                <div class="auth-hint" style="text-align:center;margin-bottom:4px;user-select:all">Manual entry: <span id="mfa-secret" class="mono"></span></div>
+            </div>
+            <p class="auth-sub" id="mfa-disable-sub" style="display:none">Enter a current code from your authenticator app to turn off two-factor authentication.</p>
+            <div class="input-group" style="margin-top:10px">
+                <label class="input-label">Authenticator code</label>
+                <input type="text" id="mfa-code-input" class="tool-input" placeholder="123456" inputmode="numeric" maxlength="6" style="letter-spacing:0.3em;text-align:center;font-size:16px"/>
+            </div>
+            <div id="mfa-modal-error" class="auth-error" style="display:none"></div>
+            <button class="analyze-btn" id="mfa-modal-submit" style="width:100%;margin-top:14px">Verify &amp; Enable</button>
+        </div>
+    </div>
+
+    <!-- Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Keyboard Shortcuts</h2>
+                <button id="shortcuts-close" class="modal-close">×</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-row"><kbd>1</kbd><span>Dashboard</span></div>
+                <div class="shortcut-row"><kbd>2</kbd><span>Log Analyzer</span></div>
+                <div class="shortcut-row"><kbd>3</kbd><span>IP Lookup</span></div>
+                <div class="shortcut-row"><kbd>4</kbd><span>DNS Lookup</span></div>
+                <div class="shortcut-row"><kbd>5</kbd><span>Blocklist</span></div>
+                <div class="shortcut-row"><kbd>6</kbd><span>Hash Generator</span></div>
+                <div class="shortcut-row"><kbd>7</kbd><span>Password Checker</span></div>
+                <div class="shortcut-row"><kbd>8</kbd><span>CVE Feed</span></div>
+                <div class="shortcut-row"><kbd>9</kbd><span>SSL Inspector</span></div>
+                <div class="shortcut-row"><kbd>0</kbd><span>AbuseIPDB</span></div>
+                <div class="shortcut-row"><kbd>T</kbd><span>Toggle Theme</span></div>
+                <div class="shortcut-row"><kbd>?</kbd><span>Show Shortcuts</span></div>
+                <div class="shortcut-row"><kbd>Esc</kbd><span>Close / Clear</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- Hamburger -->
+        <button id="hamburger" class="hamburger" aria-label="Open menu">☰</button>
+
+        <!-- ════════════════════════════════════
+             SIDEBAR — Full nav with branding
+             ════════════════════════════════════ -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon" title="SentinelX">
+                    <svg viewBox="10 115 492 330" width="26" height="17" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#37a6ff" transform="translate(2.0107)" d="m69.929 127.71c-29.464.0337-48.949 2.4206-48.949 2.4206s107.73-5.1706 194.03 29.769c2.9338 13.122 11.759 34.976 16.513 45.481-13.602 9.4041-28.94 18.249-31.328 49.612-2.3877 31.362 24.576 58.947 58.013 59.798 31.751 1.6913 53.688 1.9323 80.277 15.718 25.38 14.034 46.192 56.794 48.251 95.252 2.2244-28.534-8.4845-89.895-58.453-108.53 69.826 12.219 75.982 63.973 75.984 63.994 0 0 5.2056-59.754-88.677-73.531-11.899-1.7458-26.947-3.0899-42.168-3.1283-75.246.99487-77.989-86.786-21.288-91.218 23.499-1.9389 51.556 10.738 78.986 23.512-.10182 3.4068.0404 6.4339 2.2787 9.2314 2.2375 2.7966 10.832 5.8474 13.579 7.4233 2.7464 1.5764 11.545 7.1715 16.937 14.189 1.1692-2.1872 10.933-8.5432 10.933-8.5432s-2.3391.0507-7.781-1.9832c-5.4426-2.0339-11.9-8.1876-12.053-8.5432-.15246-.35625-.25501-.91601 1.0169-1.1705.96572-.81305-1.2209-3.4575-2.1873-4.4232-.96572-.96636-7.4247-11.95-7.5769-12.204-.15245-.25447-.20376-.50931-.66105-.81465-1.4244-.45805-7.6799.66106-7.6799.66106s-9.6211-4.7252-12.937-14.913c.0482 1.7844-1.6497 3.734 0 7.8335-5.0162-2.122-9.325-5.7416-12.723-14.685-2.0227 5.0868 0 8.3215 0 8.3215s-11.811-3.3016-13.701-14.195c-2.0742 4.8902 0 7.8316 0 7.8316s-19.258-10.048-51.255-10.194c-21.422-1.965-25.882-39.65-23.897-45.994 0 0-30.899-16.285-91.723-23.479-22.809-2.6982-44.081-3.5238-61.76-3.5036zm71.276 32.521c-9.2697.0699-19.22.41577-29.674 1.1588-55.751 3.9628-112.04 23.477-112.04 23.477s115.18-28.98 211.77-11.971h.002l-2.512-8.1057s-27.373-4.5594-67.542-4.5594zm68.293 17.263c-9.75-.0412-40.02 1.1848-85.564 15.436-57.124 17.874-89.522 43.21-89.522 43.21s85.141-47.539 181.24-50.24l-2.7492-8.3176s-1.1564-.0779-3.4064-.0875zm62.559-.13932c26.38 10.723 49.34 24.931 67.165 44.514l.002.002 4.2794-.27998s-24.518-29.746-71.446-44.236zm74.662 61.731c.85796.17286 2.4779 3.3567 3.9644 5.6306.13054.18477.26356.38112.38886.53662.002.0138.003.0234.006.037.16796.23967.33693.4887.49774.68826.0812.47558.21641.76558-.89631.53663-.0936-.48886-.25471-.62995-.25471-.62995s-2.686-1.5982-3.5094-2.7317c-.82408-1.1335-.96948-3.1153-.56774-3.8672z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">SentinelX</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">MONITOR</div>
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="logs">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+                    <span class="nav-label">Log Analyzer</span>
+                </a>
+                <a href="#" class="nav-item" data-page="ips">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+                    <span class="nav-label">IP Lookup</span>
+                </a>
+                <a href="#" class="nav-item" data-page="dns">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 3c-3.5 4-3.5 14 0 18M12 3c3.5 4 3.5 14 0 18M3 12h18"/></svg></span>
+                    <span class="nav-label">DNS Lookup</span>
+                </a>
+                <a href="#" class="nav-item" data-page="blocklist">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M4.93 4.93l14.14 14.14"/></svg></span>
+                    <span class="nav-label">Blocklist</span>
+                </a>
+
+                <div class="nav-section-label">TOOLS</div>
+                <a href="#" class="nav-item" data-page="hash">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></span>
+                    <span class="nav-label">Hash Generator</span>
+                </a>
+                <a href="#" class="nav-item" data-page="password">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
+                    <span class="nav-label">Password Check</span>
+                </a>
+                <a href="#" class="nav-item" data-page="ssl">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                    <span class="nav-label">SSL Inspector</span>
+                </a>
+                <a href="#" class="nav-item" data-page="email">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                    <span class="nav-label">Email Security</span>
+                </a>
+
+                <div class="nav-section-label">INTEL</div>
+                <a href="#" class="nav-item" data-page="cve">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                    <span class="nav-label">CVE Feed</span>
+                </a>
+                <a href="#" class="nav-item" data-page="abuseipdb">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg></span>
+                    <span class="nav-label">AbuseIPDB</span>
+                </a>
+                <a href="#" class="nav-item" data-page="typosquat">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                    <span class="nav-label">Typosquat Scan</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <!-- Account / cloud sync -->
+                <div id="account-widget" class="account-widget">
+                    <button id="account-signin" class="account-signin">
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                        <span>Sign in to sync</span>
+                    </button>
+                    <div id="account-info" class="account-info" style="display:none">
+                        <div class="account-avatar" id="account-avatar">—</div>
+                        <div class="account-meta">
+                            <span class="account-email" id="account-email">—</span>
+                            <span class="account-status" id="account-status">Synced</span>
+                        </div>
+                        <button id="account-signout" class="account-signout" title="Sign out">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <a href="#" class="nav-item" data-page="settings">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+                    <span class="nav-label">Settings</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ════════════════════════════════════
+             MAIN CONTENT
+             ════════════════════════════════════ -->
+        <main class="main">
+
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 class="page-title" id="page-title">SOC Dashboard</h1>
+                    <span class="page-sub" id="page-sub">SentinelX · Real-time Monitoring</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="cmdk-hint" id="cmdk-hint" aria-label="Open command palette">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        Search <kbd>⌘K</kbd>
+                    </button>
+                    <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle theme (T)"></button>
+                    <div class="topbar-time" id="clock">--:--:--</div>
+                </div>
+            </header>
+
+            <!-- ════════════════════════════════
+                 PAGE: DASHBOARD — SOC Layout
+                 ════════════════════════════════ -->
+            <div id="page-dashboard" class="page active">
+
+                <!-- Live threat-intel marquee (NVD, last 7 days) -->
+                <div id="intel-ticker" class="ticker-wrap" style="display:none">
+                    <span class="ticker-label">Live intel</span>
+                    <div class="ticker-viewport"><div class="ticker-track" id="ticker-track"></div></div>
+                </div>
+
+                <!-- Hero strip — greeting + live session facts -->
+                <div class="dash-hero">
+                    <div class="dash-radar" aria-hidden="true">
+                        <div class="radar-sweep"></div>
+                        <span class="radar-blip"></span>
+                    </div>
+                    <div class="dash-hero-text">
+                        <h2 class="dash-hero-title">Security <span class="grad-text">Command Center</span></h2>
+                        <p class="dash-hero-sub">Live monitoring — your blocklist, global threat origins and NVD vulnerability intel. All data is real.</p>
+                    </div>
+                    <div class="dash-hero-chips">
+                        <div class="hero-chip">
+                            <span class="hero-chip-label">session uptime</span>
+                            <span class="hero-chip-val" id="dash-uptime">0s</span>
+                        </div>
+                        <div class="hero-chip">
+                            <span class="hero-chip-label">your ip</span>
+                            <span class="hero-chip-val" id="dash-myip">detecting…</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time stat tiles (blocklist-driven, only real data) -->
+                <div class="kpi-row" style="grid-template-columns: repeat(3,1fr)">
+                    <div class="kpi-card green">
+                        <span class="kpi-glyph"><svg width="38" height="38" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M4.93 4.93l14.14 14.14"/></svg></span>
+                        <div class="kpi-label">Blocked IPs</div>
+                        <div class="kpi-value" id="kpi-blocked">0</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val" id="kpi-blocked-count-label">0</span><span>entries in blocklist</span></div>
+                    </div>
+                    <div class="kpi-card red">
+                        <span class="kpi-glyph"><svg width="38" height="38" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                        <div class="kpi-label">Critical Threats</div>
+                        <div class="kpi-value" id="kpi-critical">0</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val" id="kpi-critical-label">0</span><span>marked critical severity</span></div>
+                    </div>
+                    <div class="kpi-card amber">
+                        <span class="kpi-glyph"><svg width="38" height="38" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                        <div class="kpi-label">Watchlist / Warnings</div>
+                        <div class="kpi-value" id="kpi-warn">0</div>
+                        <div class="kpi-trend"><span class="kpi-trend-val" id="kpi-warn-label">0</span><span>marked warning severity</span></div>
+                    </div>
+                </div>
+
+                <!-- World Map — Full Width Centerpiece -->
+                <div class="map-panel" style="min-height: 480px">
+                    <div class="panel-header-row">
+                        <div style="display:flex;align-items:baseline;gap:10px">
+                            <span class="panel-heading">Threat Origin Map</span>
+                            <span class="map-substat" id="map-stats"></span>
+                        </div>
+                        <div style="display:flex;gap:12px;align-items:center">
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#fa4d56;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Critical</span></div>
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#f1c21b;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Warning</span></div>
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#4589ff;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Info</span></div>
+                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#42be65;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Your Location</span></div>
+                        </div>
+                    </div>
+                    <!-- Rendered dynamically by world_map.js -->
+                    <div class="world-map-wrap" id="world-map-wrap"></div>
+                </div>
+
+                <!-- Bottom row: recent activity + quick launch -->
+                <div class="dash-bottom">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Recent Blocks</h2>
+                            <button class="panel-btn" id="dash-view-blocklist">View all →</button>
+                        </div>
+                        <div id="dash-blocklist"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Quick Launch</h2></div>
+                        <div class="ql-grid">
+                            <button class="ql-item" data-goto="logs">
+                                <span class="ql-icon cyan"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+                                <span class="ql-body"><span class="ql-name">Analyze logs</span><span class="ql-desc">Extract &amp; geolocate attackers</span></span>
+                                <span class="ql-arrow">→</span>
+                            </button>
+                            <button class="ql-item" data-goto="ips">
+                                <span class="ql-icon green"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+                                <span class="ql-body"><span class="ql-name">Trace an IP</span><span class="ql-desc">Geo, ISP &amp; exposed ports</span></span>
+                                <span class="ql-arrow">→</span>
+                            </button>
+                            <button class="ql-item" data-goto="typosquat">
+                                <span class="ql-icon red"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                                <span class="ql-body"><span class="ql-name">Hunt typosquats</span><span class="ql-desc">Find live look-alike domains</span></span>
+                                <span class="ql-arrow">→</span>
+                            </button>
+                            <button class="ql-item" data-goto="email">
+                                <span class="ql-icon purple"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                                <span class="ql-body"><span class="ql-name">Audit email security</span><span class="ql-desc">SPF · DKIM · DMARC · DNSSEC</span></span>
+                                <span class="ql-arrow">→</span>
+                            </button>
+                            <button class="ql-item" data-goto="cve">
+                                <span class="ql-icon amber"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                                <span class="ql-body"><span class="ql-name">Browse live CVEs</span><span class="ql-desc">Fresh from the NVD feed</span></span>
+                                <span class="ql-arrow">→</span>
+                            </button>
+                            <button class="ql-item" data-goto="password">
+                                <span class="ql-icon cyan"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
+                                <span class="ql-body"><span class="ql-name">Test a password</span><span class="ql-desc">Strength + breach check</span></span>
+                                <span class="ql-arrow">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end page-dashboard -->
+
+            <!-- ════════════════════════════════
+                 PAGE: LOG ANALYZER
+                 ════════════════════════════════ -->
+            <div id="page-logs" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Paste Raw Logs</h2>
+                            <div style="display:flex;gap:8px">
+                                <button class="panel-btn" id="load-sample-btn">Load Sample</button>
+                                <button class="panel-btn" id="clear-btn">Clear</button>
+                            </div>
+                        </div>
+                        <textarea id="log-input" class="log-textarea" placeholder="Paste your raw log output here and click Analyze..."></textarea>
+                        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                            <button class="analyze-btn" id="analyze-btn">Analyze Logs</button>
+                        </div>
+                    </div>
+                    <!-- Extracted threat actors → geolocate + bulk block -->
+                    <div class="panel" id="log-actors-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Threat Actors</h2>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span id="log-actors-count" class="alert-badge danger">0 IPs</span>
+                                <button class="analyze-btn" id="log-block-all-btn" style="padding:6px 14px">Block All &amp; Map</button>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Public IP addresses extracted from suspicious log lines, ranked by activity. Geolocated live — block them to plot on the Threat Origin Map.</p>
+                        <table class="ip-table" id="log-actors-table">
+                            <thead><tr><th>IP Address</th><th>Hits</th><th>Location</th><th>Top Pattern</th><th>Action</th></tr></thead>
+                            <tbody id="log-actors-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="panel" id="results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Analysis Results</h2>
+                            <div id="results-summary" style="display:flex;gap:8px"></div>
+                        </div>
+                        <div id="results-list" class="results-list"></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>What it detects</div>
+                            <ul class="info-list">
+                                <li><b>brute force</b><span>Failed passwords, auth failures, repeated login attempts</span></li>
+                                <li><b>recon</b><span>Port scans — nmap, SYN flood, TCP/UDP scan signatures</span></li>
+                                <li><b>intrusion</b><span>Invalid users, root logins, privilege escalation via sudo</span></li>
+                                <li><b>malware</b><span>Trojan, backdoor, rootkit and exploit indicators</span></li>
+                                <li><b>network</b><span>Firewall drops, rejects and unreachable routes</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Works with</div>
+                            <ul class="info-list">
+                                <li><b>auth.log</b><span>Linux SSH / PAM authentication logs</span></li>
+                                <li><b>syslog</b><span>Kernel messages, iptables / UFW firewall events</span></li>
+                                <li><b>web logs</b><span>nginx and Apache access / error logs</span></li>
+                                <li><b>anything</b><span>Any plain text — IPv4 addresses are auto-extracted</span></li>
+                            </ul>
+                            <div class="info-code">May 17 10:21:03 server sshd[1234]: Failed password for root from 192.168.1.104 port 22 ssh2</div>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Suggested workflow</div>
+                            <p><b>1.</b> Paste logs — or hit <b>Load Sample</b> to try it instantly.<br>
+                               <b>2.</b> Review the extracted <b>Threat Actors</b>: every public IP is ranked by hits and geolocated live.<br>
+                               <b>3.</b> <b>Block All &amp; Map</b> adds them to your blocklist and plots their origins on the dashboard threat map.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: IP LOOKUP
+                 ════════════════════════════════ -->
+            <div id="page-ips" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">IP Lookup</h2>
+                            <div class="alert-badge info">Live API</div>
+                        </div>
+                        <p class="tool-desc">Enter any IP address to fetch its geolocation, ISP, and threat indicators.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="ip-input" class="tool-input" placeholder="e.g. 45.33.32.156"/></div>
+                            <button class="analyze-btn" id="myip-btn" style="align-self:flex-end">My IP</button>
+                            <button class="analyze-btn" id="lookup-btn" style="align-self:flex-end">Lookup</button>
+                        </div>
+                        <div class="quick-ips">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn" data-ip="8.8.8.8">8.8.8.8</button>
+                            <button class="quick-btn" data-ip="1.1.1.1">1.1.1.1</button>
+                            <button class="quick-btn" data-ip="45.33.32.156">45.33.32.156</button>
+                            <button class="quick-btn" data-ip="185.220.101.5">185.220.101.5</button>
+                        </div>
+                    </div>
+                    <div id="ip-result-panel" style="display:none">
+                        <div class="ip-result-grid">
+                            <div class="panel ip-result-main">
+                                <div class="ip-result-header">
+                                    <div>
+                                        <div class="ip-address-display" id="result-ip">—</div>
+                                        <div class="ip-org" id="result-org">—</div>
+                                    </div>
+                                    <div id="result-risk-badge"></div>
+                                </div>
+                                <div class="ip-details-grid">
+                                    <div class="ip-detail"><span class="ip-detail-label">Country</span><span class="ip-detail-val" id="result-country">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Region</span><span class="ip-detail-val" id="result-region">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">City</span><span class="ip-detail-val" id="result-city">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Timezone</span><span class="ip-detail-val" id="result-timezone">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">ISP</span><span class="ip-detail-val" id="result-isp">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Coordinates</span><span class="ip-detail-val" id="result-coords">—</span></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><h2 class="panel-title">Actions</h2></div>
+                                <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+                                    <button class="action-btn danger" id="block-ip-btn">Add to Blocklist</button>
+                                    <button class="action-btn warn" id="watch-ip-btn">Add to Watchlist</button>
+                                    <button class="action-btn" id="copy-report-btn">Copy Report</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Shodan InternetDB exposure -->
+                        <div class="panel" id="ip-shodan-panel" style="display:none;margin-top:10px">
+                            <div class="panel-header">
+                                <h2 class="panel-title">Exposure &amp; Attack Surface</h2>
+                                <div class="alert-badge info">Shodan InternetDB</div>
+                            </div>
+                            <div id="ip-shodan-body"></div>
+                        </div>
+                    </div>
+                    <div id="ip-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="ip-error-msg"></div>
+                    </div>
+                    <div id="ip-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Looking up IP...</span></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>What you get</div>
+                            <ul class="info-list">
+                                <li><b>location</b><span>Country, region, city, timezone and coordinates</span></li>
+                                <li><b>network</b><span>ISP and owning organisation of the address</span></li>
+                                <li><b>exposure</b><span>Open ports, tags and known CVEs from Shodan InternetDB</span></li>
+                                <li><b>actions</b><span>One-click block or watchlist — plotted on the threat map</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>Private &amp; reserved ranges</div>
+                            <ul class="info-list">
+                                <li><b>10.0.0.0/8</b><span>Private LAN (RFC 1918) — never geolocates</span></li>
+                                <li><b>172.16.0.0/12</b><span>Private LAN (RFC 1918)</span></li>
+                                <li><b>192.168.0.0/16</b><span>Home / office routers (RFC 1918)</span></li>
+                                <li><b>127.0.0.0/8</b><span>Loopback — always this machine</span></li>
+                                <li><b>169.254.0.0/16</b><span>Link-local — a host that failed DHCP</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Triage tips</div>
+                            <ul class="info-list">
+                                <li><b>hosting</b><span>Datacenter ISPs often mean VPNs, proxies or bot infrastructure — not a home user</span></li>
+                                <li><b>reputation</b><span>Cross-check the score on the AbuseIPDB page before deciding</span></li>
+                                <li><b>ports</b><span>Exposed 23 (Telnet) or 3389 (RDP) on an attacker IP is a strong compromise signal</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: BLOCKLIST
+                 ════════════════════════════════ -->
+            <div id="page-blocklist" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Blocklist Manager</h2>
+                            <div style="display:flex;gap:8px">
+                                <button class="panel-btn" id="export-btn">Export</button>
+                                <button class="panel-btn danger-btn" id="clear-all-btn">Clear All</button>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Add IP addresses to your blocklist. Sign in to sync it across devices; otherwise it stays local to this browser.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="block-ip-input" class="tool-input" placeholder="e.g. 192.168.1.104"/></div>
+                            <div class="input-group" style="flex:1.5"><label class="input-label">Reason (optional)</label><input type="text" id="block-reason-input" class="tool-input" placeholder="e.g. SSH brute force"/></div>
+                            <div class="input-group" style="max-width:130px"><label class="input-label">Severity</label>
+                                <select id="block-severity" class="tool-input">
+                                    <option value="danger">Critical</option>
+                                    <option value="warn">Warning</option>
+                                    <option value="info">Info</option>
+                                </select>
+                            </div>
+                            <button class="analyze-btn" id="add-block-btn" style="align-self:flex-end">Block IP</button>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Blocked IPs</h2>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" id="blocklist-search" class="inline-search" placeholder="Filter IPs..."/>
+                                <span id="blocklist-count" class="alert-badge info">0 entries</span>
+                            </div>
+                        </div>
+                        <div id="blocklist-empty" style="color:var(--text-3);font-size:12.5px;padding:14px 0;text-align:center">No IPs blocked yet.</div>
+                        <table class="ip-table" id="blocklist-table" style="display:none">
+                            <thead><tr><th>IP Address</th><th>Reason</th><th>Severity</th><th>Added</th><th>Action</th></tr></thead>
+                            <tbody id="blocklist-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>Severity levels</div>
+                            <ul class="info-list">
+                                <li><b class="r">critical</b><span>Confirmed hostile — brute force, exploit attempts, malware C2</span></li>
+                                <li><b class="a">warning</b><span>Suspicious but unconfirmed — keep on watch</span></li>
+                                <li><b>info</b><span>Noted for reference — scanners, crawlers, policy blocks</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Sync &amp; storage</div>
+                            <ul class="info-list">
+                                <li><b>guest</b><span>Entries live in this browser's local storage only</span></li>
+                                <li><b>signed in</b><span>The server is the source of truth — your list follows you across devices</span></li>
+                                <li><b>map</b><span>Every entry is geolocated and plotted on the dashboard threat map</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Export format</div>
+                            <p>Export produces a tab-separated text file, ready for firewalls, spreadsheets or scripts:</p>
+                            <div class="info-code">IP&nbsp;&nbsp;&nbsp;&nbsp;SEVERITY&nbsp;&nbsp;&nbsp;&nbsp;REASON&nbsp;&nbsp;&nbsp;&nbsp;DATE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: HASH GENERATOR
+                 ════════════════════════════════ -->
+            <div id="page-hash" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Hash Generator</h2>
+                            <div class="alert-badge success">Web Crypto API</div>
+                        </div>
+                        <p class="tool-desc">Generate SHA-256, SHA-1, and SHA-512 hashes from any text. Hashes update live as you type.</p>
+                        <div class="input-group">
+                            <label class="input-label">Input Text</label>
+                            <textarea id="hash-input" class="log-textarea" style="height:90px" placeholder="Type or paste text to hash..."></textarea>
+                        </div>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                            <button class="panel-btn" id="clear-hash-btn">Clear</button>
+                            <button class="analyze-btn" id="hash-btn">Generate Hashes</button>
+                        </div>
+                    </div>
+                    <div class="panel" id="hash-results" style="display:none">
+                        <div class="panel-header"><h2 class="panel-title">Hash Results</h2></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Verify Hash</h2></div>
+                        <p class="tool-desc">Check if a string matches a known hash — useful for verifying file integrity.</p>
+                        <div class="input-row" style="flex-direction:column">
+                            <div class="input-group"><label class="input-label">Original Text</label><input type="text" id="verify-input" class="tool-input" placeholder="Enter the original text..."/></div>
+                            <div class="input-row">
+                                <div class="input-group"><label class="input-label">Expected Hash</label><input type="text" id="verify-hash" class="tool-input" placeholder="Paste the hash to verify against..."/></div>
+                                <div class="input-group" style="max-width:130px"><label class="input-label">Algorithm</label>
+                                    <select id="verify-algo" class="tool-input">
+                                        <option value="sha256">SHA-256</option>
+                                        <option value="sha1">SHA-1</option>
+                                        <option value="sha512">SHA-512</option>
+                                    </select>
+                                </div>
+                                <button class="analyze-btn" id="verify-btn" style="align-self:flex-end">Verify</button>
+                            </div>
+                        </div>
+                        <div id="verify-result" class="verify-result" style="display:none"></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Algorithm status</div>
+                            <ul class="info-list">
+                                <li><b class="g">SHA-256</b><span>256-bit · industry standard — recommended for new work</span></li>
+                                <li><b class="g">SHA-512</b><span>512-bit · stronger and often faster on 64-bit CPUs</span></li>
+                                <li><b class="r">SHA-1</b><span>160-bit · broken — practical collisions since 2017, legacy verification only</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot purple"></span>Hashing ≠ encryption</div>
+                            <ul class="info-list">
+                                <li><b>one-way</b><span>You can't reverse a hash back into the input</span></li>
+                                <li><b>deterministic</b><span>The same input always gives the same digest</span></li>
+                                <li><b>avalanche</b><span>Change one character and the whole hash changes</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Where hashes are used</div>
+                            <ul class="info-list">
+                                <li><b>integrity</b><span>Verify a download matches the checksum the vendor published</span></li>
+                                <li><b>forensics</b><span>Malware samples are identified by their SHA-256</span></li>
+                                <li><b>passwords</b><span>Stored as salted hashes — but with a slow KDF (bcrypt, Argon2), never raw SHA</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: PASSWORD CHECKER
+                 ════════════════════════════════ -->
+            <div id="page-password" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Password Strength Checker</h2></div>
+                        <p class="tool-desc">Analyze your password against security rules and estimate how long it would take to crack.</p>
+                        <div class="input-group">
+                            <label class="input-label">Password</label>
+                            <div class="pw-input-wrap">
+                                <input type="password" id="pw-input" class="tool-input" placeholder="Enter a password to analyze..."/>
+                                <button id="pw-show-btn" class="pw-action-btn">Show</button>
+                                <button id="pw-copy-btn" class="pw-action-btn">Copy</button>
+                                <button id="pw-gen-btn" class="analyze-btn" style="padding:8px 14px">Generate</button>
+                            </div>
+                        </div>
+                        <div class="strength-bar-wrap">
+                            <div class="strength-track"><div id="strength-bar" class="strength-fill" style="width:0%"></div></div>
+                            <span id="strength-label" class="strength-label-text">—</span>
+                        </div>
+                        <div class="pw-stats">
+                            <div class="pw-stat"><span class="pw-stat-label">Entropy</span><span class="pw-stat-val" id="entropy-val">—</span></div>
+                            <div class="pw-stat"><span class="pw-stat-label">Est. Crack Time</span><span class="pw-stat-val" id="crack-time">—</span></div>
+                        </div>
+                        <div id="breach-result" class="breach-result" style="display:none"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Security Rules</h2></div>
+                        <div id="rules-list" class="rules-list">
+                            <div style="color:var(--text-3);font-size:12.5px;padding:8px 0">Enter a password above to see the analysis.</div>
+                        </div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Reading the entropy score</div>
+                            <ul class="info-list">
+                                <li><b class="r">&lt; 28 bits</b><span>Very weak — cracked instantly</span></li>
+                                <li><b class="r">28–35 bits</b><span>Weak — falls to a casual attack</span></li>
+                                <li><b class="a">36–59 bits</b><span>Fair — fine for throwaway accounts only</span></li>
+                                <li><b class="g">60–127 bits</b><span>Strong — resists offline cracking</span></li>
+                                <li><b class="g">128+ bits</b><span>Excellent — beyond brute force</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>What actually helps</div>
+                            <ul class="info-list">
+                                <li><b>length</b><span>Beats complexity — each extra character multiplies the search space</span></li>
+                                <li><b>passphrases</b><span>Four random words outclass P@ssw0rd-style substitutions</span></li>
+                                <li><b>uniqueness</b><span>Never reuse across sites — one breach shouldn't unlock everything</span></li>
+                                <li><b>manager</b><span>Let a password manager generate and remember them</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot purple"></span>Breach check privacy</div>
+                            <p>The breach lookup uses the <b>Have I Been Pwned</b> range API with <b>k-anonymity</b>: only the first 5 characters of your password's SHA-1 hash ever leave the browser, and the match is computed locally. Your password is never sent anywhere.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: DNS LOOKUP
+                 ════════════════════════════════ -->
+            <div id="page-dns" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">DNS Lookup</h2>
+                            <div class="alert-badge success">Google DNS API</div>
+                        </div>
+                        <p class="tool-desc">Query real DNS records for any domain. Uses Google's public DNS-over-HTTPS API — no API key required.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input type="text" id="dns-input" class="tool-input" placeholder="e.g. google.com"/></div>
+                            <div class="input-group" style="max-width:130px"><label class="input-label">Record Type</label>
+                                <select id="dns-type" class="tool-input">
+                                    <option value="A">A (IPv4)</option>
+                                    <option value="AAAA">AAAA (IPv6)</option>
+                                    <option value="MX">MX (Mail)</option>
+                                    <option value="TXT">TXT</option>
+                                    <option value="NS">NS</option>
+                                    <option value="CNAME">CNAME</option>
+                                </select>
+                            </div>
+                            <button class="analyze-btn" id="dns-lookup-btn" style="align-self:flex-end">Lookup</button>
+                            <button class="panel-btn" id="dns-all-btn" style="align-self:flex-end">All Records</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:8px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-domain" data-domain="google.com">google.com</button>
+                            <button class="quick-btn quick-domain" data-domain="github.com">github.com</button>
+                            <button class="quick-btn quick-domain" data-domain="cloudflare.com">cloudflare.com</button>
+                            <button class="quick-btn quick-domain" data-domain="wikipedia.org">wikipedia.org</button>
+                        </div>
+                    </div>
+                    <div id="dns-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Querying DNS records...</span></div>
+                    </div>
+                    <div id="dns-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="dns-error-msg"></div>
+                    </div>
+                    <div class="panel" id="dns-results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">DNS Records</h2>
+                            <div id="dns-summary" style="display:flex;gap:8px;align-items:center"></div>
+                        </div>
+                        <table class="ip-table">
+                            <thead><tr><th>Type</th><th>Name</th><th>Value</th><th>TTL</th></tr></thead>
+                            <tbody id="dns-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Record cheat sheet</div>
+                            <ul class="info-list">
+                                <li><b>A</b><span>Hostname → IPv4 address</span></li>
+                                <li><b>AAAA</b><span>Hostname → IPv6 address</span></li>
+                                <li><b>MX</b><span>Mail servers that accept email for the domain</span></li>
+                                <li><b>TXT</b><span>Free text — SPF policies, domain-ownership proofs</span></li>
+                                <li><b>NS</b><span>The authoritative nameservers</span></li>
+                                <li><b>CNAME</b><span>Alias pointing one name at another</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>What TTL means</div>
+                            <p>Time-to-live is how many <b>seconds</b> resolvers may cache the answer. A low TTL (60–300) means the owner wants fast changes — common right before a migration or failover. A high TTL (86400) means a stable, rarely-moved record.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>SOC uses</div>
+                            <ul class="info-list">
+                                <li><b>SPF audit</b><span>Read TXT records to see who may send mail as the domain</span></li>
+                                <li><b>infra map</b><span>NS + MX reveal which providers a target actually uses</span></li>
+                                <li><b>takeover</b><span>A CNAME pointing at a deprovisioned service is a subdomain-takeover risk</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: CVE LIVE FEED
+                 ════════════════════════════════ -->
+            <div id="page-cve" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">CVE Live Feed</h2>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span id="cve-last-updated" style="font-size:10.5px;color:var(--text-3);font-family:var(--f-mono)"></span>
+                                <select id="cve-severity-filter" class="tool-input" style="width:120px;height:28px;font-size:11px;padding:0 10px">
+                                    <option value="all">All Severity</option>
+                                    <option value="critical">Critical</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                                <input type="text" id="cve-search" class="inline-search" placeholder="Search CVEs..." />
+                                <span id="cve-count" class="alert-badge info">0 CVEs</span>
+                                <button class="analyze-btn" id="cve-refresh-btn" style="padding:6px 14px">↻ Refresh</button>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Real-time vulnerability feed from the National Vulnerability Database (NVD). Auto-refreshes every 5 minutes. Click any CVE to expand details.</p>
+                    </div>
+                    <div id="cve-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Fetching latest CVEs from NVD...</span></div>
+                    </div>
+                    <div id="cve-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="cve-error-msg"></div>
+                    </div>
+                    <div class="panel" style="padding:8px">
+                        <div id="cve-feed-list" class="cve-list"></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>CVSS severity ranges</div>
+                            <ul class="info-list">
+                                <li><b class="r">9.0 – 10.0</b><span>Critical — usually remote, unauthenticated, full compromise</span></li>
+                                <li><b class="a">7.0 – 8.9</b><span>High — serious impact, may need some preconditions</span></li>
+                                <li><b>4.0 – 6.9</b><span>Medium — limited impact or harder to reach</span></li>
+                                <li><b class="g">0.1 – 3.9</b><span>Low — minor information leaks, edge cases</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Anatomy of a CVE</div>
+                            <ul class="info-list">
+                                <li><b>CVE-2026-1234</b><span>Year it was assigned + sequence number</span></li>
+                                <li><b>AV:N</b><span>Vector string: attackable over the network</span></li>
+                                <li><b>PR:N / UI:N</b><span>No privileges and no user interaction required — the dangerous combo</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Triage tips</div>
+                            <ul class="info-list">
+                                <li><b>stack first</b><span>Search for the products you actually run before chasing scores</span></li>
+                                <li><b>exploited?</b><span>An actively exploited 7.5 beats a theoretical 9.8 — check references</span></li>
+                                <li><b>expand</b><span>Click any entry for its vector, affected products and advisories</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: SSL/TLS INSPECTOR
+                 ════════════════════════════════ -->
+            <div id="page-ssl" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">SSL / TLS Certificate Inspector</h2>
+                            <div class="alert-badge success">crt.sh API</div>
+                        </div>
+                        <p class="tool-desc">Query Certificate Transparency logs for any domain. Discover all issued certificates, expiry status, CAs, and subdomains. No API key required.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input type="text" id="ssl-domain-input" class="tool-input" placeholder="e.g. github.com"/></div>
+                            <button class="analyze-btn" id="ssl-lookup-btn" style="align-self:flex-end">Inspect Certs</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:6px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-ssl-domain" data-domain="google.com">google.com</button>
+                            <button class="quick-btn quick-ssl-domain" data-domain="github.com">github.com</button>
+                            <button class="quick-btn quick-ssl-domain" data-domain="cloudflare.com">cloudflare.com</button>
+                            <button class="quick-btn quick-ssl-domain" data-domain="facebook.com">facebook.com</button>
+                        </div>
+                    </div>
+                    <div id="ssl-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Querying Certificate Transparency logs...</span></div>
+                    </div>
+                    <div id="ssl-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="ssl-error-msg"></div>
+                    </div>
+                    <!-- Stats Row -->
+                    <div id="ssl-stats-panel" class="kpi-row" style="display:none">
+                        <div class="kpi-card cyan" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Total Certificates</div>
+                            <div class="kpi-value" id="ssl-stat-total" style="font-size:26px">0</div>
+                        </div>
+                        <div class="kpi-card green" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Active</div>
+                            <div class="kpi-value" id="ssl-stat-active" style="font-size:26px">0</div>
+                        </div>
+                        <div class="kpi-card red" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Expired</div>
+                            <div class="kpi-value" id="ssl-stat-expired" style="font-size:26px">0</div>
+                        </div>
+                        <div class="kpi-card amber" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Unique CAs</div>
+                            <div class="kpi-value" id="ssl-stat-issuers" style="font-size:26px">0</div>
+                        </div>
+                    </div>
+                    <!-- Certs table -->
+                    <div class="panel" id="ssl-results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Certificates</h2>
+                            <div id="ssl-summary" style="display:flex;gap:8px"></div>
+                        </div>
+                        <table class="ip-table">
+                            <thead><tr><th>Common Name</th><th>Issuer (CA)</th><th>Issued</th><th>Expiry</th><th>Serial</th></tr></thead>
+                            <tbody id="ssl-certs-tbody"></tbody>
+                        </table>
+                    </div>
+                    <!-- Subdomains -->
+                    <div class="panel" id="ssl-subdomains-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Discovered Subdomains</h2>
+                            <span id="ssl-subdomain-count" class="alert-badge info">0 found</span>
+                        </div>
+                        <div id="ssl-subdomains-list" class="subdomain-grid"></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Certificate Transparency</div>
+                            <p>Every certificate a public CA issues is written to append-only <b>CT logs</b> that anyone can search. That's why this tool can enumerate a domain's certs — and its subdomains — without touching the target at all.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>What to look for</div>
+                            <ul class="info-list">
+                                <li><b>rogue certs</b><span>Certificates your org never requested can indicate impersonation</span></li>
+                                <li><b>forgotten hosts</b><span>Subdomains you didn't know existed are unmonitored attack surface</span></li>
+                                <li><b>expired</b><span>Expired certs on live services break trust and invite MITM warnings</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Cert facts</div>
+                            <ul class="info-list">
+                                <li><b>90 days</b><span>Let's Encrypt lifetime — frequent reissues in the log are normal</span></li>
+                                <li><b>wildcard</b><span>*.example.com covers one level of subdomains only</span></li>
+                                <li><b>SAN</b><span>One cert can cover many names — check the full list</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: ABUSEIPDB
+                 ════════════════════════════════ -->
+            <div id="page-abuseipdb" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">AbuseIPDB — IP Reputation</h2>
+                            <div class="alert-badge danger">Threat Intel</div>
+                        </div>
+                        <p class="tool-desc">Check any IP's abuse reputation score. Get a free API key at <a href="https://www.abuseipdb.com" target="_blank" style="color:var(--cyan);text-decoration:underline">abuseipdb.com</a> (1,000 checks/day free).</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1">
+                                <label class="input-label">API Key</label>
+                                <div style="display:flex;gap:6px">
+                                    <input type="password" id="abuse-apikey" class="tool-input" placeholder="Paste your AbuseIPDB API key..." style="flex:1"/>
+                                    <button class="panel-btn" id="abuse-save-key" style="white-space:nowrap">Save Key</button>
+                                    <span id="abuse-key-status" style="align-self:center;font-size:11px;white-space:nowrap"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-row" style="margin-top:10px">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="abuse-ip-input" class="tool-input" placeholder="e.g. 185.220.101.5"/></div>
+                            <button class="analyze-btn" id="abuse-check-btn" style="align-self:flex-end">Check Reputation</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:6px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-abuse-ip" data-ip="185.220.101.5">185.220.101.5</button>
+                            <button class="quick-btn quick-abuse-ip" data-ip="45.33.32.156">45.33.32.156</button>
+                            <button class="quick-btn quick-abuse-ip" data-ip="89.248.167.131">89.248.167.131</button>
+                            <button class="quick-btn quick-abuse-ip" data-ip="8.8.8.8">8.8.8.8</button>
+                        </div>
+                    </div>
+                    <div id="abuse-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Checking IP reputation...</span></div>
+                    </div>
+                    <div id="abuse-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="abuse-error-msg"></div>
+                    </div>
+                    <div id="abuse-results-panel" style="display:none">
+                        <!-- Score Card -->
+                        <div class="panel" style="margin-bottom:10px">
+                            <div class="panel-header"><h2 class="panel-title">Abuse Confidence Score</h2></div>
+                            <div style="display:flex;align-items:center;gap:20px;margin-top:6px">
+                                <div style="text-align:center;min-width:100px">
+                                    <div id="abuse-score" style="font-family:var(--f-display);font-size:42px;font-weight:700;letter-spacing:-0.04em;line-height:1">0%</div>
+                                    <div id="abuse-score-label" style="font-size:11px;font-weight:700;margin-top:4px;letter-spacing:0.06em">CLEAN</div>
+                                </div>
+                                <div style="flex:1">
+                                    <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+                                        <div id="abuse-score-bar" style="height:100%;width:0%;border-radius:4px;transition:width 0.6s ease,background 0.4s"></div>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--text-3);margin-top:4px;font-family:var(--f-mono)">
+                                        <span>Clean</span><span>Minimal</span><span>Low Risk</span><span>Suspicious</span><span>Malicious</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Details Grid -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                            <div class="panel">
+                                <div class="panel-header"><h2 class="panel-title">IP Information</h2></div>
+                                <div style="display:flex;flex-direction:column;gap:10px">
+                                    <div class="ip-detail"><span class="ip-detail-label">IP Address</span><span class="ip-detail-val" id="abuse-ip-display" style="color:var(--cyan)">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">ISP</span><span class="ip-detail-val" id="abuse-isp">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Country</span><span class="ip-detail-val" id="abuse-country">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Usage Type</span><span class="ip-detail-val" id="abuse-usage">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Domain</span><span class="ip-detail-val" id="abuse-domain">—</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Whitelisted</span><span class="ip-detail-val" id="abuse-whitelist">—</span></div>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-header"><h2 class="panel-title">Report Statistics</h2></div>
+                                <div style="display:flex;flex-direction:column;gap:10px">
+                                    <div class="ip-detail"><span class="ip-detail-label">Total Reports</span><span class="ip-detail-val" id="abuse-total-reports" style="color:var(--red);font-size:20px;font-weight:700">0</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Distinct Reporters</span><span class="ip-detail-val" id="abuse-distinct-users">0</span></div>
+                                    <div class="ip-detail"><span class="ip-detail-label">Last Reported</span><span class="ip-detail-val" id="abuse-last-reported">—</span></div>
+                                </div>
+                                <div style="margin-top:10px">
+                                    <span class="ip-detail-label" style="margin-bottom:6px;display:block">Attack Categories</span>
+                                    <div id="abuse-categories" class="subdomain-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Recent Reports -->
+                        <div class="panel" id="abuse-recent-panel" style="display:none">
+                            <div class="panel-header"><h2 class="panel-title">Recent Reports</h2></div>
+                            <div id="abuse-recent-list" class="feed-list" style="max-height:240px"></div>
+                        </div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>Reading the score</div>
+                            <ul class="info-list">
+                                <li><b class="g">0 – 24</b><span>Clean or negligible — likely safe</span></li>
+                                <li><b class="a">25 – 74</b><span>Suspicious — weigh against report volume and age</span></li>
+                                <li><b class="r">75 – 100</b><span>Malicious — many admins auto-block at this level</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>Common report categories</div>
+                            <ul class="info-list">
+                                <li><b>ssh / brute</b><span>Password-guessing against SSH, FTP, mail logins</span></li>
+                                <li><b>port scan</b><span>Mass probing for open services</span></li>
+                                <li><b>web attack</b><span>SQL injection, XSS and exploit attempts on web apps</span></li>
+                                <li><b>phishing</b><span>Hosting or sending phishing content</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Key &amp; privacy</div>
+                            <p>Your API key is stored <b>only in this browser's local storage</b> and sent directly to AbuseIPDB with each check. The free tier allows <b>1,000 checks per day</b> — plenty for interactive triage.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: TYPOSQUAT / PHISHING SCANNER
+                 ════════════════════════════════ -->
+            <div id="page-typosquat" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Typosquat / Phishing Domain Scanner</h2>
+                            <div class="alert-badge success">Google DoH</div>
+                        </div>
+                        <p class="tool-desc">Generate look-alike domains an attacker might register to impersonate a brand — character swaps, homoglyphs (o→0, l→1), missing letters, extra hyphens, and alternate TLDs — then resolve each one live to find which are <strong>actually registered</strong>. All lookups run in your browser against Google's public DNS.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain to protect</label><input type="text" id="typo-input" class="tool-input" placeholder="e.g. paypal.com"/></div>
+                            <button class="analyze-btn" id="typo-scan-btn" style="align-self:flex-end">Scan Variants</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:6px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-typo" data-domain="paypal.com">paypal.com</button>
+                            <button class="quick-btn quick-typo" data-domain="google.com">google.com</button>
+                            <button class="quick-btn quick-typo" data-domain="github.com">github.com</button>
+                            <button class="quick-btn quick-typo" data-domain="microsoft.com">microsoft.com</button>
+                        </div>
+                    </div>
+                    <div id="typo-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span id="typo-loading-msg">Generating and resolving variants…</span></div>
+                        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="typo-progress"></div></div>
+                    </div>
+                    <div id="typo-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="typo-error-msg"></div>
+                    </div>
+                    <!-- Stats -->
+                    <div id="typo-stats-panel" class="kpi-row" style="display:none;grid-template-columns:repeat(3,1fr)">
+                        <div class="kpi-card cyan" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Variants Tested</div>
+                            <div class="kpi-value" id="typo-stat-total" style="font-size:26px">0</div>
+                        </div>
+                        <div class="kpi-card red" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Registered (Live)</div>
+                            <div class="kpi-value" id="typo-stat-registered" style="font-size:26px">0</div>
+                        </div>
+                        <div class="kpi-card green" style="padding:12px 16px">
+                            <div class="kpi-label" style="font-size:10px">Available</div>
+                            <div class="kpi-value" id="typo-stat-available" style="font-size:26px">0</div>
+                        </div>
+                    </div>
+                    <!-- Registered variants -->
+                    <div class="panel" id="typo-results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Registered Look-alike Domains</h2>
+                            <span id="typo-results-count" class="alert-badge danger">0 found</span>
+                        </div>
+                        <p class="tool-desc">These variants resolve to a real IP right now — potential impersonation or phishing infrastructure. Investigate suspicious ones with the IP Lookup and DNS tools.</p>
+                        <table class="ip-table">
+                            <thead><tr><th>Domain</th><th>Technique</th><th>Resolves To</th><th>Investigate</th></tr></thead>
+                            <tbody id="typo-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>Squatting techniques</div>
+                            <ul class="info-list">
+                                <li><b>homoglyph</b><span>Swap look-alike characters: paypal → paypa1, g00gle</span></li>
+                                <li><b>omission</b><span>Drop a letter: gogle.com</span></li>
+                                <li><b>repetition</b><span>Double a letter: googgle.com</span></li>
+                                <li><b>hyphenation</b><span>Insert dashes: pay-pal.com</span></li>
+                                <li><b>TLD swap</b><span>Same name, different ending: paypal.co, paypal.net</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>Why it matters</div>
+                            <p>Registered look-alikes are the raw material of <b>phishing</b>, credential harvesting and business-email-compromise. A domain that resolves today can be serving a cloned login page tomorrow — finding them early is cheap insurance.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>When you find a hit</div>
+                            <ul class="info-list">
+                                <li><b>investigate</b><span>Pivot to DNS and IP Lookup straight from the results table</span></li>
+                                <li><b>compare</b><span>Check its certs in the SSL Inspector — fresh certs on a look-alike are a red flag</span></li>
+                                <li><b>report</b><span>Genuine phishing can be reported to the registrar and Google Safe Browsing</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: EMAIL SECURITY CHECKER
+                 ════════════════════════════════ -->
+            <div id="page-email" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Email Security Checker</h2>
+                            <div class="alert-badge success">Google DoH</div>
+                        </div>
+                        <p class="tool-desc">Audit a domain's email spoofing defenses — SPF, DMARC, DKIM, MX, and DNSSEC — with live DNS queries. Everything runs in your browser against Google's public DNS.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input type="text" id="email-domain-input" class="tool-input" placeholder="e.g. yourcompany.com"/></div>
+                            <button class="analyze-btn" id="email-check-btn" style="align-self:flex-end">Run Checks</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:6px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-email-domain" data-domain="google.com">google.com</button>
+                            <button class="quick-btn quick-email-domain" data-domain="github.com">github.com</button>
+                            <button class="quick-btn quick-email-domain" data-domain="cloudflare.com">cloudflare.com</button>
+                            <button class="quick-btn quick-email-domain" data-domain="example.com">example.com</button>
+                        </div>
+                    </div>
+                    <div id="email-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Querying DNS records...</span></div>
+                    </div>
+                    <div id="email-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="email-error-msg"></div>
+                    </div>
+                    <div class="panel" id="email-results-panel" style="display:none">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Findings</h2>
+                            <span id="email-grade" class="alert-badge info">—</span>
+                        </div>
+                        <div id="email-results"></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>SPF — who may send</div>
+                            <p>A TXT record listing the servers allowed to send mail for the domain. Anything else fails the check.</p>
+                            <div class="info-code">v=spf1 include:_spf.google.com ~all</div>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot purple"></span>DKIM — proof it's untampered</div>
+                            <p>Outgoing mail is cryptographically signed; receivers fetch the public key from <b>selector._domainkey</b> DNS to verify the message wasn't altered in transit.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>DMARC — the enforcement policy</div>
+                            <ul class="info-list">
+                                <li><b>p=none</b><span>Monitor only — spoofed mail still gets delivered</span></li>
+                                <li><b class="a">p=quarantine</b><span>Failures go to spam</span></li>
+                                <li><b class="g">p=reject</b><span>Failures are refused outright — the goal state</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: SETTINGS
+                 ════════════════════════════════ -->
+            <div id="page-settings" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Account &amp; Security</h2></div>
+                        <div id="acct-signedout">
+                            <div class="settings-row" style="border-bottom:none">
+                                <div class="settings-info"><span class="settings-label">Not signed in</span><span class="settings-desc">Sign in to manage two-factor authentication and your signed-in devices.</span></div>
+                                <button class="analyze-btn" id="acct-signin-btn">Sign In</button>
+                            </div>
+                        </div>
+                        <div id="acct-signedin" style="display:none">
+                            <div class="settings-row">
+                                <div class="settings-info"><span class="settings-label">Email</span><span class="settings-desc" id="acct-email">—</span></div>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-info"><span class="settings-label">Two-Factor Authentication</span><span class="settings-desc" id="acct-mfa-desc">Adds a 6-digit authenticator code to every sign-in.</span></div>
+                                <button class="panel-btn" id="acct-mfa-btn">Enable 2FA</button>
+                            </div>
+                            <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px">
+                                <div class="settings-info"><span class="settings-label">Signed-in Devices</span><span class="settings-desc">Every device with an active session on your account. Revoke any you don't recognize.</span></div>
+                                <div id="sessions-list"><div class="loading-row"><div class="spinner"></div><span>Loading sessions...</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Appearance</h2></div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Dark Mode</span><span class="settings-desc">Toggle between dark and light theme</span></div>
+                            <label class="toggle-switch"><input type="checkbox" id="settings-theme"/><span class="toggle-slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">Data Management</h2></div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Clear Blocklist</span><span class="settings-desc">Remove all blocked IPs — includes your account when signed in</span></div>
+                            <button class="panel-btn danger-btn" id="settings-clear-blocklist">Clear</button>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Clear All Data</span><span class="settings-desc">Reset all settings and local data</span></div>
+                            <button class="panel-btn danger-btn" id="settings-clear-data">Reset</button>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">About</h2></div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Version</span><span class="settings-desc" id="settings-version">—</span></div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-info"><span class="settings-label">Shortcuts</span><span class="settings-desc">Press <kbd class="kbd-mini">?</kbd> anywhere to view keyboard shortcuts</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="js/toast.js?v=20260717"></script>
+    <script src="js/api.js?v=20260717"></script>
+    <script src="js/main.js?v=20260717"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+    <script src="js/world_map.js?v=20260717"></script>
+    <script src="js/log_parser.js?v=20260717"></script>
+    <script src="js/ip_lookup.js?v=20260717"></script>
+    <script src="js/dns_lookup.js?v=20260717"></script>
+    <script src="js/blocklist.js?v=20260717"></script>
+    <script src="js/search_filter.js?v=20260717"></script>
+    <script src="js/hash_generator.js?v=20260717"></script>
+    <script src="js/password_checker.js?v=20260717"></script>
+    <script src="js/cve_feed.js?v=20260717"></script>
+    <script src="js/ticker.js?v=20260717"></script>
+    <script src="js/ssl_inspector.js?v=20260717"></script>
+    <script src="js/abuseipdb.js?v=20260717"></script>
+    <script src="js/typosquat.js?v=20260717"></script>
+    <script src="js/command_palette.js?v=20260717"></script>
+    <script src="js/auth_ui.js?v=20260717"></script>
+    <script src="js/account_security.js?v=20260717"></script>
+    <script src="js/email_security.js?v=20260717"></script>
+
+</body>
+</html>

@@ -4,15 +4,7 @@ const STORAGE_KEY = 'sentinelx_blocklist';
 // ── Load / Save ────────────────────────────────────
 function loadBlocklist() {
     try {
-        let data = localStorage.getItem(STORAGE_KEY);
-        if (!data) {
-            data = localStorage.getItem('netwatch_blocklist');
-            if (data) {
-                localStorage.setItem(STORAGE_KEY, data);
-                localStorage.removeItem('netwatch_blocklist');
-            }
-        }
-        return JSON.parse(data) || [];
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     } catch {
         return [];
     }
@@ -22,47 +14,87 @@ function saveBlocklist(list) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
+// ── Refresh dependent views after any change ───────
+function refreshBlocklistViews() {
+    renderBlocklist();
+    updateDashboardBlocklist();
+    updateBlockedMetric();
+    window.refreshWorldMap?.();
+}
+
+const loggedIn = () => !!(window.SentinelAPI && SentinelAPI.isLoggedIn());
+const notify = (msg, kind) => (typeof showToast === 'function' ? showToast(msg, kind) : null);
+
 // ── Add Entry ──────────────────────────────────────
-function addToBlocklist(ip, reason = '', severity = 'danger') {
+// When signed in, the server is source of truth (per-user, synced); the entry it
+// returns (with a real id) is mirrored into localStorage so the map/KPIs — which
+// read localStorage — keep working unchanged. Offline/guest → localStorage only.
+async function addToBlocklist(ip, reason = '', severity = 'danger') {
     if (!ip) return;
 
     const list = loadBlocklist();
-
-    // Prevent duplicates
     if (list.find(e => e.ip === ip)) {
-        alert(`${ip} is already in the blocklist.`);
+        notify(`${ip} is already in the blocklist`, 'warn');
         return;
     }
 
-    list.unshift({
-        ip,
-        reason: reason || 'Manually blocked',
-        severity,
-        added: new Date().toISOString(),
-    });
+    const reasonText = reason || 'Manually blocked';
 
+    if (loggedIn()) {
+        try {
+            const entry = await SentinelAPI.addBlocklist(ip, reasonText, severity);
+            list.unshift({ id: entry.id, ip: entry.ip, reason: entry.reason, severity: entry.severity, added: entry.created_at });
+            saveBlocklist(list);
+            refreshBlocklistViews();
+            return;
+        } catch (err) {
+            if (err && err.status === 409) { notify(`${ip} is already blocked on your account`, 'warn'); return; }
+            if (err && err.status === 422) { notify(`${ip} is not a valid IP address`, 'danger'); return; }
+            notify('Server unreachable — saved to this device only', 'warn');
+            // fall through to local save
+        }
+    }
+
+    list.unshift({ ip, reason: reasonText, severity, added: new Date().toISOString() });
     saveBlocklist(list);
-    renderBlocklist();
-    updateDashboardBlocklist();
-    updateBlockedMetric();
+    refreshBlocklistViews();
 }
 
 // ── Remove Entry ───────────────────────────────────
-function removeFromBlocklist(ip) {
-    const list = loadBlocklist().filter(e => e.ip !== ip);
-    saveBlocklist(list);
-    renderBlocklist();
-    updateDashboardBlocklist();
-    updateBlockedMetric();
+async function removeFromBlocklist(ip) {
+    const list = loadBlocklist();
+    const entry = list.find(e => e.ip === ip);
+
+    if (loggedIn() && entry && entry.id) {
+        try { await SentinelAPI.removeBlocklist(entry.id); }
+        catch { notify('Server unreachable — removed on this device only', 'warn'); }
+    }
+
+    saveBlocklist(list.filter(e => e.ip !== ip));
+    refreshBlocklistViews();
 }
 
 // ── Clear All ──────────────────────────────────────
-function clearBlocklist() {
+async function clearBlocklist() {
     if (!confirm('Remove all blocked IPs?')) return;
+
+    if (loggedIn()) {
+        for (const e of loadBlocklist()) {
+            if (e.id) { try { await SentinelAPI.removeBlocklist(e.id); } catch {} }
+        }
+    }
+
     saveBlocklist([]);
-    renderBlocklist();
-    updateDashboardBlocklist();
-    updateBlockedMetric();
+    refreshBlocklistViews();
+}
+
+// ── Replace the local mirror with the server's list (called on login) ──
+function setBlocklistFromServer(serverList) {
+    const mapped = (serverList || []).map(e => ({
+        id: e.id, ip: e.ip, reason: e.reason, severity: e.severity, added: e.created_at,
+    }));
+    saveBlocklist(mapped);
+    refreshBlocklistViews();
 }
 
 // ── Format Date ────────────────────────────────────
@@ -111,7 +143,7 @@ function updateDashboardBlocklist() {
     if (!el) return;
 
     if (list.length === 0) {
-        el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:4px 0">No IPs blocked yet.</div>`;
+        el.innerHTML = `<div style="color:var(--text-3);font-size:12.5px;padding:8px 0">No blocks yet. Use the Log Analyzer or IP Lookup to identify threats, or add IPs directly in the Blocklist.</div>`;
         return;
     }
 
@@ -127,11 +159,23 @@ function updateDashboardBlocklist() {
   `).join('');
 }
 
-// ── Update Dashboard Metric ────────────────────────
+// ── Update Dashboard KPIs (values count up) ────────
 function updateBlockedMetric() {
-    const count = loadBlocklist().length;
-    const el = document.getElementById('blocked-metric-val');
-    if (el) el.textContent = count;
+    const list = loadBlocklist();
+    const critical = list.filter(e => e.severity === 'danger').length;
+    const count = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (typeof animateNumber === 'function') animateNumber(el, val); else el.textContent = val;
+    };
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    count('kpi-blocked', list.length);
+    set('kpi-blocked-count-label', list.length);
+    count('kpi-critical', critical);
+    set('kpi-critical-label', critical);
+    const warn = list.filter(e => e.severity === 'warn').length;
+    count('kpi-warn', warn);
+    set('kpi-warn-label', warn);
 }
 
 // ── Export ─────────────────────────────────────────

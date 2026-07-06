@@ -68,6 +68,19 @@ function extractIP(line) {
     return match ? match[0] : null;
 }
 
+// ── Public IP filter (skip private / reserved ranges) ─
+function isPublicIP(ip) {
+    const p = ip.split('.').map(Number);
+    if (p.length !== 4 || p.some(o => isNaN(o) || o < 0 || o > 255)) return false;
+    if (p[0] === 10) return false;                               // 10.0.0.0/8
+    if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return false;  // 172.16.0.0/12
+    if (p[0] === 192 && p[1] === 168) return false;              // 192.168.0.0/16
+    if (p[0] === 127) return false;                              // loopback
+    if (p[0] === 169 && p[1] === 254) return false;              // link-local
+    if (p[0] === 0 || p[0] >= 224) return false;                 // reserved / multicast
+    return true;
+}
+
 // ── Analyze ────────────────────────────────────────
 function analyzeLogs(rawText) {
     const lines = rawText.split('\n').map((l, i) => ({ text: l.trim(), num: i + 1 }));
@@ -140,6 +153,138 @@ function escapeHTML(str) {
         .replace(/>/g, '&gt;');
 }
 
+// ═══════════════════════════════════════════════════
+//  THREAT ACTOR PIPELINE — extract IPs → geolocate → block
+// ═══════════════════════════════════════════════════
+const GEO_CACHE_KEY = 'sentinelx_geo_cache_v2'; // shared with world_map.js
+
+function loadGeoCacheLP() {
+    try { return JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {}; } catch { return {}; }
+}
+function cacheGeoLP(ip, entry) {
+    const c = loadGeoCacheLP();
+    c[ip] = entry;
+    localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(c));
+}
+async function geolocateLP(ip) {
+    const cached = loadGeoCacheLP()[ip];
+    if (cached) return cached;
+    try {
+        const res = await fetch(`https://ipwho.is/${ip}`);
+        if (!res.ok) return { ok: false, transient: true };
+        const d = await res.json();
+        const entry = d.success
+            ? { ok: true, lat: d.latitude, lon: d.longitude, city: d.city || '', country: d.country || '' }
+            : { ok: false };
+        cacheGeoLP(ip, entry);
+        return entry;
+    } catch {
+        return { ok: false, transient: true };
+    }
+}
+
+// Aggregate public attacker IPs from analysis results
+function buildActors(results) {
+    const map = {};
+    results.forEach(r => {
+        if (r.severity === 'success') return;       // don't flag successful logins
+        const ip = extractIP(r.raw);
+        if (!ip || !isPublicIP(ip)) return;
+        if (!map[ip]) map[ip] = { ip, hits: 0, patterns: {}, worst: 'info' };
+        map[ip].hits++;
+        map[ip].patterns[r.type] = (map[ip].patterns[r.type] || 0) + 1;
+        const rank = { danger: 3, warn: 2, info: 1 };
+        if ((rank[r.severity] || 0) > (rank[map[ip].worst] || 0)) map[ip].worst = r.severity;
+    });
+    return Object.values(map)
+        .map(a => ({ ...a, topPattern: Object.entries(a.patterns).sort((x, y) => y[1] - x[1])[0][0] }))
+        .sort((a, b) => b.hits - a.hits);
+}
+
+let currentActors = [];
+
+async function renderActors(results) {
+    const panel = document.getElementById('log-actors-panel');
+    const tbody = document.getElementById('log-actors-tbody');
+    const count = document.getElementById('log-actors-count');
+    if (!panel || !tbody) return;
+
+    currentActors = buildActors(results);
+
+    if (currentActors.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'flex';
+    count.textContent = `${currentActors.length} IP${currentActors.length === 1 ? '' : 's'}`;
+
+    const blocked = new Set((typeof loadBlocklist === 'function' ? loadBlocklist() : []).map(e => e.ip));
+
+    tbody.innerHTML = currentActors.map(a => `
+      <tr data-ip="${a.ip}">
+        <td class="mono">${a.ip}</td>
+        <td><span class="alert-badge ${a.worst}" style="min-width:0">${a.hits}</span></td>
+        <td class="actor-loc" style="font-size:11px;color:var(--text-3)">…</td>
+        <td style="font-size:11px">${a.topPattern}</td>
+        <td>${blocked.has(a.ip)
+            ? '<span class="alert-badge danger">Blocked</span>'
+            : `<button class="remove-btn actor-block-btn" style="background:var(--red-bg)" data-ip="${a.ip}" data-pattern="${a.topPattern}" data-sev="${a.worst}">Block</button>`}</td>
+      </tr>
+    `).join('');
+
+    // Wire single-block buttons
+    tbody.querySelectorAll('.actor-block-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            blockActor(btn.dataset.ip, btn.dataset.pattern, btn.dataset.sev);
+            const cell = btn.closest('td');
+            if (cell) cell.innerHTML = '<span class="alert-badge danger">Blocked</span>';
+        });
+    });
+
+    // Geolocate each row live (cached, throttled)
+    for (const a of currentActors) {
+        const wasCached = !!loadGeoCacheLP()[a.ip];
+        const geo = await geolocateLP(a.ip);
+        const cell = tbody.querySelector(`tr[data-ip="${a.ip}"] .actor-loc`);
+        if (cell) {
+            cell.textContent = geo.ok
+                ? [geo.city, geo.country].filter(Boolean).join(', ') || 'Unknown'
+                : 'Unresolved';
+            cell.style.color = geo.ok ? 'var(--text-2)' : 'var(--text-3)';
+        }
+        if (!wasCached) await new Promise(r => setTimeout(r, 150));
+    }
+}
+
+function blockActor(ip, pattern, severity) {
+    if (typeof addToBlocklist !== 'function') return;
+    const sev = severity === 'danger' ? 'danger' : severity === 'warn' ? 'warn' : 'info';
+    addToBlocklist(ip, `Log analysis — ${pattern}`, sev);
+}
+
+function blockAllActors() {
+    if (!currentActors.length) return;
+    const blocked = new Set((typeof loadBlocklist === 'function' ? loadBlocklist() : []).map(e => e.ip));
+    let added = 0;
+    currentActors.forEach(a => {
+        if (blocked.has(a.ip)) return;
+        blockActor(a.ip, a.topPattern, a.worst);
+        added++;
+    });
+    if (typeof showToast === 'function') {
+        showToast(added ? `Blocked ${added} IP${added === 1 ? '' : 's'} — see the Threat Origin Map` : 'All actors already blocked', added ? 'success' : 'info');
+    }
+    // Refresh the table to show Blocked state
+    document.getElementById('log-actors-tbody')?.querySelectorAll('.actor-block-btn').forEach(btn => {
+        const cell = btn.closest('td');
+        if (cell) cell.innerHTML = '<span class="alert-badge danger">Blocked</span>';
+    });
+    if (added && typeof navigateTo === 'function') {
+        setTimeout(() => navigateTo('dashboard'), 600);
+    }
+}
+
 // ── Sample Logs ────────────────────────────────────
 const SAMPLE_LOGS = `May 17 10:21:03 server sshd[1234]: Failed password for root from 192.168.1.104 port 22 ssh2
 May 17 10:21:05 server sshd[1234]: Failed password for root from 192.168.1.104 port 22 ssh2
@@ -160,7 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!raw) return;
         const results = analyzeLogs(raw);
         renderResults(results);
+        renderActors(results);
     });
+
+    document.getElementById('log-block-all-btn')?.addEventListener('click', blockAllActors);
 
     document.getElementById('load-sample-btn').addEventListener('click', () => {
         document.getElementById('log-input').value = SAMPLE_LOGS;
@@ -170,5 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('log-input').value = '';
         document.getElementById('results-panel').style.display = 'none';
         document.getElementById('results-list').innerHTML = '';
+        const actors = document.getElementById('log-actors-panel');
+        if (actors) actors.style.display = 'none';
+        currentActors = [];
     });
 });

@@ -3,12 +3,14 @@ const pageTitles = {
   logs:       { title: 'Log Analyzer',       sub: 'Raw parsing / Pattern matching' },
   ips:        { title: 'IP Lookup',          sub: 'Geo / ASN / Threat intel' },
   dns:        { title: 'DNS Lookup',         sub: 'Records / Domain intelligence' },
-  blocklist:  { title: 'Blocklist Manager',  sub: 'Local firewall simulation' },
+  blocklist:  { title: 'Blocklist Manager',  sub: 'Per-account IP blocklist' },
   hash:       { title: 'Hash Generator',     sub: 'Crypto / Verification' },
   password:   { title: 'Password Checker',   sub: 'Strength / Breach detection' },
   cve:        { title: 'CVE Live Feed',      sub: 'NVD / Real-time vulnerabilities' },
   ssl:        { title: 'SSL / TLS Inspector',sub: 'crt.sh / Certificate Transparency' },
+  email:      { title: 'Email Security',     sub: 'SPF / DMARC / DKIM / DNSSEC' },
   abuseipdb:  { title: 'AbuseIPDB',          sub: 'IP Reputation / Threat intelligence' },
+  typosquat:  { title: 'Typosquat Scanner',  sub: 'Phishing / Look-alike domains' },
   settings:   { title: 'Settings',           sub: 'Preferences / Data management' }
 };
 
@@ -34,8 +36,17 @@ function navigateTo(pageId) {
   // Close mobile sidebar
   document.querySelector('.sidebar')?.classList.remove('sidebar-open');
 
+  // Keep the URL in sync so a reload (or shared link) reopens the same page
+  history.replaceState(null, '', pageId === 'dashboard' ? location.pathname : '#' + pageId);
+
   if (pageId === 'blocklist' && typeof renderBlocklist === 'function') renderBlocklist();
 }
+
+// Deep-link: open the page named in the URL hash (e.g. app.html#hash)
+document.addEventListener('DOMContentLoaded', () => {
+  const initial = location.hash.replace('#', '');
+  if (initial && pageTitles[initial]) navigateTo(initial);
+});
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', e => {
@@ -55,23 +66,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ── Rail tooltips: labels are hidden in the icon rail, so lift each
+//    item's label text into data-tip for the CSS hover tooltip.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.sidebar .nav-item').forEach((el) => {
+    const label = el.querySelector('.nav-label')?.textContent?.trim();
+    if (label) el.setAttribute('data-tip', label);
+  });
+  document.getElementById('account-signin')?.setAttribute('data-tip', 'Sign in to sync');
+});
+
 // ── Theme Management ───────────────────────────────
 const html = document.documentElement;
 const themeToggle = document.getElementById('theme-toggle');
 const settingsTheme = document.getElementById('settings-theme');
 
+// Icon shows the theme you'd switch to: sun while dark, moon while light.
+const THEME_ICONS = {
+  dark: '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+  light: '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>',
+};
+
 function setTheme(theme) {
   html.setAttribute('data-theme', theme);
   localStorage.setItem('nsd_theme', theme);
-  if (themeToggle) themeToggle.textContent = theme === 'dark' ? '☀ Light' : '☾ Dark';
+  if (themeToggle) themeToggle.innerHTML = THEME_ICONS[theme] || THEME_ICONS.dark;
   if (settingsTheme) settingsTheme.checked = theme === 'light';
-  if (typeof showToast === 'function') showToast(`Switched to ${theme} mode`, 'info');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('nsd_theme') || 'dark';
   html.setAttribute('data-theme', saved);
-  if (themeToggle) themeToggle.textContent = saved === 'dark' ? '☀ Light' : '☾ Dark';
+  if (themeToggle) themeToggle.innerHTML = THEME_ICONS[saved] || THEME_ICONS.dark;
   if (settingsTheme) settingsTheme.checked = saved === 'light';
 
   themeToggle?.addEventListener('click', () => {
@@ -118,28 +144,13 @@ function updateSessionUptime() {
 setInterval(updateSessionUptime, 1000);
 document.addEventListener('DOMContentLoaded', updateSessionUptime);
 
-// ── Dashboard Blocked Count (real) ─────────────────
-function updateDashBlockedCount() {
-  const el = document.getElementById('dash-blocked-count');
-  if (!el) return;
-  try {
-    const list = JSON.parse(localStorage.getItem('sentinelx_blocklist')) || [];
-    el.textContent = list.length;
-  } catch {
-    el.textContent = '0';
-  }
-}
-document.addEventListener('DOMContentLoaded', updateDashBlockedCount);
-// Re-check every 2 seconds in case blocklist changes
-setInterval(updateDashBlockedCount, 2000);
-
 // ── Keyboard Shortcuts ─────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('shortcuts-modal');
   const close = document.getElementById('shortcuts-close');
 
   window.toggleShortcutsModal = () => {
-    if (modal) modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    modal?.classList.toggle('modal-open');
   };
 
   close?.addEventListener('click', toggleShortcutsModal);
@@ -150,123 +161,80 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     // Ignore if user is typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-      if (e.key === 'Escape') {
-        e.target.blur();
-        const search = document.getElementById('global-search');
-        if (search) search.value = '';
-        const results = document.getElementById('search-results');
-        if (results) results.style.display = 'none';
-      }
+      if (e.key === 'Escape') e.target.blur();
       return;
     }
 
     if (e.key === '?') { e.preventDefault(); toggleShortcutsModal(); }
     if (e.key.toLowerCase() === 't') { e.preventDefault(); themeToggle?.click(); }
-    if (e.key === 'Escape' && modal?.style.display === 'flex') toggleShortcutsModal();
+    if (e.key === 'Escape' && modal?.classList.contains('modal-open')) toggleShortcutsModal();
 
-    // Map 1-8 to navigation pages (real pages only)
     const keys = { '1': 'dashboard', '2': 'logs', '3': 'ips', '4': 'dns', '5': 'blocklist', '6': 'hash', '7': 'password', '8': 'cve', '9': 'ssl', '0': 'abuseipdb' };
     if (keys[e.key]) {
       e.preventDefault();
       navigateTo(keys[e.key]);
-      if (typeof showToast === 'function') {
-        showToast(`Navigated to ${pageTitles[keys[e.key]].title}`);
-      }
     }
   });
 });
 
-// ── Global Search ──────────────────────────────────
+// ── Dashboard → Blocklist shortcut ─────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('global-search');
-  const searchResults = document.getElementById('search-results');
-  if (!searchInput || !searchResults) return;
+  document.getElementById('dash-view-blocklist')?.addEventListener('click', () => navigateTo('blocklist'));
 
-  const searchablePages = Object.keys(pageTitles).map(k => ({
-    id: k,
-    title: pageTitles[k].title,
-    sub: pageTitles[k].sub
-  }));
+  // Quick Launch tiles (and any element with data-goto) navigate like the sidebar
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', () => navigateTo(el.dataset.goto));
+  });
+});
 
-  searchInput.addEventListener('input', () => {
-    const q = searchInput.value.toLowerCase().trim();
-    if (!q) {
-      searchResults.style.display = 'none';
+// ── Animated count-up for stat values ───────────────
+window.animateNumber = function (el, to, ms = 500) {
+  if (!el) return;
+  const from = parseInt(String(el.textContent).replace(/[^\d-]/g, ''), 10) || 0;
+  if (from === to) { el.textContent = to.toLocaleString(); return; }
+  const start = performance.now();
+  (function tick(t) {
+    const p = Math.min(1, (t - start) / ms);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * eased).toLocaleString();
+    if (p < 1) requestAnimationFrame(tick);
+  })(start);
+};
+
+// ── Pointer-tracked micro-interactions ──────────────
+//    * stat cards tilt in 3D toward the cursor
+//    * primary buttons are gently "magnetic"
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.addEventListener('pointermove', (e) => {
+    const card = e.target.closest?.('.kpi-card');
+    if (card) {
+      const r = card.getBoundingClientRect();
+      const rx = ((e.clientY - r.top) / r.height - 0.5) * -5;
+      const ry = ((e.clientX - r.left) / r.width - 0.5) * 6;
+      card.style.transform = `perspective(600px) translateY(-3px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
       return;
     }
-
-    const matches = searchablePages.filter(p => 
-      p.title.toLowerCase().includes(q) || p.sub.toLowerCase().includes(q)
-    );
-
-    if (matches.length > 0) {
-      searchResults.innerHTML = matches.map(m => `
-        <div class="search-result-item" onclick="navigateTo('${m.id}'); document.getElementById('global-search').value=''; this.parentElement.style.display='none'">
-          <strong>${m.title}</strong><br>
-          <small>${m.sub}</small>
-        </div>
-      `).join('');
-      searchResults.style.display = 'flex';
-    } else {
-      searchResults.innerHTML = `<div class="search-result-item">No pages found</div>`;
-      searchResults.style.display = 'flex';
+    const btn = e.target.closest?.('.analyze-btn');
+    if (btn && !btn.disabled) {
+      const r = btn.getBoundingClientRect();
+      const dx = ((e.clientX - r.left) / r.width - 0.5) * 6;
+      const dy = ((e.clientY - r.top) / r.height - 0.5) * 4;
+      btn.style.transform = `translate(${dx.toFixed(1)}px, ${(dy - 1).toFixed(1)}px)`;
     }
   });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-wrap')) {
-      searchResults.style.display = 'none';
-    }
+  document.addEventListener('pointerout', (e) => {
+    const el = e.target.closest?.('.kpi-card, .analyze-btn');
+    if (el && !el.contains(e.relatedTarget)) el.style.transform = '';
   });
-});
-
-// ── Export Report ──────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const exportBtn = document.getElementById('export-report-btn');
-  if (!exportBtn) return;
-
-  exportBtn.addEventListener('click', () => {
-    let blockedCount = 0;
-    try {
-      blockedCount = (JSON.parse(localStorage.getItem('sentinelx_blocklist')) || []).length;
-    } catch {}
-
-    const reportData = `SentinelX Security Report
-Generated: ${new Date().toLocaleString()}
-
-Blocked IPs: ${blockedCount}
-
-Available Tools:
-- Log Analyzer (Real regex parsing)
-- IP Lookup (Live ip-api.com)
-- Blocklist Manager (Local storage)
-- Hash Generator (Web Crypto API)
-- Password Checker (Real entropy analysis)
-
-This report was auto-generated by the SentinelX dashboard.`;
-
-    const blob = new Blob([reportData], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sentinelx-report-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    if (typeof showToast === 'function') showToast('Report exported successfully', 'success');
-  });
-});
+}
 
 // ── Settings Page Logic ────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('settings-version')?.replaceChildren('2.0.0 (Real-time Only)');
-  
+  document.getElementById('settings-version')?.replaceChildren('2.1.0');
+
+  // Route through clearBlocklist() so server-side entries are removed too when signed in.
   document.getElementById('settings-clear-blocklist')?.addEventListener('click', () => {
-    if (confirm('Are you sure you want to clear the blocklist?')) {
-      localStorage.removeItem('sentinelx_blocklist');
-      if (typeof renderBlocklist === 'function') renderBlocklist();
-      updateDashBlockedCount();
-      if (typeof showToast === 'function') showToast('Blocklist cleared', 'warn');
-    }
+    if (typeof clearBlocklist === 'function') clearBlocklist();
   });
 
   document.getElementById('settings-clear-data')?.addEventListener('click', () => {

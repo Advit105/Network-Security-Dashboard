@@ -1,0 +1,28 @@
+# ── Web framework ──
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# ── Data / DB (async, parameterized queries only — no raw SQL) ──
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# ── Config & validation (server-side, mass-assignment-safe schemas) ──
+pydantic==2.10.4
+pydantic-settings==2.7.0
+email-validator==2.2.0
+
+# ── Security primitives ──
+argon2-cffi==23.1.0        # Argon2id password hashing (memory-hard)
+pyjwt==2.10.1              # JWT with server-side signature + expiry validation
+pyotp==2.9.0               # TOTP (RFC 6238) for MFA/2FA
+cryptography==44.0.0       # Fernet: encrypt sensitive fields at rest (TOTP secrets)
+
+# ── Rate limiting ──
+slowapi==0.1.9             # per-IP / per-endpoint limits (Redis-backed in prod)
+
+# ── Email (password reset) ──
+# Uses stdlib smtplib; no extra dep. Provider set via env.
+
+# ── Test / tooling ──
+httpx==0.28.1              # ASGI test client for smoke_test.py / e2e_test.py
