@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(`NVD API returned ${res.status}`);
 
       const data = await res.json();
+      window.__cveTotal = data.totalResults ?? null;   // full weekly count for the facts ticker
       allCves = (data.vulnerabilities || []).map(v => {
         const cve = v.cve;
         const cvss = extractCVSS(v);
@@ -102,7 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
           published: cve.published,
           modified: cve.lastModified,
           refs,
-          products
+          products,
+          // CISA Known-Exploited flag ships inline in the NVD record
+          kev: cve.cisaExploitAdd || null,
+          kevName: cve.cisaVulnerabilityName || null,
+          epss: null,       // filled in by enrichEPSS below
+          epssPct: null
         };
       });
 
@@ -110,7 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
       allCves.sort((a, b) => (b.cvss || 0) - (a.cvss || 0));
 
       renderCVEs();
+      publishCVEData();
       if (lastUpdated) lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+      // Enrich with EPSS exploit-probability in the background (one batch call),
+      // then re-render so the scores pop in without blocking the feed.
+      enrichEPSS();
     } catch (err) {
       console.error('CVE fetch error:', err);
       errorEl.style.display = 'block';
@@ -120,13 +131,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // EPSS = FIRST.org's probability a CVE will be exploited in the next 30 days.
+  // One request enriches the whole feed (comma-separated CVE ids).
+  async function enrichEPSS() {
+    const ids = allCves.map(c => c.id);
+    if (!ids.length) return;
+    try {
+      const res = await fetch(`https://api.first.org/data/v1/epss?cve=${ids.join(',')}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const byId = Object.fromEntries((data.data || []).map(r => [r.cve, r]));
+      allCves.forEach(c => {
+        const r = byId[c.id];
+        if (r) { c.epss = parseFloat(r.epss); c.epssPct = parseFloat(r.percentile); }
+      });
+      renderCVEs();
+      publishCVEData();
+    } catch { /* enrichment is best-effort; feed already rendered */ }
+  }
+
+  // Share the live NVD data with the facts ticker (facts.js) so it doesn't
+  // hit the rate-limited NVD API a second time. Fires whenever data changes.
+  function publishCVEData() {
+    window.SentinelCVE = { list: allCves, total: window.__cveTotal, updated: Date.now() };
+    window.dispatchEvent(new Event('sentinel-cve'));
+  }
+
   function renderCVEs() {
     const filter = filterSelect?.value || 'all';
     const search = (searchInput?.value || '').toLowerCase().trim();
 
     let filtered = allCves;
 
-    if (filter !== 'all') {
+    if (filter === 'kev') {
+      filtered = filtered.filter(c => c.kev);           // CISA Known-Exploited only
+    } else if (filter !== 'all') {
       filtered = filtered.filter(c => c.severity.cls === filter);
     }
     if (search) {
@@ -136,7 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     }
 
-    if (countBadge) countBadge.textContent = `${filtered.length} CVEs`;
+    if (countBadge) {
+      const kevCount = filtered.filter(c => c.kev).length;
+      countBadge.textContent = kevCount ? `${filtered.length} CVEs · ${kevCount} KEV` : `${filtered.length} CVEs`;
+    }
 
     if (filtered.length === 0) {
       feedContainer.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:20px;font-size:12.5px">No CVEs match your filters.</div>';
@@ -150,11 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="cve-id-row">
             <span class="cve-id-text">${c.id}</span>
             <span class="cve-score" style="color:${c.severity.color}">${c.cvss !== null ? c.cvss.toFixed(1) : '—'}</span>
+            ${c.kev ? '<span class="kev-badge" title="Listed in the CISA Known Exploited Vulnerabilities catalog — exploited in the wild">⚠ KEV</span>' : ''}
+            ${c.epss !== null ? `<span class="epss-badge" title="EPSS: ${(c.epss * 100).toFixed(1)}% chance of exploitation in the next 30 days (${(c.epssPct * 100).toFixed(0)}th percentile)">EPSS ${(c.epss * 100).toFixed(c.epss >= 0.1 ? 0 : 1)}%</span>` : ''}
           </div>
           <span class="feed-time">${formatDate(c.published)}</span>
         </div>
         <div class="cve-desc">${truncateDesc(c.desc)}</div>
         <div class="cve-details">
+          ${c.kev ? `<div class="cve-products"><span class="cve-detail-label">CISA KEV:</span> exploited in the wild — added ${formatDate(c.kev)}${c.kevName ? ` · ${c.kevName}` : ''}</div>` : ''}
+          ${c.epss !== null ? `<div class="cve-products"><span class="cve-detail-label">EPSS:</span> ${(c.epss * 100).toFixed(2)}% exploitation probability (30d) · ${(c.epssPct * 100).toFixed(0)}th percentile</div>` : ''}
           ${c.vector ? `<div class="cve-vector"><span class="cve-detail-label">Vector:</span> <code>${c.vector}</code></div>` : ''}
           ${c.products.length ? `<div class="cve-products"><span class="cve-detail-label">Affected:</span> ${c.products.join(', ')}</div>` : ''}
           ${c.refs.length ? `<div class="cve-refs">${c.refs.map(r => `<a href="${r.url}" target="_blank" rel="noopener" class="cve-ref-link">${r.source || 'Reference'}</a>`).join(' ')}</div>` : ''}

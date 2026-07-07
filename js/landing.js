@@ -64,17 +64,118 @@ const rain = (() => {
     };
 })();
 
-// ── Dragon parallax ────────────────────────────────
+// ── Parallax: mouse + scroll ───────────────────────
+// The dragon composes both inputs (mouse drift + scroll lag);
+// hero layers scroll away at different speeds, and each
+// section's giant ghost type drifts relative to the viewport.
 const dragon = document.getElementById('dragon');
+const heroTitle = document.querySelector('.glitch');
+const heroTag = document.querySelector('.tagline');
+const px = { mx: 0, my: 0, sy: 0 };
+
+function paintDragon() {
+    if (!dragon) return;
+    dragon.style.transform =
+        `translate(${(px.mx * 14).toFixed(1)}px, ${(px.my * 10 + px.sy * 0.45).toFixed(1)}px)` +
+        ` rotate(${(px.mx * 1.6).toFixed(2)}deg)`;
+}
+
 addEventListener('pointermove', (e) => {
     rain.pointer(e.clientX, e.clientY);
-    if (REDUCED || !dragon) return;
-    const dx = (e.clientX / innerWidth - 0.5);
-    const dy = (e.clientY / innerHeight - 0.5);
-    dragon.style.transform =
-        `translate(${(dx * 14).toFixed(1)}px, ${(dy * 10).toFixed(1)}px)` +
-        ` rotate(${(dx * 1.6).toFixed(2)}deg)`;
+    if (REDUCED) return;
+    px.mx = (e.clientX / innerWidth - 0.5);
+    px.my = (e.clientY / innerHeight - 0.5);
+    paintDragon();
 });
+
+const parallaxBgs = () => document.querySelectorAll('.lsec-bg');
+let scrollTick = false;
+let lastSy = 0, vel = 0;
+function parallaxFrame() {
+    scrollTick = false;
+    px.sy = scrollY;
+    // Scroll velocity → the ghost type shears like a signal losing sync
+    vel = vel * 0.6 + (px.sy - lastSy) * 0.4;
+    lastSy = px.sy;
+    const skew = Math.max(-9, Math.min(9, vel * 0.10));
+    paintDragon();
+    // Hero text scrolls away slower than the page → depth
+    if (heroTitle) heroTitle.style.transform = `translateY(${(px.sy * 0.22).toFixed(1)}px)`;
+    if (heroTag) heroTag.style.transform = `translateY(${(px.sy * 0.14).toFixed(1)}px)`;
+    // Ghost type drifts against its section, keyed to viewport centre
+    parallaxBgs().forEach((el) => {
+        const r = el.parentElement.getBoundingClientRect();
+        const mid = r.top + r.height / 2 - innerHeight / 2;
+        el.style.transform =
+            `translateY(${(mid * parseFloat(el.dataset.parallax || 0.2)).toFixed(1)}px)` +
+            ` skewX(${skew.toFixed(2)}deg)`;
+    });
+    document.getElementById('scroll-cue')?.classList.toggle('hide', px.sy > 80);
+    checkReveals();
+    // Keep ticking until the shear settles back to rest
+    if (Math.abs(vel) > 0.4 && !scrollTick) {
+        scrollTick = true;
+        requestAnimationFrame(parallaxFrame);
+    }
+}
+if (!REDUCED) {
+    addEventListener('scroll', () => {
+        if (!scrollTick) { scrollTick = true; requestAnimationFrame(parallaxFrame); }
+    }, { passive: true });
+}
+
+// ── Decode effect — text resolves out of random glyphs ──
+const DECODE_GLYPHS = '!<>-_\\/[]{}—=+*^?#$%&';
+function decode(el, dur = 600) {
+    if (!el) return;
+    const target = el.dataset.decodeTarget || el.textContent;
+    el.dataset.decodeTarget = target;
+    const t0 = performance.now();
+    (function tick(t) {
+        if (el.dataset.decodeTarget !== target) return;
+        const p = Math.min(1, (t - t0) / dur);
+        const shown = Math.floor(p * target.length);
+        let s = target.slice(0, shown);
+        for (let i = shown; i < target.length; i++) {
+            s += target[i] === ' ' ? ' ' : DECODE_GLYPHS[(Math.random() * DECODE_GLYPHS.length) | 0];
+        }
+        el.textContent = s;
+        if (p < 1) requestAnimationFrame(tick);
+        else delete el.dataset.decodeTarget;
+    })(t0);
+}
+
+// Reveal-on-scroll for section content — driven from the same scroll
+// frame as the parallax (no IntersectionObserver: one less moving part)
+let revealEls = [];
+function watchReveals() {
+    revealEls = [...document.querySelectorAll('.reveal:not(.in)')];
+    if (REDUCED) {
+        revealEls.forEach((el) => el.classList.add('in'));
+        revealEls = [];
+        return;
+    }
+    revealEls.forEach((el, i) => { el.style.animationDelay = (i % 4) * 80 + 'ms'; });
+    checkReveals();
+}
+function checkReveals() {
+    if (!revealEls.length) return;
+    const limit = innerHeight * 0.92;
+    revealEls = revealEls.filter((el) => {
+        if (el.getBoundingClientRect().top < limit) {
+            el.classList.add('in');
+            // Text decrypts as the glitch settles
+            const dec = el.querySelector?.('.dec, .ars-name') ||
+                        (el.classList.contains('intel-chip') ? el : null);
+            if (dec) {
+                const delay = (parseFloat(el.style.animationDelay) || 0) + 150;
+                setTimeout(() => decode(dec, 620), delay);
+            }
+            return false;
+        }
+        return true;
+    });
+}
 
 // ── Terminal ───────────────────────────────────────
 const out = document.getElementById('term-out');
@@ -116,6 +217,7 @@ function finishBoot() {
     inputLine.style.display = '';
     document.getElementById('enter-btn').classList.add('show');
     document.getElementById('hint').classList.add('show');
+    document.getElementById('scroll-cue')?.classList.add('show');
     term.scrollTop = term.scrollHeight;
 }
 
@@ -137,21 +239,34 @@ function launch(hash = '') {
     setTimeout(() => { location.href = APP_URL + hash; }, REDUCED ? 0 : 520);
 }
 document.getElementById('enter-btn').addEventListener('click', () => launch());
+document.querySelectorAll('[data-launch]').forEach((el) => el.addEventListener('click', () => launch()));
 
 // ── Commands ───────────────────────────────────────
 const TOOLS = [
-    ['logs',      'log analyzer — extract & geolocate attackers'],
-    ['ips',       'ip lookup — geo, isp, exposed ports'],
-    ['dns',       'dns lookup — live records via google doh'],
-    ['blocklist', 'blocklist manager — synced when signed in'],
-    ['hash',      'hash generator — sha-256 / sha-1 / sha-512'],
-    ['password',  'password checker — strength + breach check'],
-    ['ssl',       'ssl inspector — certificate transparency'],
-    ['email',     'email security — spf / dkim / dmarc / dnssec'],
-    ['cve',       'cve feed — live from the nvd'],
-    ['abuseipdb', 'abuseipdb — ip reputation scores'],
-    ['typosquat', 'typosquat scanner — live look-alike domains'],
+    ['logs',      'log analyzer',      'extract & geolocate attackers from raw logs'],
+    ['ips',       'ip lookup',         'geo, isp and exposed ports for any address'],
+    ['dns',       'dns lookup',        'live records via google dns-over-https'],
+    ['blocklist', 'blocklist manager', 'your blocklist — synced when signed in'],
+    ['hash',      'hash generator',    'sha-256 / sha-1 / sha-512 + verification'],
+    ['password',  'password checker',  'strength analysis + k-anonymous breach check'],
+    ['ssl',       'ssl inspector',     'certificate transparency + subdomain discovery'],
+    ['email',     'email security',    'spf / dkim / dmarc / dnssec audit'],
+    ['cve',       'cve feed',          'live vulnerabilities from the nvd'],
+    ['abuseipdb', 'abuseipdb',         'ip reputation scores & abuse reports'],
+    ['typosquat', 'typosquat scanner', 'find live look-alike phishing domains'],
 ];
+
+// Arsenal grid on the scroll page — one card per module
+function renderArsenal() {
+    const grid = document.getElementById('arsenal-grid');
+    if (!grid) return;
+    grid.innerHTML = TOOLS.map(([hash, name, desc]) => `
+        <a class="ars-card reveal" href="${APP_URL}#${hash}">
+            <span class="ars-hash">#${hash}</span>
+            <div class="ars-name">${name}</div>
+            <div class="ars-desc">${desc}</div>
+        </a>`).join('');
+}
 
 const COMMANDS = {
     help() {
@@ -169,8 +284,8 @@ const COMMANDS = {
     start: () => launch(),
     open: () => launch(),
     tools() {
-        TOOLS.forEach(([hash, desc]) =>
-            println(`  <a href="${APP_URL}#${hash}">#${hash}</a> <span class="dim">— ${desc}</span>`));
+        TOOLS.forEach(([hash, name, desc]) =>
+            println(`  <a href="${APP_URL}#${hash}">#${hash}</a> <span class="dim">— ${name}: ${desc}</span>`));
         println(`<span class="dim">click one, or</span> <span class="blue">enter</span> <span class="dim">for the dashboard.</span>`);
     },
     neofetch() {
@@ -226,6 +341,8 @@ addEventListener('keydown', (e) => {
         buffer = buffer.slice(0, -1);
         typedEl.textContent = buffer;
     } else if (e.key.length === 1 && buffer.length < 60) {
+        // Mid-command, space belongs to the terminal, not page scroll
+        if (e.key === ' ' && buffer.length > 0) e.preventDefault();
         buffer += e.key;
         typedEl.textContent = buffer;
     }
@@ -235,3 +352,6 @@ addEventListener('click', () => { if (booting) finishBoot(); });
 // ── Init ───────────────────────────────────────────
 rain.start();
 boot();
+renderArsenal();
+watchReveals();
+if (!REDUCED) parallaxFrame();

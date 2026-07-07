@@ -176,6 +176,55 @@ function updateBlockedMetric() {
     const warn = list.filter(e => e.severity === 'warn').length;
     count('kpi-warn', warn);
     set('kpi-warn-label', warn);
+    updateSeverityDonut(list);
+}
+
+// ── Dashboard severity donut (real blocklist data) ──
+function updateSeverityDonut(list) {
+    const svg = document.getElementById('sev-donut');
+    if (!svg) return;
+    list = list || loadBlocklist();
+
+    const wrap = document.getElementById('sev-donut-wrap');
+    const empty = document.getElementById('sev-empty');
+    const badge = document.getElementById('sev-total-badge');
+    const legend = document.getElementById('sev-legend');
+    const total = list.length;
+
+    if (badge) badge.textContent = `${total} blocked`;
+    if (wrap) wrap.style.display = total ? '' : 'none';
+    if (empty) empty.style.display = total ? 'none' : '';
+    if (!total) return;
+
+    const SEGS = [
+        ['danger', 'Critical', 'var(--red)'],
+        ['warn',   'Warning',  'var(--amber)'],
+        ['info',   'Info',     'var(--cyan)'],
+    ];
+    const counts = Object.fromEntries(SEGS.map(([k]) => [k, 0]));
+    list.forEach(e => { if (counts[e.severity] !== undefined) counts[e.severity]++; });
+
+    // r=15.915 → circumference ≈ 100, so dash lengths are percentages
+    let offset = 25; // start segments at 12 o'clock
+    const rings = SEGS.filter(([k]) => counts[k] > 0).map(([k, , color]) => {
+        const pct = (counts[k] / total) * 100;
+        const c = `<circle cx="21" cy="21" r="15.915" fill="none" stroke-width="4.5"
+            style="stroke:${color}" stroke-dasharray="${pct.toFixed(2)} ${(100 - pct).toFixed(2)}"
+            stroke-dashoffset="${offset.toFixed(2)}"></circle>`;
+        offset -= pct;
+        return c;
+    }).join('');
+
+    svg.innerHTML = rings + `
+        <text x="21" y="21" text-anchor="middle" dominant-baseline="central"
+            style="fill:var(--text-1);font-family:var(--f-mono);font-size:9px;font-weight:600">${total}</text>`;
+
+    if (legend) legend.innerHTML = SEGS.map(([k, name, color]) => `
+        <div class="legend-row">
+            <span class="legend-dot" style="background:${color}"></span>
+            <span>${name}</span>
+            <span class="legend-pct" style="color:${color}">${counts[k]}</span>
+        </div>`).join('');
 }
 
 // ── Export ─────────────────────────────────────────

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/landing.css?v=20260716" />
+    <link rel="stylesheet" href="css/landing.css?v=20260721" />
 </head>
 
 <body>
@@ -49,8 +49,43 @@
         <button id="enter-btn" class="enter-btn">ENTER CONSOLE ▸</button>
         <div class="hint" id="hint">press <kbd>enter</kbd> to launch&nbsp; · &nbsp;type <span class="cmd">help</span> for commands</div>
 
+        <div class="scroll-cue" id="scroll-cue">[ scroll to explore ]</div>
     </main>
 
-    <script src="js/landing.js?v=20260716"></script>
+    <!-- ── Parallax section: the arsenal ─────────────── -->
+    <section class="lsec" id="arsenal">
+        <div class="lsec-bg" data-parallax="0.22" aria-hidden="true">ARSENAL</div>
+        <h2 class="lsec-title reveal"><span class="cmt">//</span> <span class="dec">the arsenal</span></h2>
+        <p class="lsec-sub reveal">11 modules · live data · runs in your browser</p>
+        <div class="arsenal-grid" id="arsenal-grid"></div>
+    </section>
+
+    <!-- ── Parallax section: intel sources ───────────── -->
+    <section class="lsec" id="intel">
+        <div class="lsec-bg" data-parallax="0.16" aria-hidden="true">LIVE INTEL</div>
+        <h2 class="lsec-title reveal"><span class="cmt">//</span> <span class="dec">intel sources</span></h2>
+        <p class="lsec-sub reveal">every number on the console comes from a live feed — nothing is faked</p>
+        <div class="intel-row">
+            <span class="intel-chip reveal" title="National Vulnerability Database — CVE feed">nvd.nist.gov</span>
+            <span class="intel-chip reveal" title="Open ports & known CVEs per IP">shodan internetdb</span>
+            <span class="intel-chip reveal" title="Certificate Transparency logs">crt.sh</span>
+            <span class="intel-chip reveal" title="DNS-over-HTTPS resolver">google doh</span>
+            <span class="intel-chip reveal" title="IP geolocation">ipwho.is</span>
+            <span class="intel-chip reveal" title="k-anonymous breach check">haveibeenpwned</span>
+            <span class="intel-chip reveal" title="IP reputation (bring your own key)">abuseipdb</span>
+        </div>
+    </section>
+
+    <!-- ── Parallax section: final CTA ────────────────── -->
+    <section class="lsec lsec-cta" id="cta">
+        <div class="lsec-bg" data-parallax="0.20" aria-hidden="true">ENTER</div>
+        <h2 class="lsec-title reveal"><span class="cmt">//</span> <span class="dec">ready, operator?</span></h2>
+        <p class="lsec-sub reveal">no account needed. your blocklist stays on this machine unless you sign in.</p>
+        <button class="enter-btn show reveal" data-launch>ENTER CONSOLE ▸</button>
+    </section>
+
+    <footer class="lfoot">sentinelx v2.1.0 · local-first · kali-inspired</footer>
+
+    <script src="js/landing.js?v=20260721"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
     <title>SentinelX — SOC Security Dashboard</title>
     <meta name="description" content="Real-time security operations center dashboard with threat monitoring, IP lookup, DNS analysis, and cryptographic tools." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' stroke='%234589ff' stroke-width='1.75' fill='rgba(69,137,255,0.12)' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M9 12l2 2 4-4' stroke='%234589ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="css/style.css?v=20260717" />
+    <link rel="stylesheet" href="css/style.css?v=20260724" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -177,6 +177,10 @@
                     <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
                     <span class="nav-label">Email Security</span>
                 </a>
+                <a href="#" class="nav-item" data-page="ioc">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0H5a2 2 0 01-2-2v-4m6 6h10a2 2 0 002-2v-4M3 9h18M3 15h18"/></svg></span>
+                    <span class="nav-label">IOC Extractor</span>
+                </a>
 
                 <div class="nav-section-label">INTEL</div>
                 <a href="#" class="nav-item" data-page="cve">
@@ -190,6 +194,14 @@
                 <a href="#" class="nav-item" data-page="typosquat">
                     <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
                     <span class="nav-label">Typosquat Scan</span>
+                </a>
+                <a href="#" class="nav-item" data-page="whois">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 010 20M12 2a15 15 0 000 20M2.5 9h19M2.5 15h19"/></svg></span>
+                    <span class="nav-label">WHOIS / RDAP</span>
+                </a>
+                <a href="#" class="nav-item" data-page="asn">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="8" y="14" width="8" height="8" rx="1"/><path d="M6 10v2a2 2 0 002 2h0m10-6v2a2 2 0 01-2 2h0"/></svg></span>
+                    <span class="nav-label">ASN / Netblock</span>
                 </a>
             </nav>
 
@@ -259,6 +271,7 @@
                     <div class="dash-hero-text">
                         <h2 class="dash-hero-title">Security <span class="grad-text">Command Center</span></h2>
                         <p class="dash-hero-sub">Live monitoring — your blocklist, global threat origins and NVD vulnerability intel. All data is real.</p>
+                        <p class="dash-hero-fact"><span class="hero-fact-caret">&gt;</span> <span id="hero-fact">syncing live threat intel…</span></p>
                     </div>
                     <div class="dash-hero-chips">
                         <div class="hero-chip">
@@ -270,6 +283,13 @@
                             <span class="hero-chip-val" id="dash-myip">detecting…</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Live facts ticker — rotates real, self-refreshing threat facts -->
+                <div class="facts-strip" id="facts-strip">
+                    <span class="facts-live"><span class="facts-live-dot"></span>LIVE FACTS</span>
+                    <div class="facts-view"><span class="facts-text" id="facts-text">connecting to live intel feeds…</span></div>
+                    <div class="facts-dots" id="facts-dots"></div>
                 </div>
 
                 <!-- Real-time stat tiles (blocklist-driven, only real data) -->
@@ -320,6 +340,17 @@
                             <button class="panel-btn" id="dash-view-blocklist">View all →</button>
                         </div>
                         <div id="dash-blocklist"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Severity Mix</h2>
+                            <span id="sev-total-badge" class="alert-badge info">0 blocked</span>
+                        </div>
+                        <div class="donut-wrap" id="sev-donut-wrap" style="display:none">
+                            <svg id="sev-donut" class="donut-svg" viewBox="0 0 42 42"></svg>
+                            <div class="donut-legend" id="sev-legend"></div>
+                        </div>
+                        <div id="sev-empty" style="color:var(--text-3);font-size:12px;padding:8px 0">Nothing blocked yet — the severity split of your blocklist appears here.</div>
                     </div>
                     <div class="panel">
                         <div class="panel-header"><h2 class="panel-title">Quick Launch</h2></div>
@@ -817,8 +848,9 @@
                             <h2 class="panel-title">CVE Live Feed</h2>
                             <div style="display:flex;gap:8px;align-items:center">
                                 <span id="cve-last-updated" style="font-size:10.5px;color:var(--text-3);font-family:var(--f-mono)"></span>
-                                <select id="cve-severity-filter" class="tool-input" style="width:120px;height:28px;font-size:11px;padding:0 10px">
+                                <select id="cve-severity-filter" class="tool-input" style="width:140px;height:28px;font-size:11px;padding:0 10px">
                                     <option value="all">All Severity</option>
+                                    <option value="kev">⚠ KEV (exploited)</option>
                                     <option value="critical">Critical</option>
                                     <option value="high">High</option>
                                     <option value="medium">Medium</option>
@@ -1221,6 +1253,223 @@
             </div>
 
             <!-- ════════════════════════════════
+                 PAGE: IOC EXTRACTOR
+                 ════════════════════════════════ -->
+            <div id="page-ioc" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">IOC Extractor</h2>
+                            <div class="alert-badge success">100% client-side</div>
+                        </div>
+                        <p class="tool-desc">Paste any threat report, phishing email, or log dump. SentinelX pulls out every indicator of compromise — IPs, domains, URLs, file hashes, CVEs, emails — and auto-refangs the "defanged" forms analysts share safely (<span class="mono">hxxp://</span>, <span class="mono">evil[.]com</span>, <span class="mono">1.2.3[.]4</span>). Nothing leaves your browser.</p>
+                        <textarea id="ioc-input" class="log-textarea" placeholder="Paste threat intel, an email header, a log excerpt…"></textarea>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:8px">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2);cursor:pointer">
+                                <input type="checkbox" id="ioc-defang-toggle"/> Defang output (safe to paste into tickets)
+                            </label>
+                            <div style="display:flex;gap:8px">
+                                <button class="panel-btn" id="ioc-sample-btn">Load Sample</button>
+                                <button class="panel-btn" id="ioc-clear-btn">Clear</button>
+                                <button class="analyze-btn" id="ioc-extract-btn">Extract IOCs</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Indicators</h2>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span id="ioc-stats" class="alert-badge info"></span>
+                                <button class="panel-btn" id="ioc-copyall-btn" style="display:none">Copy All</button>
+                            </div>
+                        </div>
+                        <div id="ioc-empty" style="color:var(--text-3);font-size:12.5px;padding:8px 0">Paste text above and hit Extract.</div>
+                        <div id="ioc-results" class="ioc-grid"></div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>What it finds</div>
+                            <ul class="info-list">
+                                <li><b>network</b><span>IPv4 addresses, domains and full URLs</span></li>
+                                <li><b>files</b><span>MD5, SHA-1 and SHA-256 hashes</span></li>
+                                <li><b>vulns</b><span>CVE identifiers referenced in the text</span></li>
+                                <li><b>contact</b><span>Email addresses (senders, reply-to)</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>Refang &amp; defang</div>
+                            <p>Analysts neutralize live IOCs before sharing so nobody clicks them. This tool <b>refangs</b> on input to match them, and can <b>defang</b> its output so you can safely drop indicators into a report.</p>
+                            <div class="info-code">hxxps://evil[.]com → https://evil.com</div>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Pivot &amp; investigate</div>
+                            <ul class="info-list">
+                                <li><b>ip</b><span>Jump straight to IP Lookup, ASN or AbuseIPDB</span></li>
+                                <li><b>domain</b><span>Pivot into DNS, WHOIS or the SSL inspector</span></li>
+                                <li><b>copy</b><span>Copy one indicator, or all of them grouped</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: WHOIS / RDAP
+                 ════════════════════════════════ -->
+            <div id="page-whois" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">WHOIS / RDAP Lookup</h2>
+                            <div class="alert-badge success">RDAP · keyless</div>
+                        </div>
+                        <p class="tool-desc">Look up domain registration data — registrar, creation &amp; expiry dates, status flags, nameservers, DNSSEC — via RDAP, the structured successor to WHOIS. The key SOC signal is <strong>domain age</strong>: a domain registered days ago is a classic phishing / C2 tell.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">Domain</label><input type="text" id="whois-input" class="tool-input" placeholder="e.g. example.com"/></div>
+                            <button class="analyze-btn" id="whois-lookup-btn" style="align-self:flex-end">Lookup</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:6px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-whois" data-domain="google.com">google.com</button>
+                            <button class="quick-btn quick-whois" data-domain="github.com">github.com</button>
+                            <button class="quick-btn quick-whois" data-domain="cloudflare.com">cloudflare.com</button>
+                            <button class="quick-btn quick-whois" data-domain="wikipedia.org">wikipedia.org</button>
+                        </div>
+                    </div>
+                    <div id="whois-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Querying RDAP registry…</span></div>
+                    </div>
+                    <div id="whois-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="whois-error-msg"></div>
+                    </div>
+                    <div id="whois-result" style="display:none">
+                        <div class="panel ip-result-main" style="margin-bottom:10px">
+                            <div class="ip-result-header">
+                                <div>
+                                    <div class="ip-address-display" id="whois-domain">—</div>
+                                    <div class="ip-org">Domain registration record</div>
+                                </div>
+                                <div id="whois-risk-badge"></div>
+                            </div>
+                            <div class="ip-details-grid">
+                                <div class="ip-detail"><span class="ip-detail-label">Age</span><span class="ip-detail-val" id="whois-age">—</span></div>
+                                <div class="ip-detail"><span class="ip-detail-label">Registered</span><span class="ip-detail-val" id="whois-registered">—</span></div>
+                                <div class="ip-detail"><span class="ip-detail-label">Expires</span><span class="ip-detail-val" id="whois-expires">—</span></div>
+                                <div class="ip-detail"><span class="ip-detail-label">Last Changed</span><span class="ip-detail-val" id="whois-changed">—</span></div>
+                                <div class="ip-detail"><span class="ip-detail-label">Registrar</span><span class="ip-detail-val" id="whois-registrar">—</span></div>
+                                <div class="ip-detail"><span class="ip-detail-label">DNSSEC</span><span class="ip-detail-val" id="whois-dnssec">—</span></div>
+                            </div>
+                        </div>
+                        <div class="panel" style="margin-bottom:10px">
+                            <div class="panel-header"><h2 class="panel-title">Nameservers</h2></div>
+                            <div id="whois-ns" class="subdomain-grid"></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><h2 class="panel-title">Status Flags</h2></div>
+                            <div id="whois-status" class="subdomain-grid"></div>
+                        </div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>Why age matters</div>
+                            <p>Attackers register fresh domains constantly. A brand look-alike created <b>this week</b> that's already sending mail is almost never legitimate — age is one of the highest-signal, lowest-effort checks in triage.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Reading status flags</div>
+                            <ul class="info-list">
+                                <li><b>clientHold</b><span>Domain is suspended — often abuse-related</span></li>
+                                <li><b>pendingDelete</b><span>On its way out of the registry</span></li>
+                                <li><b>*Prohibited</b><span>Locks against transfer/update — normal &amp; healthy</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>RDAP vs WHOIS</div>
+                            <p>RDAP is the IETF replacement for legacy WHOIS: structured JSON, standardized fields, and CORS-enabled — which is exactly why this runs in your browser with no key. Some ccTLDs don't publish RDAP yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: ASN / NETBLOCK
+                 ════════════════════════════════ -->
+            <div id="page-asn" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">ASN / Netblock Lookup</h2>
+                            <div class="alert-badge success">RIPEstat · keyless</div>
+                        </div>
+                        <p class="tool-desc">Find who owns the network an IP lives in — the autonomous system (ASN), the covering prefix, the operator, and crucially the <strong>abuse contact</strong> to report attacks to. Powered by RIPEstat's public data API.</p>
+                        <div class="input-row">
+                            <div class="input-group" style="flex:1"><label class="input-label">IP Address</label><input type="text" id="asn-input" class="tool-input" placeholder="e.g. 45.33.32.156"/></div>
+                            <button class="analyze-btn" id="asn-myip-btn" style="align-self:flex-end">My IP</button>
+                            <button class="analyze-btn" id="asn-lookup-btn" style="align-self:flex-end">Lookup</button>
+                        </div>
+                        <div class="quick-ips" style="margin-top:6px">
+                            <span class="quick-label">Quick test:</span>
+                            <button class="quick-btn quick-asn" data-ip="45.33.32.156">45.33.32.156</button>
+                            <button class="quick-btn quick-asn" data-ip="8.8.8.8">8.8.8.8</button>
+                            <button class="quick-btn quick-asn" data-ip="1.1.1.1">1.1.1.1</button>
+                            <button class="quick-btn quick-asn" data-ip="185.220.101.5">185.220.101.5</button>
+                        </div>
+                    </div>
+                    <div id="asn-loading" style="display:none" class="panel">
+                        <div class="loading-row"><div class="spinner"></div><span>Querying RIPEstat…</span></div>
+                    </div>
+                    <div id="asn-error" style="display:none" class="panel">
+                        <div style="color:var(--red);font-size:12.5px;text-align:center;padding:14px" id="asn-error-msg"></div>
+                    </div>
+                    <div id="asn-result" style="display:none">
+                        <div class="panel ip-result-main" style="margin-bottom:10px">
+                            <div class="ip-result-header">
+                                <div>
+                                    <div class="ip-address-display" id="asn-ip">—</div>
+                                    <div class="ip-org" id="asn-holder">—</div>
+                                </div>
+                                <button class="action-btn" id="asn-pivot-ip" style="align-self:flex-start">Geolocate →</button>
+                            </div>
+                            <div class="ip-details-grid">
+                                <div class="ip-detail"><span class="ip-detail-label">ASN</span><span class="ip-detail-val" id="asn-number">—</span></div>
+                                <div class="ip-detail"><span class="ip-detail-label">Prefix</span><span class="ip-detail-val" id="asn-prefix">—</span></div>
+                                <div class="ip-detail" style="grid-column:1/-1"><span class="ip-detail-label">Announced</span><span class="ip-detail-val" id="asn-announced">—</span></div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h2 class="panel-title">Abuse Contact</h2>
+                                <div class="alert-badge warn">report here</div>
+                            </div>
+                            <p class="tool-desc">The address the network operator publishes for abuse reports. Use it to report attacks originating from this IP.</p>
+                            <div id="asn-abuse"></div>
+                        </div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>ASN vs IP</div>
+                            <p>An <b>ASN</b> is a network operator's ID; the <b>prefix</b> is the block of addresses they announce to the internet. Blocking a whole malicious prefix can be smarter than chasing individual IPs that rotate within it.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>Reporting abuse</div>
+                            <ul class="info-list">
+                                <li><b>who</b><span>The abuse@ mailbox is the operator's own reporting channel</span></li>
+                                <li><b>what</b><span>Include the IP, timestamps (with timezone) and log excerpts</span></li>
+                                <li><b>bogon</b><span>"Not announced" means the IP isn't globally routed — often spoofed</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Pairs with</div>
+                            <ul class="info-list">
+                                <li><b>IP Lookup</b><span>Geo, ISP and exposed ports for the same address</span></li>
+                                <li><b>AbuseIPDB</b><span>Community reputation score for the IP</span></li>
+                                <li><b>Blocklist</b><span>Add the IP — or its whole prefix — to your blocklist</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
                  PAGE: SETTINGS
                  ════════════════════════════════ -->
             <div id="page-settings" class="page">
@@ -1280,27 +1529,31 @@
         </main>
     </div>
 
-    <script src="js/toast.js?v=20260717"></script>
-    <script src="js/api.js?v=20260717"></script>
-    <script src="js/main.js?v=20260717"></script>
+    <script src="js/toast.js?v=20260724"></script>
+    <script src="js/api.js?v=20260724"></script>
+    <script src="js/main.js?v=20260724"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
-    <script src="js/world_map.js?v=20260717"></script>
-    <script src="js/log_parser.js?v=20260717"></script>
-    <script src="js/ip_lookup.js?v=20260717"></script>
-    <script src="js/dns_lookup.js?v=20260717"></script>
-    <script src="js/blocklist.js?v=20260717"></script>
-    <script src="js/search_filter.js?v=20260717"></script>
-    <script src="js/hash_generator.js?v=20260717"></script>
-    <script src="js/password_checker.js?v=20260717"></script>
-    <script src="js/cve_feed.js?v=20260717"></script>
-    <script src="js/ticker.js?v=20260717"></script>
-    <script src="js/ssl_inspector.js?v=20260717"></script>
-    <script src="js/abuseipdb.js?v=20260717"></script>
-    <script src="js/typosquat.js?v=20260717"></script>
-    <script src="js/command_palette.js?v=20260717"></script>
-    <script src="js/auth_ui.js?v=20260717"></script>
-    <script src="js/account_security.js?v=20260717"></script>
-    <script src="js/email_security.js?v=20260717"></script>
+    <script src="js/world_map.js?v=20260724"></script>
+    <script src="js/log_parser.js?v=20260724"></script>
+    <script src="js/ip_lookup.js?v=20260724"></script>
+    <script src="js/dns_lookup.js?v=20260724"></script>
+    <script src="js/blocklist.js?v=20260724"></script>
+    <script src="js/search_filter.js?v=20260724"></script>
+    <script src="js/hash_generator.js?v=20260724"></script>
+    <script src="js/password_checker.js?v=20260724"></script>
+    <script src="js/cve_feed.js?v=20260724"></script>
+    <script src="js/facts.js?v=20260724"></script>
+    <script src="js/ticker.js?v=20260724"></script>
+    <script src="js/ssl_inspector.js?v=20260724"></script>
+    <script src="js/abuseipdb.js?v=20260724"></script>
+    <script src="js/typosquat.js?v=20260724"></script>
+    <script src="js/ioc_extractor.js?v=20260724"></script>
+    <script src="js/whois_rdap.js?v=20260724"></script>
+    <script src="js/asn_lookup.js?v=20260724"></script>
+    <script src="js/command_palette.js?v=20260724"></script>
+    <script src="js/auth_ui.js?v=20260724"></script>
+    <script src="js/account_security.js?v=20260724"></script>
+    <script src="js/email_security.js?v=20260724"></script>
 
 </body>
 </html>

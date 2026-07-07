@@ -11,6 +11,9 @@ const pageTitles = {
   email:      { title: 'Email Security',     sub: 'SPF / DMARC / DKIM / DNSSEC' },
   abuseipdb:  { title: 'AbuseIPDB',          sub: 'IP Reputation / Threat intelligence' },
   typosquat:  { title: 'Typosquat Scanner',  sub: 'Phishing / Look-alike domains' },
+  ioc:        { title: 'IOC Extractor',      sub: 'Indicators / Refang / Pivot' },
+  whois:      { title: 'WHOIS / RDAP',       sub: 'Domain age / Registration intel' },
+  asn:        { title: 'ASN / Netblock',     sub: 'RIPEstat / Abuse contact' },
   settings:   { title: 'Settings',           sub: 'Preferences / Data management' }
 };
 
@@ -26,11 +29,13 @@ function navigateTo(pageId) {
     el.classList.toggle('active', el.id === 'page-' + pageId);
   });
 
-  // Update topbar title
+  // Update topbar title — in dark mode it decrypts into place
   const info = pageTitles[pageId];
   if (info) {
-    document.getElementById('page-title').textContent = info.title;
-    document.getElementById('page-sub').textContent   = info.sub;
+    const titleEl = document.getElementById('page-title');
+    titleEl.textContent = info.title;
+    document.getElementById('page-sub').textContent = info.sub;
+    if (html.getAttribute('data-theme') === 'dark') window.decodeText?.(titleEl, 450);
   }
 
   // Close mobile sidebar
@@ -40,6 +45,9 @@ function navigateTo(pageId) {
   history.replaceState(null, '', pageId === 'dashboard' ? location.pathname : '#' + pageId);
 
   if (pageId === 'blocklist' && typeof renderBlocklist === 'function') renderBlocklist();
+
+  // Reveal any info tiles already in view on the freshly opened page
+  requestAnimationFrame(() => window.checkTileReveals?.());
 }
 
 // Deep-link: open the page named in the URL hash (e.g. app.html#hash)
@@ -94,6 +102,24 @@ function setTheme(theme) {
   if (settingsTheme) settingsTheme.checked = theme === 'light';
 }
 
+// Toggling plays a transition first: CRT power-on flicker into dark,
+// clean white wipe into light. The attribute swap happens while the
+// overlay is fully opaque, so the restyle itself is never visible.
+function switchTheme(theme) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setTheme(theme); return; }
+  let fx = document.getElementById('theme-fx');
+  if (!fx) {
+    fx = document.createElement('div');
+    fx.id = 'theme-fx';
+    document.body.appendChild(fx);
+  }
+  fx.classList.remove('fx-dark', 'fx-light');
+  void fx.offsetWidth; // restart the animation if spammed
+  fx.classList.add(theme === 'dark' ? 'fx-dark' : 'fx-light');
+  setTimeout(() => setTheme(theme), theme === 'dark' ? 300 : 180);
+  fx.addEventListener('animationend', () => fx.classList.remove('fx-dark', 'fx-light'), { once: true });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('nsd_theme') || 'dark';
   html.setAttribute('data-theme', saved);
@@ -102,11 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   themeToggle?.addEventListener('click', () => {
     const current = html.getAttribute('data-theme');
-    setTheme(current === 'dark' ? 'light' : 'dark');
+    switchTheme(current === 'dark' ? 'light' : 'dark');
   });
 
   settingsTheme?.addEventListener('change', (e) => {
-    setTheme(e.target.checked ? 'light' : 'dark');
+    switchTheme(e.target.checked ? 'light' : 'dark');
   });
 });
 
@@ -201,11 +227,31 @@ window.animateNumber = function (el, to, ms = 500) {
   })(start);
 };
 
-// ── Pointer-tracked micro-interactions ──────────────
+// ── Pointer-tracked micro-interactions (dark mode only —
+//    light mode is deliberately simple and static) ─────
+//    * panels get a spotlight that follows the cursor
 //    * stat cards tilt in 3D toward the cursor
 //    * primary buttons are gently "magnetic"
+//    * a phosphor glow trails the pointer across the console
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  let lastSpot = null;
+
   document.addEventListener('pointermove', (e) => {
+    if (html.getAttribute('data-theme') !== 'dark') return;
+
+    // Spotlight: expose cursor position to CSS as --sx/--sy
+    const spot = e.target.closest?.('.panel, .map-panel, .kpi-card, .info-tile');
+    if (lastSpot && lastSpot !== spot) {
+      lastSpot.style.removeProperty('--sx');
+      lastSpot.style.removeProperty('--sy');
+    }
+    lastSpot = spot;
+    if (spot) {
+      const r = spot.getBoundingClientRect();
+      spot.style.setProperty('--sx', (e.clientX - r.left).toFixed(0) + 'px');
+      spot.style.setProperty('--sy', (e.clientY - r.top).toFixed(0) + 'px');
+    }
+
     const card = e.target.closest?.('.kpi-card');
     if (card) {
       const r = card.getBoundingClientRect();
@@ -226,7 +272,74 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const el = e.target.closest?.('.kpi-card, .analyze-btn');
     if (el && !el.contains(e.relatedTarget)) el.style.transform = '';
   });
+
+  // Trailing phosphor glow (CSS hides it in light mode)
+  document.addEventListener('DOMContentLoaded', () => {
+    const glow = document.createElement('div');
+    glow.id = 'cursor-glow';
+    document.body.appendChild(glow);
+    let gx = innerWidth / 2, gy = innerHeight / 2, tx = gx, ty = gy;
+    document.addEventListener('pointermove', (e) => { tx = e.clientX; ty = e.clientY; });
+    (function trail() {
+      gx += (tx - gx) * 0.12;
+      gy += (ty - gy) * 0.12;
+      glow.style.transform = `translate(${(gx - 260).toFixed(1)}px, ${(gy - 260).toFixed(1)}px)`;
+      requestAnimationFrame(trail);
+    })();
+  });
 }
+
+// ── Scroll parallax ─────────────────────────────────
+//    * the Kali watermark lags behind the page scroll (depth)
+//    * info tiles below the fold reveal as they scroll into view
+//      (position-checked, no IntersectionObserver — deterministic)
+window.checkTileReveals = function () {
+  document.querySelectorAll('.info-tile.reveal:not(.in)').forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width && r.top < innerHeight * 0.95 && r.bottom > 0) el.classList.add('in');
+  });
+};
+
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  // .page elements scroll, and scroll doesn't bubble → capture phase
+  document.addEventListener('scroll', (e) => {
+    const page = e.target;
+    if (!(page instanceof Element) || !page.classList?.contains('page')) return;
+    const k = document.querySelector('.bg-kali');
+    if (k) k.style.transform = `translateY(calc(-50% + ${(page.scrollTop * 0.08).toFixed(1)}px))`;
+    checkTileReveals();
+  }, { capture: true, passive: true });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.info-tile').forEach((el, i) => {
+      el.classList.add('reveal');
+      el.style.animationDelay = (i % 3) * 90 + 'ms';
+    });
+    checkTileReveals();
+  });
+}
+
+// ── Decode effect — text resolves out of random glyphs ──
+window.decodeText = function (el, dur = 500) {
+  if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const GLYPHS = '!<>-_\\/[]{}—=+*^?#$%&';
+  const target = el.dataset.decodeTarget || el.textContent;
+  el.dataset.decodeTarget = target;
+  const t0 = performance.now();
+  (function tick(t) {
+    // Guard: if the text was swapped mid-animation (fast nav), stop
+    if (el.dataset.decodeTarget !== target) return;
+    const p = Math.min(1, (t - t0) / dur);
+    const shown = Math.floor(p * target.length);
+    let s = target.slice(0, shown);
+    for (let i = shown; i < target.length; i++) {
+      s += target[i] === ' ' ? ' ' : GLYPHS[(Math.random() * GLYPHS.length) | 0];
+    }
+    el.textContent = s;
+    if (p < 1) requestAnimationFrame(tick);
+    else delete el.dataset.decodeTarget;
+  })(t0);
+};
 
 // ── Settings Page Logic ────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
