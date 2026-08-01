@@ -11,6 +11,7 @@
   const $ = (id) => document.getElementById(id);
   let mfaMode = 'enable';       // 'enable' | 'disable'
   let qrLibLoading = null;
+  let sessionsFor = null;       // user id the device list was last fetched for
 
   // ── Panel state ───────────────────────────────────
   function renderPanel(state) {
@@ -32,8 +33,14 @@
         btn.classList.remove('danger-btn');
         desc.textContent = 'Adds a 6-digit authenticator code to every sign-in.';
       }
-      loadSessions();
+      // Fetch the device list once per sign-in, not on every state emit
+      // (online-status flaps also fire onChange).
+      if (sessionsFor !== state.user.id) {
+        sessionsFor = state.user.id;
+        loadSessions();
+      }
     } else {
+      sessionsFor = null;
       out.style.display = 'block';
       inn.style.display = 'none';
     }

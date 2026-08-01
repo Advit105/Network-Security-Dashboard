@@ -139,3 +139,10 @@ class DeviceSessionList(BaseModel):
 
 class MessageOut(BaseModel):
     detail: str
+
+
+class RefreshResult(BaseModel):
+    """Refresh response. Carries the rotated CSRF token in the body because a
+    cross-origin SPA cannot read the API-origin cookie it was also set in."""
+    detail: str
+    csrf_token: str

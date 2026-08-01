@@ -92,7 +92,7 @@
       const c = bl.filter(e => e.severity === 'danger').length;
       out.push(`🛡 You're blocking ${bl.length} IP${bl.length === 1 ? '' : 's'}${c ? ` — ${c} marked critical` : ''}`);
     } else {
-      out.push(`🛡 Your blocklist is empty — block an IP from any tool to plot it on the threat map`);
+      out.push(`🛡 Your blocklist is empty — block an IP from any tool to rank it in Top Threat Origins`);
     }
 
     const ipEl = document.getElementById('dash-myip');

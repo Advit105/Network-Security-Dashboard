@@ -29,17 +29,17 @@ function renderHashResults(hashes) {
     <div class="hash-row">
       <div class="hash-algo">SHA-256</div>
       <div class="hash-val" id="hash-sha256">${hashes.sha256}</div>
-      <button class="copy-hash-btn" onclick="copyHash('hash-sha256', this)">Copy</button>
+      <button class="copy-hash-btn" data-copy-hash="hash-sha256">Copy</button>
     </div>
     <div class="hash-row">
       <div class="hash-algo">SHA-1</div>
       <div class="hash-val" id="hash-sha1">${hashes.sha1}</div>
-      <button class="copy-hash-btn" onclick="copyHash('hash-sha1', this)">Copy</button>
+      <button class="copy-hash-btn" data-copy-hash="hash-sha1">Copy</button>
     </div>
     <div class="hash-row">
       <div class="hash-algo">SHA-512</div>
       <div class="hash-val" id="hash-sha512">${hashes.sha512}</div>
-      <button class="copy-hash-btn" onclick="copyHash('hash-sha512', this)">Copy</button>
+      <button class="copy-hash-btn" data-copy-hash="hash-sha512">Copy</button>
     </div>
   `;
 }
@@ -83,6 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn   = document.getElementById('hash-btn');
   const input = document.getElementById('hash-input');
   if (!btn || !input) return;
+
+  // Web Crypto needs a secure context (https / localhost) — fail with a
+  // message instead of a silent TypeError when served over plain http.
+  if (!crypto.subtle) {
+    btn.addEventListener('click', () =>
+      showToast('Web Crypto unavailable — open the app via localhost or HTTPS', 'danger'));
+    return;
+  }
 
   btn.addEventListener('click', async () => {
     const text = input.value.trim();

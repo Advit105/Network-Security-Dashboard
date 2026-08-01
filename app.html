@@ -3,11 +3,15 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:8000 https://*.googleapis.com https://*.firebaseapp.com https://ipwho.is https://dns.google https://internetdb.shodan.io https://crt.sh https://api.pwnedpasswords.com https://api.ipify.org https://api.first.org https://nvd.nist.gov https://services.nvd.nist.gov https://onionoo.torproject.org https://rdap.org https://stat.ripe.net https://www.abuseipdb.com https://cdn.jsdelivr.net; frame-src https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SentinelX — SOC Security Dashboard</title>
     <meta name="description" content="Real-time security operations center dashboard with threat monitoring, IP lookup, DNS analysis, and cryptographic tools." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' stroke='%234589ff' stroke-width='1.75' fill='rgba(69,137,255,0.12)' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M9 12l2 2 4-4' stroke='%234589ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="css/style.css?v=20260724" />
+    <link rel="stylesheet" href="css/style.css?v=20260801" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0b0e14" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,7 +24,7 @@
     </div>
 
     <!-- Toast -->
-    <div id="toast-container"></div>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
 
     <!-- Command Palette (⌘K) -->
     <div id="cmdk" class="cmdk-overlay">
@@ -36,14 +40,19 @@
 
     <!-- Auth Modal (login / register / MFA) -->
     <div id="auth-modal" class="modal-overlay">
-        <div class="modal-box auth-box">
+        <div class="modal-box auth-box" role="dialog" aria-modal="true" aria-labelledby="auth-title">
             <div class="modal-header">
                 <h2 class="modal-title" id="auth-title">Sign in to SentinelX</h2>
-                <button id="auth-close" class="modal-close">×</button>
+                <button id="auth-close" class="modal-close" aria-label="Close">×</button>
             </div>
             <p class="auth-sub" id="auth-sub">Sync your blocklist across devices. Optional — the app works without an account.</p>
 
             <div id="auth-form-step">
+                <button type="button" id="auth-google" class="google-btn">
+                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    <span>Continue with Google</span>
+                </button>
+                <div class="auth-divider"><span>or</span></div>
                 <div class="input-group" style="margin-bottom:12px">
                     <label class="input-label">Email</label>
                     <input type="email" id="auth-email" class="tool-input" placeholder="you@company.com" autocomplete="username"/>
@@ -74,10 +83,10 @@
 
     <!-- MFA enroll / disable Modal -->
     <div id="mfa-modal" class="modal-overlay">
-        <div class="modal-box auth-box">
+        <div class="modal-box auth-box" role="dialog" aria-modal="true" aria-labelledby="mfa-modal-title">
             <div class="modal-header">
                 <h2 class="modal-title" id="mfa-modal-title">Enable Two-Factor Authentication</h2>
-                <button id="mfa-modal-close" class="modal-close">×</button>
+                <button id="mfa-modal-close" class="modal-close" aria-label="Close">×</button>
             </div>
             <div id="mfa-enroll-step">
                 <p class="auth-sub">Scan this QR code with your authenticator app (Google Authenticator, 1Password, Authy…), then enter the 6-digit code it shows.</p>
@@ -96,10 +105,10 @@
 
     <!-- Shortcuts Modal -->
     <div id="shortcuts-modal" class="modal-overlay">
-        <div class="modal-box">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts">
             <div class="modal-header">
                 <h2 class="modal-title">Keyboard Shortcuts</h2>
-                <button id="shortcuts-close" class="modal-close">×</button>
+                <button id="shortcuts-close" class="modal-close" aria-label="Close">×</button>
             </div>
             <div class="shortcuts-grid">
                 <div class="shortcut-row"><kbd>1</kbd><span>Dashboard</span></div>
@@ -131,7 +140,7 @@
             <div class="sidebar-logo">
                 <div class="logo-icon" title="SentinelX">
                     <svg viewBox="10 115 492 330" width="26" height="17" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="#37a6ff" transform="translate(2.0107)" d="m69.929 127.71c-29.464.0337-48.949 2.4206-48.949 2.4206s107.73-5.1706 194.03 29.769c2.9338 13.122 11.759 34.976 16.513 45.481-13.602 9.4041-28.94 18.249-31.328 49.612-2.3877 31.362 24.576 58.947 58.013 59.798 31.751 1.6913 53.688 1.9323 80.277 15.718 25.38 14.034 46.192 56.794 48.251 95.252 2.2244-28.534-8.4845-89.895-58.453-108.53 69.826 12.219 75.982 63.973 75.984 63.994 0 0 5.2056-59.754-88.677-73.531-11.899-1.7458-26.947-3.0899-42.168-3.1283-75.246.99487-77.989-86.786-21.288-91.218 23.499-1.9389 51.556 10.738 78.986 23.512-.10182 3.4068.0404 6.4339 2.2787 9.2314 2.2375 2.7966 10.832 5.8474 13.579 7.4233 2.7464 1.5764 11.545 7.1715 16.937 14.189 1.1692-2.1872 10.933-8.5432 10.933-8.5432s-2.3391.0507-7.781-1.9832c-5.4426-2.0339-11.9-8.1876-12.053-8.5432-.15246-.35625-.25501-.91601 1.0169-1.1705.96572-.81305-1.2209-3.4575-2.1873-4.4232-.96572-.96636-7.4247-11.95-7.5769-12.204-.15245-.25447-.20376-.50931-.66105-.81465-1.4244-.45805-7.6799.66106-7.6799.66106s-9.6211-4.7252-12.937-14.913c.0482 1.7844-1.6497 3.734 0 7.8335-5.0162-2.122-9.325-5.7416-12.723-14.685-2.0227 5.0868 0 8.3215 0 8.3215s-11.811-3.3016-13.701-14.195c-2.0742 4.8902 0 7.8316 0 7.8316s-19.258-10.048-51.255-10.194c-21.422-1.965-25.882-39.65-23.897-45.994 0 0-30.899-16.285-91.723-23.479-22.809-2.6982-44.081-3.5238-61.76-3.5036zm71.276 32.521c-9.2697.0699-19.22.41577-29.674 1.1588-55.751 3.9628-112.04 23.477-112.04 23.477s115.18-28.98 211.77-11.971h.002l-2.512-8.1057s-27.373-4.5594-67.542-4.5594zm68.293 17.263c-9.75-.0412-40.02 1.1848-85.564 15.436-57.124 17.874-89.522 43.21-89.522 43.21s85.141-47.539 181.24-50.24l-2.7492-8.3176s-1.1564-.0779-3.4064-.0875zm62.559-.13932c26.38 10.723 49.34 24.931 67.165 44.514l.002.002 4.2794-.27998s-24.518-29.746-71.446-44.236zm74.662 61.731c.85796.17286 2.4779 3.3567 3.9644 5.6306.13054.18477.26356.38112.38886.53662.002.0138.003.0234.006.037.16796.23967.33693.4887.49774.68826.0812.47558.21641.76558-.89631.53663-.0936-.48886-.25471-.62995-.25471-.62995s-2.686-1.5982-3.5094-2.7317c-.82408-1.1335-.96948-3.1153-.56774-3.8672z"/>
+                        <path fill="currentColor" transform="translate(2.0107)" d="m69.929 127.71c-29.464.0337-48.949 2.4206-48.949 2.4206s107.73-5.1706 194.03 29.769c2.9338 13.122 11.759 34.976 16.513 45.481-13.602 9.4041-28.94 18.249-31.328 49.612-2.3877 31.362 24.576 58.947 58.013 59.798 31.751 1.6913 53.688 1.9323 80.277 15.718 25.38 14.034 46.192 56.794 48.251 95.252 2.2244-28.534-8.4845-89.895-58.453-108.53 69.826 12.219 75.982 63.973 75.984 63.994 0 0 5.2056-59.754-88.677-73.531-11.899-1.7458-26.947-3.0899-42.168-3.1283-75.246.99487-77.989-86.786-21.288-91.218 23.499-1.9389 51.556 10.738 78.986 23.512-.10182 3.4068.0404 6.4339 2.2787 9.2314 2.2375 2.7966 10.832 5.8474 13.579 7.4233 2.7464 1.5764 11.545 7.1715 16.937 14.189 1.1692-2.1872 10.933-8.5432 10.933-8.5432s-2.3391.0507-7.781-1.9832c-5.4426-2.0339-11.9-8.1876-12.053-8.5432-.15246-.35625-.25501-.91601 1.0169-1.1705.96572-.81305-1.2209-3.4575-2.1873-4.4232-.96572-.96636-7.4247-11.95-7.5769-12.204-.15245-.25447-.20376-.50931-.66105-.81465-1.4244-.45805-7.6799.66106-7.6799.66106s-9.6211-4.7252-12.937-14.913c.0482 1.7844-1.6497 3.734 0 7.8335-5.0162-2.122-9.325-5.7416-12.723-14.685-2.0227 5.0868 0 8.3215 0 8.3215s-11.811-3.3016-13.701-14.195c-2.0742 4.8902 0 7.8316 0 7.8316s-19.258-10.048-51.255-10.194c-21.422-1.965-25.882-39.65-23.897-45.994 0 0-30.899-16.285-91.723-23.479-22.809-2.6982-44.081-3.5238-61.76-3.5036zm71.276 32.521c-9.2697.0699-19.22.41577-29.674 1.1588-55.751 3.9628-112.04 23.477-112.04 23.477s115.18-28.98 211.77-11.971h.002l-2.512-8.1057s-27.373-4.5594-67.542-4.5594zm68.293 17.263c-9.75-.0412-40.02 1.1848-85.564 15.436-57.124 17.874-89.522 43.21-89.522 43.21s85.141-47.539 181.24-50.24l-2.7492-8.3176s-1.1564-.0779-3.4064-.0875zm62.559-.13932c26.38 10.723 49.34 24.931 67.165 44.514l.002.002 4.2794-.27998s-24.518-29.746-71.446-44.236zm74.662 61.731c.85796.17286 2.4779 3.3567 3.9644 5.6306.13054.18477.26356.38112.38886.53662.002.0138.003.0234.006.037.16796.23967.33693.4887.49774.68826.0812.47558.21641.76558-.89631.53663-.0936-.48886-.25471-.62995-.25471-.62995s-2.686-1.5982-3.5094-2.7317c-.82408-1.1335-.96948-3.1153-.56774-3.8672z"/>
                     </svg>
                 </div>
                 <span class="logo-text">SentinelX</span>
@@ -181,6 +190,14 @@
                     <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0H5a2 2 0 01-2-2v-4m6 6h10a2 2 0 002-2v-4M3 9h18M3 15h18"/></svg></span>
                     <span class="nav-label">IOC Extractor</span>
                 </a>
+                <a href="#" class="nav-item" data-page="decoder">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13 5l-2 14"/></svg></span>
+                    <span class="nav-label">Decoder</span>
+                </a>
+                <a href="#" class="nav-item" data-page="headers">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="M6 14h6M6 17h9"/></svg></span>
+                    <span class="nav-label">Header Analyzer</span>
+                </a>
 
                 <div class="nav-section-label">INTEL</div>
                 <a href="#" class="nav-item" data-page="cve">
@@ -206,6 +223,11 @@
             </nav>
 
             <div class="sidebar-footer">
+                <!-- Install as PWA — revealed only when the browser offers it -->
+                <button id="install-app" class="install-btn" style="display:none" aria-label="Install SentinelX as an app">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                    <span>Install app</span>
+                </button>
                 <!-- Account / cloud sync -->
                 <div id="account-widget" class="account-widget">
                     <button id="account-signin" class="account-signin">
@@ -314,22 +336,21 @@
                     </div>
                 </div>
 
-                <!-- World Map — Full Width Centerpiece -->
-                <div class="map-panel" style="min-height: 480px">
+                <!-- Top Threat Origins — ranked country breakdown of the blocklist -->
+                <div class="map-panel">
                     <div class="panel-header-row">
                         <div style="display:flex;align-items:baseline;gap:10px">
-                            <span class="panel-heading">Threat Origin Map</span>
-                            <span class="map-substat" id="map-stats"></span>
+                            <span class="panel-heading">Top Threat Origins</span>
+                            <span class="map-substat" id="origins-stat"></span>
                         </div>
                         <div style="display:flex;gap:12px;align-items:center">
                             <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#fa4d56;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Critical</span></div>
                             <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#f1c21b;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Warning</span></div>
                             <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#4589ff;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Info</span></div>
-                            <div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:#42be65;width:6px;height:6px"></div><span style="font-size:10px;color:var(--text-3)">Your Location</span></div>
                         </div>
                     </div>
-                    <!-- Rendered dynamically by world_map.js -->
-                    <div class="world-map-wrap" id="world-map-wrap"></div>
+                    <!-- Rendered dynamically by threat_origins.js -->
+                    <div class="origins-list" id="threat-origins-wrap"></div>
                 </div>
 
                 <!-- Bottom row: recent activity + quick launch -->
@@ -415,10 +436,10 @@
                             <h2 class="panel-title">Threat Actors</h2>
                             <div style="display:flex;gap:8px;align-items:center">
                                 <span id="log-actors-count" class="alert-badge danger">0 IPs</span>
-                                <button class="analyze-btn" id="log-block-all-btn" style="padding:6px 14px">Block All &amp; Map</button>
+                                <button class="analyze-btn" id="log-block-all-btn" style="padding:6px 14px">Block All</button>
                             </div>
                         </div>
-                        <p class="tool-desc">Public IP addresses extracted from suspicious log lines, ranked by activity. Geolocated live — block them to plot on the Threat Origin Map.</p>
+                        <p class="tool-desc">Public IP addresses extracted from suspicious log lines, ranked by activity. Geolocated live — block them to rank their countries in Top Threat Origins.</p>
                         <table class="ip-table" id="log-actors-table">
                             <thead><tr><th>IP Address</th><th>Hits</th><th>Location</th><th>Top Pattern</th><th>Action</th></tr></thead>
                             <tbody id="log-actors-tbody"></tbody>
@@ -456,7 +477,7 @@
                             <div class="info-head"><span class="idot green"></span>Suggested workflow</div>
                             <p><b>1.</b> Paste logs — or hit <b>Load Sample</b> to try it instantly.<br>
                                <b>2.</b> Review the extracted <b>Threat Actors</b>: every public IP is ranked by hits and geolocated live.<br>
-                               <b>3.</b> <b>Block All &amp; Map</b> adds them to your blocklist and plots their origins on the dashboard threat map.</p>
+                               <b>3.</b> <b>Block All</b> adds them to your blocklist and ranks their origin countries in Top Threat Origins.</p>
                         </div>
                     </div>
                 </div>
@@ -536,7 +557,7 @@
                                 <li><b>location</b><span>Country, region, city, timezone and coordinates</span></li>
                                 <li><b>network</b><span>ISP and owning organisation of the address</span></li>
                                 <li><b>exposure</b><span>Open ports, tags and known CVEs from Shodan InternetDB</span></li>
-                                <li><b>actions</b><span>One-click block or watchlist — plotted on the threat map</span></li>
+                                <li><b>actions</b><span>One-click block or watchlist — ranked in Top Threat Origins</span></li>
                             </ul>
                         </div>
                         <div class="info-tile">
@@ -616,7 +637,7 @@
                             <ul class="info-list">
                                 <li><b>guest</b><span>Entries live in this browser's local storage only</span></li>
                                 <li><b>signed in</b><span>The server is the source of truth — your list follows you across devices</span></li>
-                                <li><b>map</b><span>Every entry is geolocated and plotted on the dashboard threat map</span></li>
+                                <li><b>origins</b><span>Every entry is geolocated and ranked in Top Threat Origins</span></li>
                             </ul>
                         </div>
                         <div class="info-tile">
@@ -1314,6 +1335,123 @@
             </div>
 
             <!-- ════════════════════════════════
+                 PAGE: DECODER (CyberChef-lite)
+                 ════════════════════════════════ -->
+            <div id="page-decoder" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Cyber Decoder</h2>
+                            <div class="alert-badge success">100% client-side</div>
+                        </div>
+                        <p class="tool-desc">The everyday CyberChef ops in one panel — Base64, hex, URL, HTML entities, ROT13, JWTs, gzipped blobs, Unix timestamps, defang/refang. Hit <b>✨ Magic</b> to auto-detect and peel encoding layers, or chain operations by feeding the output back as input. Nothing leaves your browser.</p>
+                        <textarea id="dec-input" class="log-textarea" style="min-height:120px" placeholder="Paste an encoded string — a Base64 blob from a phishing page, a JWT, hex from a packet dump, an obfuscated URL…"></textarea>
+                        <div id="dec-ops" class="dec-ops"></div>
+                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+                            <button class="panel-btn" id="dec-sample-btn">Load Sample</button>
+                            <button class="panel-btn" id="dec-clear-btn">Clear</button>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Output</h2>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span id="dec-status" class="alert-badge info">Waiting for input…</span>
+                                <button class="panel-btn" id="dec-chain-btn" style="display:none" title="Feed this output back as input to chain another operation">↑ Use as input</button>
+                                <button class="panel-btn" id="dec-copy-btn" style="display:none">Copy</button>
+                            </div>
+                        </div>
+                        <pre id="dec-output" class="dec-output"></pre>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot"></span>Why analysts decode all day</div>
+                            <ul class="info-list">
+                                <li><b>phishing</b><span>Credential-harvest pages hide the real URL in Base64 redirect parameters</span></li>
+                                <li><b>malware</b><span>PowerShell droppers ship as <span class="mono">-EncodedCommand</span> Base64, often gzipped inside</span></li>
+                                <li><b>tokens</b><span>JWTs carry who/what/when in the payload — expiry and alg=none are instant tells</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>✨ Magic mode</div>
+                            <p>Detects the encoding from the data itself — Base64 alphabet check, gzip magic bytes (<span class="mono">1f 8b</span>), JWT structure, percent-encoding — then decodes and <b>re-checks up to six layers deep</b>, showing every step it took. Attackers stack encodings precisely so a single decode shows garbage.</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>Chain like CyberChef</div>
+                            <ul class="info-list">
+                                <li><b>1</b><span>Run any operation on your input</span></li>
+                                <li><b>2</b><span>Hit <b>↑ Use as input</b> to move the result up</span></li>
+                                <li><b>3</b><span>Run the next op — a manual CyberChef "recipe"</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 PAGE: EMAIL HEADER ANALYZER
+                 ════════════════════════════════ -->
+            <div id="page-headers" class="page">
+                <div class="tool-layout">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Email Header Analyzer</h2>
+                            <div class="alert-badge success">100% client-side</div>
+                        </div>
+                        <p class="tool-desc">Paste the full raw headers of a suspicious email (<b>Gmail:</b> ⋮ → Show original · <b>Outlook:</b> View message source). SentinelX traces every relay hop, reads the SPF / DKIM / DMARC verdicts, checks whether they actually <i>align</i> with the From: address, and flags the classic spoofing tells. Headers never leave your browser.</p>
+                        <textarea id="hdr-input" class="log-textarea" placeholder="Return-Path: <...>&#10;Received: from ... by ... ; date&#10;Authentication-Results: ...&#10;From: ...&#10;Subject: ..."></textarea>
+                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+                            <button class="panel-btn" id="hdr-sample-btn">Load Sample</button>
+                            <button class="panel-btn" id="hdr-clear-btn">Clear</button>
+                            <button class="analyze-btn" id="hdr-analyze-btn">Analyze Headers</button>
+                        </div>
+                    </div>
+                    <div id="hdr-results" style="display:none">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h2 class="panel-title">Message Summary</h2>
+                                <span id="hdr-verdict" class="alert-badge info">—</span>
+                            </div>
+                            <div id="hdr-summary" class="hdr-summary"></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header"><h2 class="panel-title">Red Flags</h2></div>
+                            <div id="hdr-flags"></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h2 class="panel-title">Delivery Route</h2>
+                                <span class="alert-badge info">origin → inbox</span>
+                            </div>
+                            <div id="hdr-hops"></div>
+                        </div>
+                    </div>
+                    <div class="info-strip">
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot red"></span>The #1 phishing tell</div>
+                            <p><b>Reply-To ≠ From.</b> The attacker spoofs a trusted From: address for display, but replies must reach a mailbox they control. Auth can even <i>pass</i> — for the attacker's own domain — which is why <b>alignment</b> with the From: domain matters more than a green "pass".</p>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot amber"></span>Reading the route</div>
+                            <ul class="info-list">
+                                <li><b>bottom-up</b><span>Each relay stacks its Received: line on top — the analyzer reverses to origin-first</span></li>
+                                <li><b>origin IP</b><span>First public IP in the chain — pivot straight into Lookup / Abuse / ASN</span></li>
+                                <li><b>timestamps</b><span>Backwards time = forged line; long gaps = queuing</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-tile">
+                            <div class="info-head"><span class="idot green"></span>SOC triage flow</div>
+                            <ul class="info-list">
+                                <li><b>1</b><span>Verdict + red flags: is this spoofed?</span></li>
+                                <li><b>2</b><span>Pivot the origin IP into AbuseIPDB</span></li>
+                                <li><b>3</b><span>Feed body URLs to the IOC Extractor, then block</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
                  PAGE: WHOIS / RDAP
                  ════════════════════════════════ -->
             <div id="page-whois" class="page">
@@ -1529,31 +1667,34 @@
         </main>
     </div>
 
-    <script src="js/toast.js?v=20260724"></script>
-    <script src="js/api.js?v=20260724"></script>
-    <script src="js/main.js?v=20260724"></script>
-    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
-    <script src="js/world_map.js?v=20260724"></script>
-    <script src="js/log_parser.js?v=20260724"></script>
-    <script src="js/ip_lookup.js?v=20260724"></script>
-    <script src="js/dns_lookup.js?v=20260724"></script>
-    <script src="js/blocklist.js?v=20260724"></script>
-    <script src="js/search_filter.js?v=20260724"></script>
-    <script src="js/hash_generator.js?v=20260724"></script>
-    <script src="js/password_checker.js?v=20260724"></script>
-    <script src="js/cve_feed.js?v=20260724"></script>
-    <script src="js/facts.js?v=20260724"></script>
-    <script src="js/ticker.js?v=20260724"></script>
-    <script src="js/ssl_inspector.js?v=20260724"></script>
-    <script src="js/abuseipdb.js?v=20260724"></script>
-    <script src="js/typosquat.js?v=20260724"></script>
-    <script src="js/ioc_extractor.js?v=20260724"></script>
-    <script src="js/whois_rdap.js?v=20260724"></script>
-    <script src="js/asn_lookup.js?v=20260724"></script>
-    <script src="js/command_palette.js?v=20260724"></script>
-    <script src="js/auth_ui.js?v=20260724"></script>
-    <script src="js/account_security.js?v=20260724"></script>
-    <script src="js/email_security.js?v=20260724"></script>
+    <script defer src="js/toast.js?v=20260801"></script>
+    <script defer src="js/firebase-config.js?v=20260801"></script>
+    <script type="module" src="js/gauth.js?v=20260801"></script>
+    <script defer src="js/api.js?v=20260801"></script>
+    <script defer src="js/main.js?v=20260801"></script>
+    <script defer src="js/threat_origins.js?v=20260801"></script>
+    <script defer src="js/log_parser.js?v=20260801"></script>
+    <script defer src="js/ip_lookup.js?v=20260801"></script>
+    <script defer src="js/dns_lookup.js?v=20260801"></script>
+    <script defer src="js/blocklist.js?v=20260801"></script>
+    <script defer src="js/search_filter.js?v=20260801"></script>
+    <script defer src="js/hash_generator.js?v=20260801"></script>
+    <script defer src="js/password_checker.js?v=20260801"></script>
+    <script defer src="js/cve_feed.js?v=20260801"></script>
+    <script defer src="js/facts.js?v=20260801"></script>
+    <script defer src="js/ticker.js?v=20260801"></script>
+    <script defer src="js/ssl_inspector.js?v=20260801"></script>
+    <script defer src="js/abuseipdb.js?v=20260801"></script>
+    <script defer src="js/typosquat.js?v=20260801"></script>
+    <script defer src="js/ioc_extractor.js?v=20260801"></script>
+    <script defer src="js/whois_rdap.js?v=20260801"></script>
+    <script defer src="js/asn_lookup.js?v=20260801"></script>
+    <script defer src="js/command_palette.js?v=20260801"></script>
+    <script defer src="js/auth_ui.js?v=20260801"></script>
+    <script defer src="js/account_security.js?v=20260801"></script>
+    <script defer src="js/email_security.js?v=20260801"></script>
+    <script defer src="js/decoder.js?v=20260801"></script>
+    <script defer src="js/header_analyzer.js?v=20260801"></script>
 
 </body>
 </html>

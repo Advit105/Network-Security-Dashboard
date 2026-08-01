@@ -6,6 +6,7 @@ already-rotated token means it was stolen and replayed → we revoke the entire
 token family, forcing re-authentication everywhere.
 """
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select, update
@@ -50,11 +51,11 @@ async def _revoke_family(db: AsyncSession, family_id: uuid.UUID) -> None:
     )
 
 
+@dataclass(frozen=True)
 class RefreshOutcome:
-    def __init__(self, raw_token: str | None, user_id: uuid.UUID | None, reuse_detected: bool):
-        self.raw_token = raw_token
-        self.user_id = user_id
-        self.reuse_detected = reuse_detected
+    raw_token: str | None
+    user_id: uuid.UUID | None
+    reuse_detected: bool
 
 
 async def rotate_session(
@@ -89,7 +90,6 @@ async def revoke_by_raw(db: AsyncSession, raw_refresh: str) -> None:
     ).scalar_one_or_none()
     if row and row.revoked_at is None:
         row.revoked_at = _now()
-        await db.flush()
 
 
 async def revoke_all_for_user(db: AsyncSession, user_id: uuid.UUID) -> None:

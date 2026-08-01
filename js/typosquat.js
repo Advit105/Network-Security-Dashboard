@@ -129,7 +129,13 @@
       return;
     }
 
-    const tld = parts.pop();
+    let tld = parts.pop();
+    // ccTLD registries like .co.uk: keep the two-part suffix together so
+    // variants mutate "example", not "co". Common seconds only — good enough.
+    const SECOND_LEVEL = new Set(['co', 'com', 'net', 'org', 'ac', 'gov', 'edu']);
+    if (parts.length > 1 && tld.length === 2 && SECOND_LEVEL.has(parts[parts.length - 1])) {
+      tld = parts.pop() + '.' + tld;
+    }
     const sld = parts.join('');
 
     loading.style.display = 'flex';

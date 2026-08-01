@@ -35,10 +35,8 @@
     if (!query) return 1;
     const q = query.toLowerCase(), t = text.toLowerCase();
     if (t.includes(q)) return 100 - t.indexOf(q);
+    // subsequence check
     let qi = 0;
-    for (let i = 0; i < t.length && qi < q.length; i++) if (t[qi] === q[qi]) qi++;
-    // fallthrough subsequence check
-    qi = 0;
     for (let i = 0; i < t.length; i++) { if (t[i] === q[qi]) qi++; if (qi === q.length) return 20; }
     return 0;
   }

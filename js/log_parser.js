@@ -134,7 +134,7 @@ function renderResults(results) {
     <div class="result-row" style="animation-delay:${i * 40}ms">
       <div class="alert-dot ${r.severity}"></div>
       <div class="result-info">
-        <span class="result-type" style="color:var(--${r.severity === 'danger' ? 'danger' : r.severity === 'warn' ? 'warn' : r.severity === 'success' ? 'success' : 'info'})">${r.type}</span>
+        <span class="result-type" style="color:var(--${r.severity === 'danger' ? 'red' : r.severity === 'warn' ? 'amber' : r.severity === 'success' ? 'green' : 'cyan'}-ink)">${r.type}</span>
         <span class="alert-msg">${r.desc}</span>
         <span class="result-raw">${escapeHTML(r.raw)}</span>
       </div>
@@ -156,7 +156,7 @@ function escapeHTML(str) {
 // ═══════════════════════════════════════════════════
 //  THREAT ACTOR PIPELINE — extract IPs → geolocate → block
 // ═══════════════════════════════════════════════════
-const GEO_CACHE_KEY = 'sentinelx_geo_cache_v2'; // shared with world_map.js
+const GEO_CACHE_KEY = 'sentinelx_geo_cache_v2'; // shared with threat_origins.js
 
 function loadGeoCacheLP() {
     try { return JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {}; } catch { return {}; }
@@ -273,7 +273,7 @@ function blockAllActors() {
         added++;
     });
     if (typeof showToast === 'function') {
-        showToast(added ? `Blocked ${added} IP${added === 1 ? '' : 's'} — see the Threat Origin Map` : 'All actors already blocked', added ? 'success' : 'info');
+        showToast(added ? `Blocked ${added} IP${added === 1 ? '' : 's'} — see Top Threat Origins` : 'All actors already blocked', added ? 'success' : 'info');
     }
     // Refresh the table to show Blocked state
     document.getElementById('log-actors-tbody')?.querySelectorAll('.actor-block-btn').forEach(btn => {

@@ -22,8 +22,23 @@ function refreshBlocklistViews() {
     window.refreshWorldMap?.();
 }
 
-const loggedIn = () => !!(window.SentinelAPI && SentinelAPI.isLoggedIn());
+// Active remote store: Google (Firestore) → email backend → none (guest).
+// Both stores expose the same add/remove/list shape, so callers don't care
+// which one they get. null = guest, save to localStorage only.
+function remoteStore() {
+    if (window.GAuth && GAuth.isSignedIn()) return GAuth.store;
+    if (window.SentinelAPI && SentinelAPI.isLoggedIn()) return SentinelAPI;
+    return null;
+}
+const loggedIn = () => !!remoteStore();
 const notify = (msg, kind) => (typeof showToast === 'function' ? showToast(msg, kind) : null);
+
+// IPv4 or (rough) IPv6 — the server validates too, but guest mode has no
+// server, so junk must be rejected here or it pollutes the list and map.
+function isValidBlockIP(ip) {
+    if (/^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/.test(ip)) return true;
+    return ip.includes(':') && /^(?:[0-9a-f]{0,4}:){1,7}[0-9a-f]{0,4}$/i.test(ip);
+}
 
 // ── Add Entry ──────────────────────────────────────
 // When signed in, the server is source of truth (per-user, synced); the entry it
@@ -31,6 +46,11 @@ const notify = (msg, kind) => (typeof showToast === 'function' ? showToast(msg, 
 // read localStorage — keep working unchanged. Offline/guest → localStorage only.
 async function addToBlocklist(ip, reason = '', severity = 'danger') {
     if (!ip) return;
+    ip = String(ip).trim();
+    if (!isValidBlockIP(ip)) {
+        notify(`"${ip.slice(0, 40)}" is not a valid IP address`, 'danger');
+        return;
+    }
 
     const list = loadBlocklist();
     if (list.find(e => e.ip === ip)) {
@@ -40,9 +60,10 @@ async function addToBlocklist(ip, reason = '', severity = 'danger') {
 
     const reasonText = reason || 'Manually blocked';
 
-    if (loggedIn()) {
+    const remote = remoteStore();
+    if (remote) {
         try {
-            const entry = await SentinelAPI.addBlocklist(ip, reasonText, severity);
+            const entry = await remote.addBlocklist(ip, reasonText, severity);
             list.unshift({ id: entry.id, ip: entry.ip, reason: entry.reason, severity: entry.severity, added: entry.created_at });
             saveBlocklist(list);
             refreshBlocklistViews();
@@ -65,9 +86,10 @@ async function removeFromBlocklist(ip) {
     const list = loadBlocklist();
     const entry = list.find(e => e.ip === ip);
 
-    if (loggedIn() && entry && entry.id) {
-        try { await SentinelAPI.removeBlocklist(entry.id); }
-        catch { notify('Server unreachable — removed on this device only', 'warn'); }
+    const remote = remoteStore();
+    if (remote && entry && entry.id) {
+        try { await remote.removeBlocklist(entry.id); }
+        catch { notify('Sync unreachable — removed on this device only', 'warn'); }
     }
 
     saveBlocklist(list.filter(e => e.ip !== ip));
@@ -78,9 +100,10 @@ async function removeFromBlocklist(ip) {
 async function clearBlocklist() {
     if (!confirm('Remove all blocked IPs?')) return;
 
-    if (loggedIn()) {
+    const remote = remoteStore();
+    if (remote) {
         for (const e of loadBlocklist()) {
-            if (e.id) { try { await SentinelAPI.removeBlocklist(e.id); } catch {} }
+            if (e.id) { try { await remote.removeBlocklist(e.id); } catch {} }
         }
     }
 
@@ -124,13 +147,15 @@ function renderBlocklist() {
     empty.style.display = 'none';
     table.style.display = 'table';
 
+    // ip/reason are user data → escaped; Remove is a delegated listener on
+    // the tbody (no inline onclick, so quotes in data can't break out).
     tbody.innerHTML = list.map(e => `
     <tr>
-      <td class="mono">${e.ip}</td>
-      <td style="color:var(--text-secondary);font-size:12px">${e.reason}</td>
+      <td class="mono">${escHtml(e.ip)}</td>
+      <td style="color:var(--text-2);font-size:12px">${escHtml(e.reason)}</td>
       <td><div class="alert-badge ${e.severity}">${e.severity === 'danger' ? 'Critical' : e.severity === 'warn' ? 'Warning' : 'Info'}</div></td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${formatDate(e.added)}</td>
-      <td><button class="remove-btn" onclick="removeFromBlocklist('${e.ip}')">Remove</button></td>
+      <td style="font-family:var(--f-mono);font-size:11px;color:var(--text-3)">${formatDate(e.added)}</td>
+      <td><button class="remove-btn" data-ip="${escHtml(e.ip)}">Remove</button></td>
     </tr>
   `).join('');
 }
@@ -151,8 +176,8 @@ function updateDashboardBlocklist() {
     <div class="alert-row">
       <div class="alert-dot ${e.severity}"></div>
       <div class="alert-info">
-        <span class="alert-msg" style="font-family:var(--font-mono);font-size:12px">${e.ip}</span>
-        <span class="alert-meta">${e.reason}</span>
+        <span class="alert-msg" style="font-family:var(--f-mono);font-size:12px">${escHtml(e.ip)}</span>
+        <span class="alert-meta">${escHtml(e.reason)}</span>
       </div>
       <div class="alert-badge ${e.severity}">${e.severity === 'danger' ? 'Critical' : e.severity === 'warn' ? 'Watch' : 'Info'}</div>
     </div>
@@ -268,6 +293,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Enter key on IP input
     document.getElementById('block-ip-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') document.getElementById('add-block-btn').click();
+    });
+
+    // Remove buttons (delegated — rows re-render on every change)
+    document.getElementById('blocklist-tbody')?.addEventListener('click', e => {
+        const btn = e.target.closest('.remove-btn');
+        if (btn?.dataset.ip) removeFromBlocklist(btn.dataset.ip);
     });
 
     // Export

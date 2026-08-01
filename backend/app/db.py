@@ -27,9 +27,6 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency: one session per request, always closed."""
+    """FastAPI dependency: one session per request, closed by the context manager."""
     async with SessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session

@@ -20,11 +20,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.core.cookies import REFRESH_COOKIE, clear_auth_cookies, set_auth_cookies
+from app.core.cookies import CSRF_COOKIE, REFRESH_COOKIE, clear_auth_cookies, set_auth_cookies
 from app.core.crypto import decrypt, encrypt
 from app.core.dependencies import CurrentUser, require_csrf
 from app.core.rate_limit import (
-    LOGIN_LIMIT, MFA_VERIFY_LIMIT, REGISTER_LIMIT, RESET_REQUEST_LIMIT, limiter,
+    LOGIN_LIMIT, MFA_VERIFY_LIMIT, REGISTER_LIMIT, RESET_REQUEST_LIMIT, client_ip, limiter,
 )
 from app.core.security import (
     generate_opaque_token, hash_password, hash_token, needs_rehash, verify_password,
@@ -34,17 +34,15 @@ from app.core.tokens import (
     decode_mfa_challenge_token,
 )
 from app.core import totp
-from app.core.rate_limit import client_ip
 from app.db import get_db
 from app.models.audit import AuditEvent
 from app.models.password_reset import PasswordResetToken
 from app.models.user import Role, User
 from app.schemas.auth import (
     DeviceSession, DeviceSessionList, LoginRequest, LoginResult, MFADisableRequest,
-    MFAEnableConfirmRequest, MFAEnrollStart, MFAVerifyRequest,
-    MessageOut, PasswordResetConfirm, PasswordResetRequest, RegisterRequest, SessionInfo, UserOut,
+    MFAEnableConfirmRequest, MFAEnrollStart, MFAVerifyRequest, MessageOut,
+    PasswordResetConfirm, PasswordResetRequest, RefreshResult, RegisterRequest, SessionInfo, UserOut,
 )
-from app.core.cookies import CSRF_COOKIE
 from app.services import audit, sessions
 from app.services.email import send_password_reset
 
@@ -97,16 +95,21 @@ async def session(request: Request, db: Db) -> SessionInfo:
     """Tells the SPA whether it's logged in and hands back the CSRF token to use.
     A cross-origin SPA can't read the API-origin CSRF cookie, so we echo it here.
     Unauthenticated callers just get authenticated=false (never an error)."""
+    # The CSRF cookie is echoed even when unauthenticated: the SPA needs it to
+    # call POST /auth/refresh (CSRF-protected) and revive an expired access
+    # token whose refresh cookie is still valid. It is the caller's own cookie
+    # value, so echoing it grants nothing an attacker doesn't already have.
+    csrf = request.cookies.get(CSRF_COOKIE)
     token = request.cookies.get("access_token")
     if not token:
-        return SessionInfo(authenticated=False)
+        return SessionInfo(authenticated=False, csrf_token=csrf)
     try:
         payload = decode_access_token(token)
         user = (await db.execute(select(User).where(User.id == uuid.UUID(payload["sub"])))).scalar_one_or_none()
     except (TokenError, ValueError, KeyError):
         user = None
     if not user or not user.is_active:
-        return SessionInfo(authenticated=False)
+        return SessionInfo(authenticated=False, csrf_token=csrf)
     return SessionInfo(
         authenticated=True,
         user=UserOut.model_validate(user),
@@ -180,10 +183,17 @@ async def mfa_verify(request: Request, response: Response, body: MFAVerifyReques
 
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     ip, ua = _ctx(request)
-    if not user or not user.mfa_enabled or not user.mfa_secret_enc:
+    # is_active is re-checked here: the account may have been disabled between
+    # the password step and this second step (the challenge token lives 5 min).
+    if not user or not user.is_active or not user.mfa_enabled or not user.mfa_secret_enc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA session")
 
-    if not totp.verify_code(decrypt(user.mfa_secret_enc), body.code):
+    try:
+        secret = decrypt(user.mfa_secret_enc)
+    except ValueError:
+        # FERNET_KEY rotated / ciphertext corrupt — fail cleanly, not with a 500.
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA session")
+    if not totp.verify_code(secret, body.code):
         await audit.record(db, event=AuditEvent.mfa_failure, user_id=user.id, email=user.email, ip=ip,
                            user_agent=ua, suspicious=True)
         await db.commit()
@@ -197,8 +207,8 @@ async def mfa_verify(request: Request, response: Response, body: MFAVerifyReques
 
 
 # ── Refresh (rotation + reuse detection) ─────────────────────────────────────
-@router.post("/refresh", response_model=MessageOut, dependencies=[Depends(require_csrf)])
-async def refresh(request: Request, response: Response, db: Db) -> MessageOut:
+@router.post("/refresh", response_model=RefreshResult, dependencies=[Depends(require_csrf)])
+async def refresh(request: Request, response: Response, db: Db) -> RefreshResult:
     raw = request.cookies.get(REFRESH_COOKIE)
     if not raw:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No session")
@@ -225,7 +235,7 @@ async def refresh(request: Request, response: Response, db: Db) -> MessageOut:
     set_auth_cookies(response, access_token=access, refresh_token=outcome.raw_token, csrf_token=csrf)
     await audit.record(db, event=AuditEvent.token_refresh, user_id=user.id, email=user.email, ip=ip, user_agent=ua)
     await db.commit()
-    return MessageOut(detail="refreshed")
+    return RefreshResult(detail="refreshed", csrf_token=csrf)
 
 
 # ── Logout ───────────────────────────────────────────────────────────────────
@@ -259,7 +269,11 @@ async def mfa_enable(request: Request, body: MFAEnableConfirmRequest, user: Curr
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="MFA already enabled")
     if not user.mfa_secret_enc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Start enrollment first")
-    if not totp.verify_code(decrypt(user.mfa_secret_enc), body.code):
+    try:
+        secret = decrypt(user.mfa_secret_enc)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Enrollment invalid — start again")
+    if not totp.verify_code(secret, body.code):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code")
     user.mfa_enabled = True
     ip, ua = _ctx(request)
@@ -272,7 +286,11 @@ async def mfa_enable(request: Request, body: MFAEnableConfirmRequest, user: Curr
 async def mfa_disable(request: Request, body: MFADisableRequest, user: CurrentUser, db: Db) -> MessageOut:
     if not user.mfa_enabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled")
-    if not user.mfa_secret_enc or not totp.verify_code(decrypt(user.mfa_secret_enc), body.code):
+    try:
+        secret = decrypt(user.mfa_secret_enc) if user.mfa_secret_enc else None
+    except ValueError:
+        secret = None
+    if not secret or not totp.verify_code(secret, body.code):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code")
     user.mfa_enabled = False
     user.mfa_secret_enc = None
@@ -376,6 +394,9 @@ async def password_reset_confirm(request: Request, body: PasswordResetConfirm, d
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
 
     user.password_hash = hash_password(body.new_password)
+    # Proving email ownership clears any brute-force lockout on the account.
+    user.failed_login_count = 0
+    user.locked_until = None
     row.used_at = datetime.now(UTC)
     # Security: reset invalidates all existing sessions (in case of prior compromise).
     await sessions.revoke_all_for_user(db, user.id)

@@ -46,7 +46,7 @@ app.add_middleware(
     allow_origins=settings.cors_origin_list,   # explicit origins only
     allow_credentials=True,                    # cookies
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-CSRF-Token"],
+    allow_headers=["Content-Type", "Authorization", "X-CSRF-Token", "X-Abuse-Key"],
     max_age=600,
 )
 

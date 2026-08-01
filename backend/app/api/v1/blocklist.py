@@ -3,7 +3,7 @@
 Every handler scopes queries to the authenticated user (`caller.id`), so a user
 can only ever see or modify their own entries — IDOR is prevented by construction,
 not by an after-the-fact ownership check. Mutations require CSRF; all endpoints
-are rate-limited via the global limiter and require authentication.
+require authentication.
 """
 import uuid
 from typing import Annotated

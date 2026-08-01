@@ -24,5 +24,5 @@ slowapi==0.1.9             # per-IP / per-endpoint limits (Redis-backed in prod)
 # ── Email (password reset) ──
 # Uses stdlib smtplib; no extra dep. Provider set via env.
 
-# ── Test / tooling ──
-httpx==0.28.1              # ASGI test client for smoke_test.py / e2e_test.py
+# ── Outbound HTTP + test tooling ──
+httpx==0.28.1              # AbuseIPDB proxy (api/v1/proxy.py) + ASGI test client

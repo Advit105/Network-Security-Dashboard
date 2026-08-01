@@ -21,8 +21,8 @@ async function dnsLookup(domain, type) {
 
         if (data.Status !== 0 || !data.Answer || data.Answer.length === 0) {
             document.getElementById('dns-error-msg').textContent =
-                data.Answer ? 'No records found for this query.' :
-                `DNS query failed (Status: ${data.Status}). Check the domain name.`;
+                data.Status !== 0 ? `DNS query failed (Status: ${data.Status}). Check the domain name.`
+                                  : 'No records found for this query.';
             errBox.style.display = 'flex';
             return;
         }
@@ -46,9 +46,9 @@ function renderDNSResults(domain, queryType, data) {
     const summary = document.getElementById('dns-summary');
 
     summary.innerHTML = `
-        <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">${domain}</span>
+        <span style="font-family:var(--f-mono);font-size:12px;color:var(--text-2)">${escHtml(domain)}</span>
         <div class="alert-badge info">${data.Answer.length} records</div>
-        <div class="alert-badge success">${queryType}</div>
+        <div class="alert-badge success">${escHtml(queryType)}</div>
     `;
 
     tbody.innerHTML = data.Answer.map(record => {
@@ -63,12 +63,14 @@ function renderDNSResults(domain, queryType, data) {
         // Truncate very long values
         const displayVal = value.length > 80 ? value.slice(0, 77) + '...' : value;
 
+        // record.data / record.name are attacker-controlled (any domain's TXT
+        // can contain markup) — always escaped before hitting innerHTML.
         return `
         <tr>
-            <td><div class="alert-badge info" style="font-size:10px">${typeName}</div></td>
-            <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary)">${record.name}</td>
-            <td style="font-family:var(--font-mono);font-size:12px;color:var(--info);word-break:break-all" title="${value}">${displayVal}</td>
-            <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${record.TTL}s</td>
+            <td><div class="alert-badge info" style="font-size:10px">${escHtml(typeName)}</div></td>
+            <td style="font-family:var(--f-mono);font-size:12px;color:var(--text-1)">${escHtml(record.name)}</td>
+            <td style="font-family:var(--f-mono);font-size:12px;color:var(--cyan-ink);word-break:break-all" title="${escHtml(value)}">${escHtml(displayVal)}</td>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--text-3)">${record.TTL}s</td>
         </tr>`;
     }).join('');
 

@@ -29,7 +29,7 @@ window.SentinelAPI = (() => {
   function isLoggedIn() { return !!state.user; }
   function currentUser() { return state.user; }
 
-  async function request(method, path, body, { csrf = false } = {}) {
+  async function request(method, path, body, { csrf = false, retry = true } = {}) {
     const headers = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (csrf && state.csrf) headers['X-CSRF-Token'] = state.csrf;
@@ -50,9 +50,28 @@ window.SentinelAPI = (() => {
     if (res.status === 204) return null;
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      // Access token expired mid-session (TTL 15 min): rotate the refresh
+      // token once and replay the request. Refresh itself passes retry:false.
+      if (res.status === 401 && retry && state.user) {
+        if (await tryRefresh()) return request(method, path, body, { csrf, retry: false });
+        state.user = null; state.csrf = null; emit();   // session truly gone
+      }
       throw new ApiError(res.status, data.detail || res.statusText, data.detail);
     }
     return data;
+  }
+
+  // Single-flight refresh: concurrent 401s share one rotation (a second
+  // POST /auth/refresh with the same cookie would trip reuse detection).
+  let refreshing = null;
+  function tryRefresh() {
+    if (!refreshing) {
+      refreshing = request('POST', '/auth/refresh', undefined, { csrf: true, retry: false })
+        .then((r) => { if (r && r.csrf_token) state.csrf = r.csrf_token; return true; })
+        .catch(() => false)
+        .finally(() => { refreshing = null; });
+    }
+    return refreshing;
   }
 
   class ApiError extends Error {
@@ -66,7 +85,13 @@ window.SentinelAPI = (() => {
   async function bootstrap() {
     // Called on page load: are we already logged in (cookie present)?
     try {
-      const s = await request('GET', '/auth/session');
+      let s = await request('GET', '/auth/session');
+      if (s && !s.authenticated && s.csrf_token) {
+        // Access token expired but the 7-day refresh cookie may still be
+        // alive — rotate it and ask again instead of dumping the user out.
+        state.csrf = s.csrf_token;
+        if (await tryRefresh()) s = await request('GET', '/auth/session');
+      }
       if (s && s.authenticated) {
         state.user = s.user; state.csrf = s.csrf_token;
       } else {
@@ -97,7 +122,21 @@ window.SentinelAPI = (() => {
   }
 
   async function logout() {
-    try { await request('POST', '/auth/logout', undefined, { csrf: true }); } catch {}
+    try {
+      await request('POST', '/auth/logout', undefined, { csrf: true, retry: false });
+    } catch (err) {
+      // Stale CSRF would leave the server session alive while the UI shows
+      // signed-out — re-sync the token from /auth/session and retry once.
+      if (err && err.status === 403) {
+        try {
+          const s = await request('GET', '/auth/session');
+          if (s && s.csrf_token) {
+            state.csrf = s.csrf_token;
+            await request('POST', '/auth/logout', undefined, { csrf: true, retry: false });
+          }
+        } catch {}
+      }
+    }
     state.user = null; state.csrf = null; emit();
   }
 

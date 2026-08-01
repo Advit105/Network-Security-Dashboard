@@ -122,10 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const activeCerts = certs.filter(c => !c.expired).length;
       const expiredCerts = totalCerts - activeCerts;
       const uniqueIssuers = new Set(certs.map(c => c.issuerCA)).size;
-      const wildcardCerts = certs.filter(c => c.commonName.startsWith('*.')).length;
 
       // Render stats
-      renderStats(totalCerts, activeCerts, expiredCerts, uniqueIssuers, wildcardCerts);
+      renderStats(totalCerts, activeCerts, expiredCerts, uniqueIssuers);
 
       // Render certs table
       renderCerts(displayCerts, totalCerts);
@@ -158,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return match ? match[1].trim() : issuerStr.substring(0, 40);
   }
 
-  function renderStats(total, active, expired, issuers, wildcards) {
+  function renderStats(total, active, expired, issuers) {
     statsPanel.style.display = 'grid';
     document.getElementById('ssl-stat-total').textContent = total;
     document.getElementById('ssl-stat-active').textContent = active;
@@ -167,13 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderCerts(certs, total) {
+    // CT log fields (common name, issuer DN) are external data — escaped.
     certsBody.innerHTML = certs.map(c => `
       <tr class="${c.expired ? 'cert-expired' : ''}">
-        <td><span class="mono">${c.commonName}</span></td>
-        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.issuerCA}">${c.issuerCA}</td>
+        <td><span class="mono">${escHtml(c.commonName)}</span></td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(c.issuerCA)}">${escHtml(c.issuerCA)}</td>
         <td><span class="mono">${formatCertDate(c.notBefore)}</span></td>
         <td>${getExpiryBadge(c.notAfter)}</td>
-        <td><span class="mono" style="font-size:10px;opacity:0.6">${c.serialNumber.substring(0, 16)}…</span></td>
+        <td><span class="mono" style="font-size:10px;opacity:0.6">${escHtml(c.serialNumber.substring(0, 16))}…</span></td>
       </tr>
     `).join('');
 
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     subdomainCount.textContent = `${subdomains.length} found`;
 
     subdomainsList.innerHTML = subdomains.slice(0, 40).map(s => `
-      <span class="subdomain-tag">${s}</span>
+      <span class="subdomain-tag">${escHtml(s)}</span>
     `).join('');
 
     if (subdomains.length > 40) {

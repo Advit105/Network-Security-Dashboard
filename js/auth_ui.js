@@ -52,6 +52,8 @@
       st.textContent = state.online === false ? 'Offline' : 'Synced';
       st.className = 'account-status' + (state.online === false ? ' offline' : '');
     } else {
+      // A Google session (gauth.js) owns the widget — don't reset it to signed-out.
+      if (window.GAuth && GAuth.isSignedIn()) return;
       signin.style.display = 'flex';
       info.style.display = 'none';
     }
@@ -160,6 +162,8 @@
     await hydrateFromServer();
   }
   async function doLogout() {
+    // Google session? Let gauth.js handle sign-out + guest restore.
+    if (window.GAuth && GAuth.isSignedIn()) { await GAuth.signOut(); return; }
     await SentinelAPI.logout();
     restoreGuest();
     showToast?.('Signed out — back to local mode', 'info');

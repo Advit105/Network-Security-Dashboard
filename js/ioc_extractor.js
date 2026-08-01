@@ -125,13 +125,13 @@
         const shown = doDefang ? defang(v) : v;
         const priv = g.key === 'ipv4' && isPrivate(v);
         const pivots = (PIVOTS[g.pivot] || []).map(([page, inp, btn, lbl]) =>
-          `<button class="ioc-pivot" onclick="__iocPivot('${page}','${inp}',${btn ? `'${btn}'` : 'null'},'${esc(v)}')">${lbl}</button>`
+          `<button class="ioc-pivot" data-pivot-page="${page}" data-pivot-input="${inp}"${btn ? ` data-pivot-btn="${btn}"` : ''} data-pivot-val="${esc(v)}">${lbl}</button>`
         ).join('');
         return `<div class="ioc-row">
           <span class="ioc-val${priv ? ' ioc-priv' : ''}" title="${priv ? 'Private / reserved range' : ''}">${esc(shown)}</span>
           <div class="ioc-actions">
             ${pivots}
-            <button class="ioc-copy" onclick="navigator.clipboard.writeText('${esc(shown)}').then(()=>showToast('Copied','success'))">Copy</button>
+            <button class="ioc-copy" data-copy="${esc(shown)}">Copy</button>
           </div>
         </div>`;
       }).join('');

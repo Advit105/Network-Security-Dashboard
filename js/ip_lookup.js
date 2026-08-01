@@ -261,8 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('myip-btn')?.addEventListener('click', detectMyIP);
 
-    // Quick test buttons
-    document.querySelectorAll('.quick-btn').forEach(btn => {
+    // Quick test buttons — scoped to this page: .quick-btn is shared by the
+    // DNS/SSL/Abuse pages, whose buttons have no data-ip.
+    document.querySelectorAll('#page-ips .quick-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const ip = btn.dataset.ip;
             document.getElementById('ip-input').value = ip;

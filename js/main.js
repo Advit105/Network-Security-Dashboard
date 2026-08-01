@@ -12,6 +12,8 @@ const pageTitles = {
   abuseipdb:  { title: 'AbuseIPDB',          sub: 'IP Reputation / Threat intelligence' },
   typosquat:  { title: 'Typosquat Scanner',  sub: 'Phishing / Look-alike domains' },
   ioc:        { title: 'IOC Extractor',      sub: 'Indicators / Refang / Pivot' },
+  decoder:    { title: 'Cyber Decoder',      sub: 'Base64 / Hex / JWT / Magic' },
+  headers:    { title: 'Email Header Analyzer', sub: 'Received chain / Auth alignment / Spoof flags' },
   whois:      { title: 'WHOIS / RDAP',       sub: 'Domain age / Registration intel' },
   asn:        { title: 'ASN / Netblock',     sub: 'RIPEstat / Abuse contact' },
   settings:   { title: 'Settings',           sub: 'Preferences / Data management' }
@@ -19,23 +21,30 @@ const pageTitles = {
 
 // ── Navigation (SPA) ───────────────────────────────
 function navigateTo(pageId) {
-  // Update nav active state
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.page === pageId);
-  });
+  // The visual swap (nav highlight, page show/hide, title) — wrapped in a
+  // View Transition for a smooth cross-fade where the browser supports it.
+  const apply = () => {
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.page === pageId);
+    });
+    document.querySelectorAll('.page').forEach(el => {
+      el.classList.toggle('active', el.id === 'page-' + pageId);
+    });
+    const info = pageTitles[pageId];
+    if (info) {
+      document.getElementById('page-title').textContent = info.title;
+      document.getElementById('page-sub').textContent = info.sub;
+    }
+  };
 
-  // Show active page
-  document.querySelectorAll('.page').forEach(el => {
-    el.classList.toggle('active', el.id === 'page-' + pageId);
-  });
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.startViewTransition && !reduce) document.startViewTransition(apply);
+  else apply();
 
-  // Update topbar title — in dark mode it decrypts into place
+  // Topbar title decrypts into place in dark mode — after the swap
   const info = pageTitles[pageId];
-  if (info) {
-    const titleEl = document.getElementById('page-title');
-    titleEl.textContent = info.title;
-    document.getElementById('page-sub').textContent = info.sub;
-    if (html.getAttribute('data-theme') === 'dark') window.decodeText?.(titleEl, 450);
+  if (info && html.getAttribute('data-theme') === 'dark') {
+    window.decodeText?.(document.getElementById('page-title'), 450);
   }
 
   // Close mobile sidebar
@@ -185,8 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('keydown', (e) => {
+    // Leave browser shortcuts (Cmd+1..9, Ctrl+T…) alone
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     // Ignore if user is typing in an input
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
+        e.target.tagName === 'SELECT' || e.target.isContentEditable) {
       if (e.key === 'Escape') e.target.blur();
       return;
     }
@@ -232,7 +244,6 @@ window.animateNumber = function (el, to, ms = 500) {
 //    * panels get a spotlight that follows the cursor
 //    * stat cards tilt in 3D toward the cursor
 //    * primary buttons are gently "magnetic"
-//    * a phosphor glow trails the pointer across the console
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   let lastSpot = null;
 
@@ -271,21 +282,6 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.addEventListener('pointerout', (e) => {
     const el = e.target.closest?.('.kpi-card, .analyze-btn');
     if (el && !el.contains(e.relatedTarget)) el.style.transform = '';
-  });
-
-  // Trailing phosphor glow (CSS hides it in light mode)
-  document.addEventListener('DOMContentLoaded', () => {
-    const glow = document.createElement('div');
-    glow.id = 'cursor-glow';
-    document.body.appendChild(glow);
-    let gx = innerWidth / 2, gy = innerHeight / 2, tx = gx, ty = gy;
-    document.addEventListener('pointermove', (e) => { tx = e.clientX; ty = e.clientY; });
-    (function trail() {
-      gx += (tx - gx) * 0.12;
-      gy += (ty - gy) * 0.12;
-      glow.style.transform = `translate(${(gx - 260).toFixed(1)}px, ${(gy - 260).toFixed(1)}px)`;
-      requestAnimationFrame(trail);
-    })();
   });
 }
 
@@ -357,3 +353,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// ── PWA: service worker + install prompt ──────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();                       // suppress Chrome's default mini-infobar
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('install-app');
+  if (btn) btn.style.display = 'flex';
+});
+document.getElementById('install-app')?.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('install-app');
+  if (btn) btn.style.display = 'none';
+});
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('install-app');
+  if (btn) btn.style.display = 'none';
+});
+
+// ── Delegated click actions — replaces inline onclick handlers (which a
+//    strict CSP without 'unsafe-inline' blocks). Buttons carry data-* attrs. ──
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-copy],[data-copy-hash],[data-pivot-page],[data-action="toggle-cve"]');
+  if (!el) return;
+  if (el.hasAttribute('data-copy')) {
+    navigator.clipboard.writeText(el.dataset.copy).then(() => window.showToast?.('Copied', 'success'));
+  } else if (el.hasAttribute('data-copy-hash')) {
+    window.copyHash?.(el.dataset.copyHash, el);
+  } else if (el.hasAttribute('data-pivot-page')) {
+    window.__iocPivot?.(el.dataset.pivotPage, el.dataset.pivotInput, el.dataset.pivotBtn || null, el.dataset.pivotVal);
+  } else if (el.dataset.action === 'toggle-cve') {
+    el.querySelector('.cve-details')?.classList.toggle('cve-open');
+  }
+});
+
+// ── Modal accessibility: focus trap + focus restore (WCAG dialog pattern) ──
+(() => {
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  let lastFocused = null;
+
+  document.querySelectorAll('.modal-overlay').forEach((modal) => {
+    new MutationObserver(() => {
+      if (modal.classList.contains('modal-open')) {
+        lastFocused = document.activeElement;              // remember the trigger
+        modal.querySelector(FOCUSABLE)?.focus();            // move focus into the dialog
+      } else if (lastFocused) {
+        lastFocused.focus?.();                              // restore on close
+        lastFocused = null;
+      }
+    }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  // Keep Tab inside whichever dialog is open.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const modal = document.querySelector('.modal-overlay.modal-open');
+    if (!modal) return;
+    const items = [...modal.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+})();

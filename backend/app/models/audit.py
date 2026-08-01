@@ -43,7 +43,8 @@ class AuditLog(Base):
     # Nullable: some events (failed login for unknown email) have no user.
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True, nullable=True)
     event: Mapped[AuditEvent] = mapped_column(Enum(AuditEvent, name="audit_event"), index=True, nullable=False)
-    email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    # Indexed: count_recent_failures filters by email on every failed login.
+    email: Mapped[str | None] = mapped_column(String(320), index=True, nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(400), nullable=True)
     detail: Mapped[str | None] = mapped_column(String(500), nullable=True)

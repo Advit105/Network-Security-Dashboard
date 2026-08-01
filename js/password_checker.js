@@ -89,9 +89,18 @@ function estimateCrackTime(entropy) {
 // ── Generate Strong Password ───────────────────────
 function generatePassword(length = 20) {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}';
-  const arr   = new Uint8Array(length);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b => chars[b % chars.length]).join('');
+  // Rejection sampling: bytes ≥ the largest multiple of chars.length are
+  // discarded, so no character is more likely than another (b % 80 biases).
+  const limit = 256 - (256 % chars.length);
+  let out = '';
+  while (out.length < length) {
+    const arr = new Uint8Array(length * 2);
+    crypto.getRandomValues(arr);
+    for (const b of arr) {
+      if (b < limit && out.length < length) out += chars[b % chars.length];
+    }
+  }
+  return out;
 }
 
 // ── Have I Been Pwned Breach Check ─────────────────

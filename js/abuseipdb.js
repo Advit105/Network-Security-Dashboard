@@ -1,5 +1,8 @@
 // ── AbuseIPDB IP Reputation Checker ──────────────────
-// Checks IP threat reputation via AbuseIPDB API
+// Checks IP threat reputation via AbuseIPDB API.
+// AbuseIPDB sends no CORS headers, so browsers can't call it directly —
+// requests go through the SentinelX backend proxy (/proxy/abuseipdb/check),
+// which forwards the user's own key (X-Abuse-Key) and relays the JSON.
 // Requires a free API key from https://www.abuseipdb.com
 // Key is stored in localStorage for persistence
 // ─────────────────────────────────────────────────────
@@ -91,22 +94,26 @@ document.addEventListener('DOMContentLoaded', () => {
     resultsPanel.style.display = 'none';
 
     try {
-      const url = `https://api.abuseipdb.com/api/v2/check?ipAddress=${encodeURIComponent(ip)}&maxAgeInDays=90&verbose`;
+      const base = (window.SentinelAPI && SentinelAPI.BASE) || 'http://localhost:8000/api/v1';
+      let res;
+      try {
+        res = await fetch(`${base}/proxy/abuseipdb/check?ip=${encodeURIComponent(ip)}`, {
+          headers: { 'X-Abuse-Key': apiKey, 'Accept': 'application/json' }
+        });
+      } catch {
+        throw new Error('AbuseIPDB checks need the SentinelX backend running (the AbuseIPDB API blocks direct browser requests).');
+      }
 
-      const res = await fetch(url, {
-        headers: {
-          'Key': apiKey,
-          'Accept': 'application/json'
-        }
-      });
-
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         throw new Error('Invalid API key. Get a free key at abuseipdb.com');
       }
       if (res.status === 429) {
         throw new Error('Rate limit exceeded. Free tier allows 1000 checks/day.');
       }
-      if (!res.ok) throw new Error(`AbuseIPDB returned ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `AbuseIPDB lookup failed (${res.status})`);
+      }
 
       const json = await res.json();
       const d = json.data;
@@ -195,14 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Recent reports
     const recentList = document.getElementById('abuse-recent-list');
     if (recentList && d.reports && d.reports.length > 0) {
+      // Report comments are free text written by anonymous reporters — escaped.
       recentList.innerHTML = d.reports.slice(0, 8).map(r => `
         <div class="feed-item">
           <span class="feed-sev ${r.categories?.some(c => [14,15,16,18,22].includes(c)) ? 'critical' : 'high'}">
             ${r.categories?.length ? getCategoryName(r.categories[0]) : 'Unknown'}
           </span>
           <div class="feed-body">
-            <div class="feed-title" style="font-size:11px;white-space:normal">${r.comment || 'No comment'}</div>
-            <div class="feed-meta">Reporter: ${r.reporterCountryCode || '??'}</div>
+            <div class="feed-title" style="font-size:11px;white-space:normal">${escHtml(r.comment || 'No comment')}</div>
+            <div class="feed-meta">Reporter: ${escHtml(r.reporterCountryCode || '??')}</div>
           </div>
           <span class="feed-time">${new Date(r.reportedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
         </div>

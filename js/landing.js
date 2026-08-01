@@ -196,14 +196,18 @@ function println(html = '') {
 // ── Boot sequence ──────────────────────────────────
 // Every line states something true about the app; any
 // keypress or click skips straight to the prompt.
-const BOOT_LINES = [
-    `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> sentinelx console <span class="white">v2.1.0</span>`,
-    `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> 11 tool modules registered`,
-    `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> intel sources: <span class="blue">nvd · shodan internetdb · crt.sh · google doh</span>`,
-    `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> web crypto api: ${window.crypto && crypto.subtle ? '<span class="ok">available</span>' : '<span class="err">unavailable</span>'}`,
-    `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> access level: <span class="white">guest</span> — no account required`,
-    `<span class="dim">ready. type</span> <span class="blue">help</span> <span class="dim">or press</span> <span class="white">enter</span><span class="dim">.</span>`,
-];
+// A function (not a const) so the module count always
+// reads live from TOOLS — it can never go stale again.
+function bootLines() {
+    return [
+        `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> sentinelx console <span class="white">v2.1.0</span>`,
+        `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> ${TOOLS.length} tool modules registered`,
+        `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> intel sources: <span class="blue">nvd · epss · shodan internetdb · crt.sh · rdap · ripestat · google doh</span>`,
+        `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> web crypto api: ${window.crypto && crypto.subtle ? '<span class="ok">available</span>' : '<span class="err">unavailable</span>'}`,
+        `<span class="dim">[</span><span class="ok"> ok </span><span class="dim">]</span> access level: <span class="white">guest</span> — no account required`,
+        `<span class="dim">ready. type</span> <span class="blue">help</span> <span class="dim">or press</span> <span class="white">enter</span><span class="dim">.</span>`,
+    ];
+}
 
 let booting = true;
 let bootTimer = null;
@@ -213,7 +217,7 @@ function finishBoot() {
     booting = false;
     clearTimeout(bootTimer);
     out.innerHTML = '';
-    BOOT_LINES.forEach((l) => println(l));
+    bootLines().forEach((l) => println(l));
     inputLine.style.display = '';
     document.getElementById('enter-btn').classList.add('show');
     document.getElementById('hint').classList.add('show');
@@ -223,11 +227,12 @@ function finishBoot() {
 
 function boot() {
     if (REDUCED) { finishBoot(); return; }
+    const lines = bootLines();
     let i = 0;
     (function next() {
         if (!booting) return;
-        if (i >= BOOT_LINES.length) { finishBoot(); return; }
-        println(BOOT_LINES[i]);
+        if (i >= lines.length) { finishBoot(); return; }
+        println(lines[i]);
         i += 1;
         bootTimer = setTimeout(next, 260 + Math.random() * 240);
     })();
@@ -254,6 +259,9 @@ const TOOLS = [
     ['cve',       'cve feed',          'live vulnerabilities from the nvd'],
     ['abuseipdb', 'abuseipdb',         'ip reputation scores & abuse reports'],
     ['typosquat', 'typosquat scanner', 'find live look-alike phishing domains'],
+    ['ioc',       'ioc extractor',     'pull indicators out of any report — refang, pivot'],
+    ['whois',     'whois / rdap',      'domain age & registration intel, keyless'],
+    ['asn',       'asn / netblock',    'who owns the range + the abuse contact to report to'],
 ];
 
 // Arsenal grid on the scroll page — one card per module
@@ -266,6 +274,9 @@ function renderArsenal() {
             <div class="ars-name">${name}</div>
             <div class="ars-desc">${desc}</div>
         </a>`).join('');
+    // Keep the section subtitle's module count truthful automatically
+    const sub = document.getElementById('arsenal-sub');
+    if (sub) sub.textContent = `${TOOLS.length} modules · live data · runs in your browser`;
 }
 
 const COMMANDS = {

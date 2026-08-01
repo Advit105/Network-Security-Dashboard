@@ -48,6 +48,7 @@ async def get_user(user_id: uuid.UUID, caller: CurrentUser, db: Db) -> UserOut:
 @router.get("", response_model=list[UserOut], dependencies=[Depends(require_role(Role.admin))])
 async def list_users(db: Db, limit: int = 50, offset: int = 0) -> list[UserOut]:
     limit = max(1, min(limit, 200))  # bound page size
+    offset = max(0, offset)          # negative OFFSET is a DB error → would 500
     rows = (await db.execute(select(User).order_by(User.created_at.desc()).limit(limit).offset(offset))).scalars().all()
     return [UserOut.model_validate(u) for u in rows]
 

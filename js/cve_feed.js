@@ -185,25 +185,29 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // NVD descriptions routinely contain literal "<script>"/"<img>" text
+    // (they describe injection bugs) — everything external is escaped, and
+    // reference hrefs are restricted to http(s).
+    const safeUrl = (u) => /^https?:\/\//i.test(u || '') ? escHtml(u) : '#';
     feedContainer.innerHTML = filtered.map((c, i) => `
-      <div class="cve-item" style="animation-delay:${i * 0.03}s" onclick="this.querySelector('.cve-details').classList.toggle('cve-open')">
+      <div class="cve-item" style="animation-delay:${i * 0.03}s" data-action="toggle-cve">
         <div class="cve-top">
           <span class="feed-sev ${c.severity.cls}">${c.severity.label}</span>
           <div class="cve-id-row">
-            <span class="cve-id-text">${c.id}</span>
+            <span class="cve-id-text">${escHtml(c.id)}</span>
             <span class="cve-score" style="color:${c.severity.color}">${c.cvss !== null ? c.cvss.toFixed(1) : '—'}</span>
             ${c.kev ? '<span class="kev-badge" title="Listed in the CISA Known Exploited Vulnerabilities catalog — exploited in the wild">⚠ KEV</span>' : ''}
             ${c.epss !== null ? `<span class="epss-badge" title="EPSS: ${(c.epss * 100).toFixed(1)}% chance of exploitation in the next 30 days (${(c.epssPct * 100).toFixed(0)}th percentile)">EPSS ${(c.epss * 100).toFixed(c.epss >= 0.1 ? 0 : 1)}%</span>` : ''}
           </div>
           <span class="feed-time">${formatDate(c.published)}</span>
         </div>
-        <div class="cve-desc">${truncateDesc(c.desc)}</div>
+        <div class="cve-desc">${escHtml(truncateDesc(c.desc))}</div>
         <div class="cve-details">
-          ${c.kev ? `<div class="cve-products"><span class="cve-detail-label">CISA KEV:</span> exploited in the wild — added ${formatDate(c.kev)}${c.kevName ? ` · ${c.kevName}` : ''}</div>` : ''}
+          ${c.kev ? `<div class="cve-products"><span class="cve-detail-label">CISA KEV:</span> exploited in the wild — added ${formatDate(c.kev)}${c.kevName ? ` · ${escHtml(c.kevName)}` : ''}</div>` : ''}
           ${c.epss !== null ? `<div class="cve-products"><span class="cve-detail-label">EPSS:</span> ${(c.epss * 100).toFixed(2)}% exploitation probability (30d) · ${(c.epssPct * 100).toFixed(0)}th percentile</div>` : ''}
-          ${c.vector ? `<div class="cve-vector"><span class="cve-detail-label">Vector:</span> <code>${c.vector}</code></div>` : ''}
-          ${c.products.length ? `<div class="cve-products"><span class="cve-detail-label">Affected:</span> ${c.products.join(', ')}</div>` : ''}
-          ${c.refs.length ? `<div class="cve-refs">${c.refs.map(r => `<a href="${r.url}" target="_blank" rel="noopener" class="cve-ref-link">${r.source || 'Reference'}</a>`).join(' ')}</div>` : ''}
+          ${c.vector ? `<div class="cve-vector"><span class="cve-detail-label">Vector:</span> <code>${escHtml(c.vector)}</code></div>` : ''}
+          ${c.products.length ? `<div class="cve-products"><span class="cve-detail-label">Affected:</span> ${escHtml(c.products.join(', '))}</div>` : ''}
+          ${c.refs.length ? `<div class="cve-refs">${c.refs.map(r => `<a href="${safeUrl(r.url)}" target="_blank" rel="noopener" class="cve-ref-link">${escHtml(r.source || 'Reference')}</a>`).join(' ')}</div>` : ''}
         </div>
       </div>
     `).join('');
@@ -214,10 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
   filterSelect?.addEventListener('change', renderCVEs);
   searchInput?.addEventListener('input', renderCVEs);
 
-  // Auto-refresh every 5 minutes
+  // Auto-refresh every 5 minutes — skipped while the tab is hidden so idle
+  // tabs don't burn the NVD's unauthenticated rate limit.
   function startAutoRefresh() {
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-    autoRefreshTimer = setInterval(fetchCVEs, 5 * 60 * 1000);
+    autoRefreshTimer = setInterval(() => { if (!document.hidden) fetchCVEs(); }, 5 * 60 * 1000);
   }
 
   // Initial load
