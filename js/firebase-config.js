@@ -25,3 +25,9 @@ window.FIREBASE_CONFIG = {
   appId: "1:21533746472:web:65b3e712799219d6ce9c1d",
   measurementId: "G-JNTJY5HQTH",
 };
+
+// ── Firebase App Check (optional, recommended for the public deploy) ──
+// A reCAPTCHA v3 site key locks Firebase so only YOUR app can use the project
+// (stops randoms from draining your quota with your public config). Left as a
+// placeholder = App Check disabled and nothing breaks. See README "App Check".
+window.APPCHECK_SITE_KEY = "TODO-RECAPTCHA-V3-SITE-KEY";

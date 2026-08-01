@@ -16,7 +16,10 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot,
+  initializeAppCheck, ReCaptchaV3Provider,
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
+import {
+  getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, getDoc, getDocs, setDoc,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const GUEST_KEY = 'sentinelx_blocklist_guest';   // shared with auth_ui.js
@@ -33,6 +36,19 @@ if (!configured) {
   });
 } else {
   const app = initializeApp(cfg);
+
+  // App Check (reCAPTCHA v3) — init before other services so their requests
+  // carry the attestation token. Only when a real site key is configured.
+  const siteKey = window.APPCHECK_SITE_KEY;
+  if (siteKey && !String(siteKey).includes('TODO')) {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (e) { console.warn('App Check init failed:', e); }
+  }
+
   const auth = getAuth(app);
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
@@ -52,7 +68,36 @@ if (!configured) {
     async removeBlocklist(id) {
       await deleteDoc(doc(db, 'users', currentUser.uid, 'blocklist', id));
     },
+    // Investigation cases (users/{uid}/cases)
+    async listCases() {
+      const snap = await getDocs(collection(db, 'users', currentUser.uid, 'cases'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+    async addCase(data) {
+      const r = await addDoc(collection(db, 'users', currentUser.uid, 'cases'), data);
+      return r.id;
+    },
+    async updateCase(id, patch) {
+      await setDoc(doc(db, 'users', currentUser.uid, 'cases', id), patch, { merge: true });
+    },
+    async deleteCase(id) {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'cases', id));
+    },
   };
+
+  // ── User preferences (theme, …) at users/{uid}/prefs/app ──
+  async function savePref(key, value) {
+    if (!currentUser) return;
+    try { await setDoc(doc(db, 'users', currentUser.uid, 'prefs', 'app'), { [key]: value }, { merge: true }); }
+    catch (e) { console.warn('savePref failed:', e); }
+  }
+  async function loadPrefs() {
+    if (!currentUser) return null;
+    try {
+      const s = await getDoc(doc(db, 'users', currentUser.uid, 'prefs', 'app'));
+      return s.exists() ? s.data() : null;
+    } catch { return null; }
+  }
 
   // ── Guest ↔ cloud snapshot (mirrors auth_ui.js so both auth paths agree) ──
   const backupGuest = () => localStorage.setItem(GUEST_KEY, localStorage.getItem(DISPLAY_KEY) || '[]');
@@ -101,6 +146,10 @@ if (!configured) {
       unsub = onSnapshot(collection(db, 'users', user.uid, 'blocklist'),
         (snap) => window.setBlocklistFromServer?.(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
         (err) => console.warn('Firestore listen failed:', err));
+      // Apply saved preferences — the user's theme follows them across devices.
+      loadPrefs().then(p => { if (p?.theme && window.setTheme) window.setTheme(p.theme); });
+      // Pull the user's investigation cases (uploads any guest-made ones first).
+      window.hydrateCasesFromServer?.();
     } else if (!user && synced) {
       synced = false;
       if (unsub) { unsub(); unsub = null; }
@@ -115,6 +164,7 @@ if (!configured) {
     signIn,
     signOut: doSignOut,
     store,
+    savePref,
   };
 
   $('auth-google')?.addEventListener('click', signIn);

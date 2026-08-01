@@ -943,6 +943,73 @@ body::after {
 .panel-btn.danger-btn { color: var(--red-ink); }
 .panel-btn.danger-btn:hover { border-color: rgba(250,77,86,0.30); }
 
+/* Export dropdown — native <details> menu */
+.export-menu { position: relative; display: inline-block; }
+.export-menu > summary { list-style: none; cursor: pointer; }
+.export-menu > summary::-webkit-details-marker { display: none; }
+.export-menu-list {
+    position: absolute; right: 0; top: calc(100% + 4px); z-index: 30;
+    display: flex; flex-direction: column; min-width: 190px;
+    background: var(--bg-card-2); border: 1px solid var(--border);
+    border-radius: var(--r-sm); box-shadow: var(--sh-lg, var(--sh)); padding: 4px;
+}
+.export-menu-list button {
+    text-align: left; padding: 8px 10px; border: none; border-radius: 6px;
+    font-family: var(--f-mono); font-size: 12px; color: var(--text-2);
+    background: transparent; cursor: pointer; white-space: nowrap;
+}
+.export-menu-list button:hover { background: var(--bg-hover); color: var(--text-1); }
+
+/* Investigation Cases */
+.cases-layout { display: grid; grid-template-columns: 260px 1fr; gap: 12px; min-height: 520px; }
+.cases-sidebar, .cases-detail {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: var(--r); box-shadow: var(--sh); overflow-y: auto;
+}
+.cases-sidebar { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.cases-sidebar-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--f-display); font-size: 13px; font-weight: 600; color: var(--text-1);
+}
+#cases-list { display: flex; flex-direction: column; gap: 4px; }
+.case-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    width: 100%; text-align: left; padding: 9px 10px; border-radius: var(--r-sm);
+    background: transparent; border: 1px solid transparent; cursor: pointer;
+    color: var(--text-2); font-size: 12.5px; transition: all 0.15s;
+}
+.case-item:hover { background: var(--bg-card-2); color: var(--text-1); }
+.case-item.active { background: var(--cyan-bg); border-color: rgba(69,137,255,0.25); color: var(--cyan-ink); }
+.case-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.case-item-count { font-family: var(--f-mono); font-size: 11px; color: var(--text-3); flex-shrink: 0; }
+
+.cases-detail { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.case-head { display: flex; gap: 10px; align-items: center; }
+.case-name-input {
+    flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border);
+    color: var(--text-1); font-family: var(--f-display); font-size: 18px; font-weight: 600; padding: 4px 2px;
+}
+.case-name-input:focus { outline: none; border-bottom-color: var(--cyan); }
+.case-add { display: flex; gap: 8px; }
+.case-add .tool-input { flex: 1; }
+.case-items { display: flex; flex-direction: column; gap: 4px; }
+.case-item-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 7px 10px; border-radius: var(--r-sm); background: var(--bg-card-2); font-size: 12.5px;
+}
+.case-notes-label { font-family: var(--f-mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.case-notes {
+    min-height: 160px; resize: vertical; background: var(--bg-card-2);
+    border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px;
+    color: var(--text-1); font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6;
+}
+.case-notes:focus { outline: none; border-color: var(--cyan); }
+.cases-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; flex: 1; padding: 48px 20px; }
+.cases-empty-title { font-family: var(--f-display); font-size: 15px; font-weight: 600; color: var(--text-2); }
+.cases-empty-sub { font-family: var(--f-mono); font-size: 11.5px; color: var(--text-3); max-width: 380px; line-height: 1.6; }
+.cases-empty-sm { font-family: var(--f-mono); font-size: 11px; color: var(--text-3); padding: 8px 2px; }
+@media (max-width: 720px) { .cases-layout { grid-template-columns: 1fr; } }
+
 .panels { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; flex: 1; }
 
 /* ═══════════════════════════════════════════════════

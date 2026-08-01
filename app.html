@@ -3,12 +3,12 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:8000 https://*.googleapis.com https://*.firebaseapp.com https://ipwho.is https://dns.google https://internetdb.shodan.io https://crt.sh https://api.pwnedpasswords.com https://api.ipify.org https://api.first.org https://nvd.nist.gov https://services.nvd.nist.gov https://onionoo.torproject.org https://rdap.org https://stat.ripe.net https://www.abuseipdb.com https://cdn.jsdelivr.net; frame-src https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:8000 https://*.googleapis.com https://*.firebaseapp.com https://www.google.com https://ipwho.is https://dns.google https://internetdb.shodan.io https://crt.sh https://api.pwnedpasswords.com https://api.ipify.org https://api.first.org https://nvd.nist.gov https://services.nvd.nist.gov https://onionoo.torproject.org https://rdap.org https://stat.ripe.net https://www.abuseipdb.com https://cdn.jsdelivr.net; frame-src https://*.firebaseapp.com https://accounts.google.com https://apis.google.com https://www.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SentinelX — SOC Security Dashboard</title>
     <meta name="description" content="Real-time security operations center dashboard with threat monitoring, IP lookup, DNS analysis, and cryptographic tools." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' stroke='%234589ff' stroke-width='1.75' fill='rgba(69,137,255,0.12)' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M9 12l2 2 4-4' stroke='%234589ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="css/style.css?v=20260801" />
+    <link rel="stylesheet" href="css/style.css?v=20260802" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0b0e14" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -167,6 +167,10 @@
                 <a href="#" class="nav-item" data-page="blocklist">
                     <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M4.93 4.93l14.14 14.14"/></svg></span>
                     <span class="nav-label">Blocklist</span>
+                </a>
+                <a href="#" class="nav-item" data-page="cases">
+                    <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M3 7a2 2 0 012-2h3l2 2h9a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
+                    <span class="nav-label">Cases</span>
                 </a>
 
                 <div class="nav-section-label">TOOLS</div>
@@ -591,7 +595,17 @@
                         <div class="panel-header">
                             <h2 class="panel-title">Blocklist Manager</h2>
                             <div style="display:flex;gap:8px">
-                                <button class="panel-btn" id="export-btn">Export</button>
+                                <details class="export-menu" id="export-menu">
+                                    <summary class="panel-btn">Export ▾</summary>
+                                    <div class="export-menu-list">
+                                        <button data-export="plain">IP list (.txt)</button>
+                                        <button data-export="csv">CSV</button>
+                                        <button data-export="iptables">iptables / ip6tables</button>
+                                        <button data-export="pf">pf.conf table</button>
+                                        <button data-export="cisco">Cisco ACL</button>
+                                        <button data-export="stix">STIX 2.1 bundle</button>
+                                    </div>
+                                </details>
                                 <button class="panel-btn danger-btn" id="clear-all-btn">Clear All</button>
                             </div>
                         </div>
@@ -1608,6 +1622,22 @@
             </div>
 
             <!-- ════════════════════════════════
+                 PAGE: INVESTIGATION CASES
+                 ════════════════════════════════ -->
+            <div id="page-cases" class="page">
+                <div class="cases-layout">
+                    <aside class="cases-sidebar">
+                        <div class="cases-sidebar-head">
+                            <span>Cases</span>
+                            <button class="panel-btn" id="case-new-btn">+ New</button>
+                        </div>
+                        <div id="cases-list"></div>
+                    </aside>
+                    <section class="cases-detail" id="cases-detail"></section>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
                  PAGE: SETTINGS
                  ════════════════════════════════ -->
             <div id="page-settings" class="page">
@@ -1667,34 +1697,35 @@
         </main>
     </div>
 
-    <script defer src="js/toast.js?v=20260801"></script>
-    <script defer src="js/firebase-config.js?v=20260801"></script>
-    <script type="module" src="js/gauth.js?v=20260801"></script>
-    <script defer src="js/api.js?v=20260801"></script>
-    <script defer src="js/main.js?v=20260801"></script>
-    <script defer src="js/threat_origins.js?v=20260801"></script>
-    <script defer src="js/log_parser.js?v=20260801"></script>
-    <script defer src="js/ip_lookup.js?v=20260801"></script>
-    <script defer src="js/dns_lookup.js?v=20260801"></script>
-    <script defer src="js/blocklist.js?v=20260801"></script>
-    <script defer src="js/search_filter.js?v=20260801"></script>
-    <script defer src="js/hash_generator.js?v=20260801"></script>
-    <script defer src="js/password_checker.js?v=20260801"></script>
-    <script defer src="js/cve_feed.js?v=20260801"></script>
-    <script defer src="js/facts.js?v=20260801"></script>
-    <script defer src="js/ticker.js?v=20260801"></script>
-    <script defer src="js/ssl_inspector.js?v=20260801"></script>
-    <script defer src="js/abuseipdb.js?v=20260801"></script>
-    <script defer src="js/typosquat.js?v=20260801"></script>
-    <script defer src="js/ioc_extractor.js?v=20260801"></script>
-    <script defer src="js/whois_rdap.js?v=20260801"></script>
-    <script defer src="js/asn_lookup.js?v=20260801"></script>
-    <script defer src="js/command_palette.js?v=20260801"></script>
-    <script defer src="js/auth_ui.js?v=20260801"></script>
-    <script defer src="js/account_security.js?v=20260801"></script>
-    <script defer src="js/email_security.js?v=20260801"></script>
-    <script defer src="js/decoder.js?v=20260801"></script>
-    <script defer src="js/header_analyzer.js?v=20260801"></script>
+    <script defer src="js/toast.js?v=20260802"></script>
+    <script defer src="js/firebase-config.js?v=20260802"></script>
+    <script type="module" src="js/gauth.js?v=20260802"></script>
+    <script defer src="js/api.js?v=20260802"></script>
+    <script defer src="js/main.js?v=20260802"></script>
+    <script defer src="js/threat_origins.js?v=20260802"></script>
+    <script defer src="js/log_parser.js?v=20260802"></script>
+    <script defer src="js/ip_lookup.js?v=20260802"></script>
+    <script defer src="js/dns_lookup.js?v=20260802"></script>
+    <script defer src="js/blocklist.js?v=20260802"></script>
+    <script defer src="js/cases.js?v=20260802"></script>
+    <script defer src="js/search_filter.js?v=20260802"></script>
+    <script defer src="js/hash_generator.js?v=20260802"></script>
+    <script defer src="js/password_checker.js?v=20260802"></script>
+    <script defer src="js/cve_feed.js?v=20260802"></script>
+    <script defer src="js/facts.js?v=20260802"></script>
+    <script defer src="js/ticker.js?v=20260802"></script>
+    <script defer src="js/ssl_inspector.js?v=20260802"></script>
+    <script defer src="js/abuseipdb.js?v=20260802"></script>
+    <script defer src="js/typosquat.js?v=20260802"></script>
+    <script defer src="js/ioc_extractor.js?v=20260802"></script>
+    <script defer src="js/whois_rdap.js?v=20260802"></script>
+    <script defer src="js/asn_lookup.js?v=20260802"></script>
+    <script defer src="js/command_palette.js?v=20260802"></script>
+    <script defer src="js/auth_ui.js?v=20260802"></script>
+    <script defer src="js/account_security.js?v=20260802"></script>
+    <script defer src="js/email_security.js?v=20260802"></script>
+    <script defer src="js/decoder.js?v=20260802"></script>
+    <script defer src="js/header_analyzer.js?v=20260802"></script>
 
 </body>
 </html>

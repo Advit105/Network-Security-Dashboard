@@ -8,7 +8,8 @@ A security operations dashboard that runs on real, live data — no simulations,
 - **Log Analyzer** — paste raw logs; suspicious patterns are parsed, public IPs are extracted, geolocated, and can be bulk-blocked.
 - **IP Lookup** — geolocation, ISP, and exposure data (Shodan InternetDB) for any address.
 - **DNS Lookup** — live records via Google DNS-over-HTTPS.
-- **Blocklist Manager** — per-account blocklist that syncs across devices when signed in (Google or email); works fully offline as a guest (localStorage).
+- **Blocklist Manager** — per-account blocklist that syncs across devices when signed in (Google or email); works fully offline as a guest (localStorage). Export to **iptables / pf / Cisco ACL / CSV / STIX 2.1**.
+- **Investigation Cases** — group the IPs, domains, hashes and notes from an investigation into named cases; synced to your account (Google) or kept local as a guest.
 - **Hash Generator / Password Checker** — Web Crypto API hashing, entropy analysis, and breach checks.
 - **CVE Live Feed** — latest vulnerabilities from the NVD.
 - **SSL/TLS Inspector** — Certificate Transparency lookups via crt.sh.
@@ -71,6 +72,25 @@ GitHub Pages for anyone to use. One-time setup:
 Until step 2 is done, Google sign-in stays disabled and the app runs in guest
 mode — nothing breaks.
 
+### App Check (recommended once public)
+
+Your web config is public, so anyone could point their own page at your Firebase
+project. **App Check** (reCAPTCHA v3) makes Firebase reject requests that don't
+come from your app. To enable:
+
+1. Firebase console → **App Check** → register your Web app with the
+   **reCAPTCHA v3** provider; copy the **site key**.
+2. Put it in [js/firebase-config.js](js/firebase-config.js) as
+   `window.APPCHECK_SITE_KEY`. (Leaving the placeholder keeps App Check off.)
+3. Test the live site — sign-in and Firestore should still work (tokens now
+   attach automatically).
+4. **Only then**, in App Check, set Firestore + Authentication to **Enforce**.
+   Enforcing *before* the site key is live would lock the app out.
+
+> Local dev needs an App Check **debug token** (console → App Check → your app →
+> Manage debug tokens) set via `self.FIREBASE_APPCHECK_DEBUG_TOKEN` — or just
+> test App Check on the deployed site.
+
 ### Deploy to GitHub Pages
 
 The frontend is static, so Pages serves it directly:
@@ -93,6 +113,7 @@ Firebase Authorized domains (step 5) so Google sign-in works there.
 - **Content-Security-Policy** — a strict CSP ships in the `<head>` of both pages (no `unsafe-inline` for scripts). All UI actions use delegated listeners + `data-*` attributes instead of inline `onclick`.
   - *Self-hosting the FastAPI backend?* The CSP allows `http://localhost:8000` for local dev. If your backend runs on a different origin, add it to the `connect-src` directive in [app.html](app.html).
 - **Accessibility** — dialogs use `role="dialog"` + focus trap/restore; `prefers-reduced-motion` disables animation and page cross-fades.
+- **CI** — [.github/workflows/ci.yml](.github/workflows/ci.yml) syntax-checks every JS file, validates the manifest/config, and fails the build if an inline event handler (which the CSP forbids) sneaks back in.
 
 ## Stack
 

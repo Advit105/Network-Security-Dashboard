@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax-check all JS (ESM-aware)
+        run: |
+          fail=0
+          for f in js/*.js; do
+            if grep -q '^import ' "$f"; then
+              cp "$f" "/tmp/$(basename "$f").mjs"        # gauth.js is an ES module
+              node --check "/tmp/$(basename "$f").mjs" || { echo "FAIL $f"; fail=1; }
+            else
+              node --check "$f" || { echo "FAIL $f"; fail=1; }
+            fi
+          done
+          exit $fail
+
+      - name: Validate manifest + Firebase config
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('manifest.json','utf8'))" && echo "OK manifest.json"
+          node --check js/firebase-config.js && echo "OK firebase-config.js"
+
+      - name: Guard the CSP invariant (no inline event handlers)
+        run: |
+          if grep -rnE 'on(click|change|submit|load|error|input|keydown|mouseover)="' js/*.js app.html index.html; then
+            echo "Found an inline event handler. The strict CSP forbids these —"
+            echo "use a delegated data-* action (see the handler in js/main.js)."
+            exit 1
+          fi
+          echo "OK no inline handlers"

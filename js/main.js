@@ -4,6 +4,7 @@ const pageTitles = {
   ips:        { title: 'IP Lookup',          sub: 'Geo / ASN / Threat intel' },
   dns:        { title: 'DNS Lookup',         sub: 'Records / Domain intelligence' },
   blocklist:  { title: 'Blocklist Manager',  sub: 'Per-account IP blocklist' },
+  cases:      { title: 'Investigation Cases', sub: 'Group indicators & notes · synced' },
   hash:       { title: 'Hash Generator',     sub: 'Crypto / Verification' },
   password:   { title: 'Password Checker',   sub: 'Strength / Breach detection' },
   cve:        { title: 'CVE Live Feed',      sub: 'NVD / Real-time vulnerabilities' },
@@ -109,6 +110,7 @@ function setTheme(theme) {
   localStorage.setItem('nsd_theme', theme);
   if (themeToggle) themeToggle.innerHTML = THEME_ICONS[theme] || THEME_ICONS.dark;
   if (settingsTheme) settingsTheme.checked = theme === 'light';
+  window.GAuth?.savePref?.('theme', theme); // sync to signed-in user (no-op as guest)
 }
 
 // Toggling plays a transition first: CRT power-on flicker into dark,

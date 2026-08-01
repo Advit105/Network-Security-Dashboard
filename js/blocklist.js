@@ -252,20 +252,62 @@ function updateSeverityDonut(list) {
         </div>`).join('');
 }
 
-// ── Export ─────────────────────────────────────────
-function exportBlocklist() {
+// ── Export (deployable formats) ────────────────────
+const isV6 = (ip) => ip.includes(':');
+
+function blocklistToFormat(list, fmt) {
+    const now = new Date().toISOString();
+    switch (fmt) {
+        case 'plain':                                   // bare IPs, one per line
+            return list.map(e => e.ip).join('\n') + '\n';
+        case 'csv': {
+            const q = (s) => `"${String(s ?? '').replace(/"/g, '""')}"`;
+            return 'ip,severity,reason,added\n' +
+                list.map(e => [e.ip, e.severity, e.reason, e.added].map(q).join(',')).join('\n') + '\n';
+        }
+        case 'iptables':                                // Linux netfilter drop rules (v4 + v6)
+            return list.map(e => `${isV6(e.ip) ? 'ip6tables' : 'iptables'} -A INPUT -s ${e.ip} -j DROP`).join('\n') + '\n';
+        case 'pf':                                      // BSD/macOS pf table
+            return `table <sentinelx> persist { ${list.map(e => e.ip).join(', ')} }\nblock drop in quick from <sentinelx> to any\n`;
+        case 'cisco':                                   // Cisco extended ACL entries
+            return list.map(e => `deny ip host ${e.ip} any`).join('\n') + '\n';
+        case 'stix': {                                  // STIX 2.1 bundle of indicators
+            const objects = list.map(e => ({
+                type: 'indicator', spec_version: '2.1',
+                id: 'indicator--' + crypto.randomUUID(),
+                created: now, modified: now,
+                name: `Blocked ${e.ip}`, description: e.reason || '',
+                indicator_types: ['malicious-activity'],
+                pattern: `[${isV6(e.ip) ? 'ipv6-addr' : 'ipv4-addr'}:value = '${e.ip}']`,
+                pattern_type: 'stix', valid_from: e.added || now,
+            }));
+            return JSON.stringify({ type: 'bundle', id: 'bundle--' + crypto.randomUUID(), objects }, null, 2);
+        }
+        default:                                        // txt — human-readable table
+            return 'IP\tSEVERITY\tREASON\tDATE\n' +
+                list.map(e => `${e.ip}\t${e.severity.toUpperCase()}\t${e.reason}\t${formatDate(e.added)}`).join('\n') + '\n';
+    }
+}
+
+const EXPORT_META = {
+    txt:      { ext: 'txt',  mime: 'text/plain' },
+    plain:    { ext: 'txt',  mime: 'text/plain' },
+    csv:      { ext: 'csv',  mime: 'text/csv' },
+    iptables: { ext: 'sh',   mime: 'text/plain' },
+    pf:       { ext: 'conf', mime: 'text/plain' },
+    cisco:    { ext: 'txt',  mime: 'text/plain' },
+    stix:     { ext: 'json', mime: 'application/json' },
+};
+
+function downloadBlocklist(fmt) {
     const list = loadBlocklist();
-    if (list.length === 0) { alert('Blocklist is empty.'); return; }
-
-    const text = list.map(e =>
-        `${e.ip}\t${e.severity.toUpperCase()}\t${e.reason}\t${formatDate(e.added)}`
-    ).join('\n');
-
-    const blob = new Blob([`IP\tSEVERITY\tREASON\tDATE\n${text}`], { type: 'text/plain' });
+    if (list.length === 0) { notify('Blocklist is empty — nothing to export', 'warn'); return; }
+    const meta = EXPORT_META[fmt] || EXPORT_META.txt;
+    const blob = new Blob([blocklistToFormat(list, fmt)], { type: meta.mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'sentinelx-blocklist.txt';
+    a.download = `sentinelx-blocklist.${meta.ext}`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -301,8 +343,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btn?.dataset.ip) removeFromBlocklist(btn.dataset.ip);
     });
 
-    // Export
-    document.getElementById('export-btn').addEventListener('click', exportBlocklist);
+    // Export menu (native <details>; each item carries data-export="<format>")
+    document.getElementById('export-menu')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-export]');
+        if (!btn) return;
+        downloadBlocklist(btn.dataset.export);
+        document.getElementById('export-menu').removeAttribute('open');
+    });
+    // Close the menu when clicking outside it
+    document.addEventListener('click', (e) => {
+        const m = document.getElementById('export-menu');
+        if (m && m.open && !m.contains(e.target)) m.removeAttribute('open');
+    });
 
     // Clear all
     document.getElementById('clear-all-btn').addEventListener('click', clearBlocklist);
