@@ -12,8 +12,8 @@
 //      URL, so updates land automatically without stale files.
 //  Bump CACHE to force a clean refresh of cached assets.
 // ═══════════════════════════════════════════════════
-const CACHE = 'sentinelx-v1';
-const SHELL = ['./app.html', './index.html', './css/style.css', './icon.svg', './manifest.json'];
+const CACHE = 'sentinelx-v2';
+const SHELL = ['./app.html', './index.html', './css/style.css', './icons/icon.svg', './manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
