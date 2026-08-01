@@ -30,4 +30,4 @@ window.FIREBASE_CONFIG = {
 // A reCAPTCHA v3 site key locks Firebase so only YOUR app can use the project
 // (stops randoms from draining your quota with your public config). Left as a
 // placeholder = App Check disabled and nothing breaks. See README "App Check".
-window.APPCHECK_SITE_KEY = "TODO-RECAPTCHA-V3-SITE-KEY";
+window.APPCHECK_SITE_KEY = "6LdZo3AtAAAAAArrYpf-gAKHMQKwmjTvpBy7kKzq";
