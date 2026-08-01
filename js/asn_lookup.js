@@ -66,10 +66,10 @@
     if (abuseList.length) {
       abuseWrap.innerHTML = abuseList.map(a => `
         <div class="asn-abuse-row">
-          <span class="mono" style="color:var(--amber-ink)">${a}</span>
+          <span class="mono" style="color:var(--amber-ink)">${escHtml(a)}</span>
           <div style="display:flex;gap:6px">
             <button class="ioc-copy" data-copy="${escHtml(a)}">Copy</button>
-            <a class="ioc-copy" style="text-decoration:none" href="mailto:${a}?subject=Abuse%20report%20for%20${ip}&body=Hello%2C%0A%0AWe%20observed%20abusive%20activity%20from%20${ip}%20(prefix%20${encodeURIComponent(d.prefix)}).%0A">Report</a>
+            <a class="ioc-copy" style="text-decoration:none" href="mailto:${encodeURIComponent(a)}?subject=Abuse%20report%20for%20${ip}&body=Hello%2C%0A%0AWe%20observed%20abusive%20activity%20from%20${ip}%20(prefix%20${encodeURIComponent(d.prefix)}).%0A">Report</a>
           </div>
         </div>`).join('');
     } else {

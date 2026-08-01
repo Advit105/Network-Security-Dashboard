@@ -194,14 +194,14 @@ async function lookupExposure(ip) {
     // Tags
     if (tags.length) {
         html += '<div class="exposure-block"><span class="exposure-label">Tags</span><div class="exposure-tags">';
-        html += tags.map(t => `<span class="port-tag${['malware','c2','compromised','honeypot'].includes(t) ? ' risky' : ''}">${t}</span>`).join('');
+        html += tags.map(t => `<span class="port-tag${['malware','c2','compromised','honeypot'].includes(t) ? ' risky' : ''}">${escHtml(t)}</span>`).join('');
         html += '</div></div>';
     }
 
     // Hostnames
     if (hostnames.length) {
         html += '<div class="exposure-block"><span class="exposure-label">Hostnames</span><div class="exposure-tags">';
-        html += hostnames.slice(0, 8).map(h => `<span class="host-tag">${h}</span>`).join('');
+        html += hostnames.slice(0, 8).map(h => `<span class="host-tag">${escHtml(h)}</span>`).join('');
         html += '</div></div>';
     }
 

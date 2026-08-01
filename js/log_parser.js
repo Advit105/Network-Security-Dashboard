@@ -2,18 +2,21 @@
 const PATTERNS = [
     {
         type: 'Brute Force',
+        attack: ['T1110', 'Brute Force'],
         severity: 'danger',
         regex: /failed password|authentication failure|invalid password|too many failures/i,
         desc: ip => `Failed login attempt${ip ? ' from ' + ip : ''} — possible brute force attack`,
     },
     {
         type: 'Invalid User',
+        attack: ['T1110', 'Brute Force — user guessing'],
         severity: 'danger',
         regex: /invalid user|unknown user|no such user/i,
         desc: ip => `Invalid username attempted${ip ? ' from ' + ip : ''}`,
     },
     {
         type: 'Port Scan',
+        attack: ['T1046', 'Network Service Discovery'],
         severity: 'danger',
         regex: /port scan|nmap|syn flood|tcp scan|udp scan/i,
         desc: ip => `Port scan detected${ip ? ' from ' + ip : ''}`,
@@ -26,6 +29,7 @@ const PATTERNS = [
     },
     {
         type: 'Root Login',
+        attack: ['T1078', 'Valid Accounts'],
         severity: 'danger',
         regex: /root.*login|login.*root|su.*root/i,
         desc: ip => `Root login attempt detected${ip ? ' from ' + ip : ''}`,
@@ -38,12 +42,14 @@ const PATTERNS = [
     },
     {
         type: 'Malware / Suspicious Process',
+        attack: ['TA0002', 'Execution (tactic)'],
         severity: 'danger',
         regex: /malware|trojan|virus|backdoor|rootkit|exploit|payload/i,
         desc: ip => `Malware or suspicious activity detected`,
     },
     {
         type: 'Privilege Escalation',
+        attack: ['T1548', 'Abuse Elevation Control'],
         severity: 'danger',
         regex: /sudo|privilege|escalat|NOPASSWD|sudoers/i,
         desc: ip => `Privilege escalation event detected`,
@@ -94,6 +100,7 @@ function analyzeLogs(rawText) {
                     line: num,
                     type: pattern.type,
                     severity: pattern.severity,
+                    attack: pattern.attack || null,
                     desc: pattern.desc(extractIP(text)),
                     raw: text,
                 });
@@ -134,7 +141,7 @@ function renderResults(results) {
     <div class="result-row" style="animation-delay:${i * 40}ms">
       <div class="alert-dot ${r.severity}"></div>
       <div class="result-info">
-        <span class="result-type" style="color:var(--${r.severity === 'danger' ? 'red' : r.severity === 'warn' ? 'amber' : r.severity === 'success' ? 'green' : 'cyan'}-ink)">${r.type}</span>
+        <span class="result-type" style="color:var(--${r.severity === 'danger' ? 'red' : r.severity === 'warn' ? 'amber' : r.severity === 'success' ? 'green' : 'cyan'}-ink)">${r.type}</span>${r.attack ? ` <span class="attack-chip" title="MITRE ATT&CK — ${r.attack[1]}">${r.attack[0]}</span>` : ''}
         <span class="alert-msg">${r.desc}</span>
         <span class="result-raw">${escapeHTML(r.raw)}</span>
       </div>

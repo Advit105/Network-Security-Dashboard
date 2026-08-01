@@ -101,12 +101,12 @@
 
     const ns = (d.nameservers || []).map(n => n.ldhName).filter(Boolean);
     $('whois-ns').innerHTML = ns.length
-      ? ns.map(h => `<span class="host-tag">${h.toLowerCase()}</span>`).join('')
+      ? ns.map(h => `<span class="host-tag">${escHtml(h.toLowerCase())}</span>`).join('')
       : '<span class="exposure-none">none published</span>';
 
     const status = d.status || [];
     $('whois-status').innerHTML = status.length
-      ? status.map(s => `<span class="subdomain-tag">${s}</span>`).join('')
+      ? status.map(s => `<span class="subdomain-tag">${escHtml(s)}</span>`).join('')
       : '<span class="exposure-none">none</span>';
 
     show('whois-result');

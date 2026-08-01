@@ -248,12 +248,14 @@ document.querySelectorAll('[data-launch]').forEach((el) => el.addEventListener('
 
 // ── Commands ───────────────────────────────────────
 const TOOLS = [
+    ['intel',     'threat intel',      'any indicator \u2192 every keyless source + exposure verdict'],
+    ['cases',     'investigation cases', 'group indicators & notes \u2014 synced to your account'],
     ['logs',      'log analyzer',      'extract & geolocate attackers from raw logs'],
     ['ips',       'ip lookup',         'geo, isp and exposed ports for any address'],
     ['dns',       'dns lookup',        'live records via google dns-over-https'],
     ['blocklist', 'blocklist manager', 'your blocklist — synced when signed in'],
-    ['hash',      'hash generator',    'sha-256 / sha-1 / sha-512 + verification'],
-    ['password',  'password checker',  'strength analysis + k-anonymous breach check'],
+    ['hash',      'hash intel',        'hash files locally + one-click reputation pivots'],
+    ['password',  'credential exposure', 'k-anonymous breach check via haveibeenpwned'],
     ['ssl',       'ssl inspector',     'certificate transparency + subdomain discovery'],
     ['email',     'email security',    'spf / dkim / dmarc / dnssec audit'],
     ['cve',       'cve feed',          'live vulnerabilities from the nvd'],

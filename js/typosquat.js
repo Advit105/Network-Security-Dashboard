@@ -181,12 +181,12 @@
 
     tbody.innerHTML = registered.map(r => `
       <tr>
-        <td class="mono" style="color:var(--red)">${r.domain}</td>
+        <td class="mono" style="color:var(--red)">${escHtml(r.domain)}</td>
         <td style="font-size:11px">${r.technique}</td>
-        <td class="mono" style="font-size:11px">${r.ip}</td>
+        <td class="mono" style="font-size:11px">${escHtml(r.ip)}</td>
         <td>
-          <button class="remove-btn typo-invest-ip" style="background:var(--cyan-bg);border-color:rgba(0,229,255,0.25);color:var(--cyan)" data-ip="${r.ip}">IP Lookup</button>
-          <button class="remove-btn typo-invest-dns" style="background:var(--glass)" data-domain="${r.domain}">DNS</button>
+          <button class="remove-btn typo-invest-ip" style="background:var(--cyan-bg);border-color:rgba(0,229,255,0.25);color:var(--cyan)" data-ip="${escHtml(r.ip)}">IP Lookup</button>
+          <button class="remove-btn typo-invest-dns" style="background:var(--glass)" data-domain="${escHtml(r.domain)}">DNS</button>
         </td>
       </tr>
     `).join('');

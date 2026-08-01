@@ -21,7 +21,7 @@
       { id: 'act-theme', kind: 'action', title: 'Toggle Theme', sub: 'Switch dark / light',
         run: () => document.getElementById('theme-toggle')?.click() },
       { id: 'act-export', kind: 'action', title: 'Export Blocklist', sub: 'Download your blocked IPs as .txt',
-        run: () => { navigateTo('blocklist'); document.getElementById('export-btn')?.click(); } },
+        run: () => { navigateTo('blocklist'); if (typeof downloadBlocklist === 'function') downloadBlocklist('txt'); } },
       { id: 'act-shortcuts', kind: 'action', title: 'Keyboard Shortcuts', sub: 'Show the shortcut cheatsheet',
         run: () => window.toggleShortcutsModal?.() },
       { id: 'act-myip', kind: 'action', title: 'Look Up My IP', sub: 'Detect and geolocate your address',

@@ -64,10 +64,12 @@
     // Mask URLs + emails so bare domains/IPs aren't double-counted from them
     let masked = text.replace(RE.url, ' ').replace(RE.email, ' ');
     const ipv4 = uniq(masked.match(RE.ipv4) || []);
-    // Domains: drop anything that's actually an IP, and TLD-only noise
+    // Domains: drop anything that's actually an IP, and TLD-only noise.
+    // Anchored, non-global regex — .test() on a /g regex is stateful (lastIndex).
+    const isIP = /^(?:\d{1,3}\.){3}\d{1,3}$/;
     const domains = uniq((masked.match(RE.domain) || [])
       .map(s => s.toLowerCase())
-      .filter(d => !RE.ipv4.test(d) && d.includes('.')));
+      .filter(d => !isIP.test(d) && d.includes('.')));
 
     return { urls, domains, ipv4, emails, md5, sha1, sha256, cves };
   }

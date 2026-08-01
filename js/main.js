@@ -1,12 +1,13 @@
 const pageTitles = {
   dashboard:  { title: 'SOC Dashboard',      sub: 'SentinelX · Real-time Monitoring' },
+  intel:      { title: 'Threat Intel',       sub: 'Unified enrichment / Exposure verdict' },
   logs:       { title: 'Log Analyzer',       sub: 'Raw parsing / Pattern matching' },
   ips:        { title: 'IP Lookup',          sub: 'Geo / ASN / Threat intel' },
   dns:        { title: 'DNS Lookup',         sub: 'Records / Domain intelligence' },
   blocklist:  { title: 'Blocklist Manager',  sub: 'Per-account IP blocklist' },
   cases:      { title: 'Investigation Cases', sub: 'Group indicators & notes · synced' },
-  hash:       { title: 'Hash Generator',     sub: 'Crypto / Verification' },
-  password:   { title: 'Password Checker',   sub: 'Strength / Breach detection' },
+  hash:       { title: 'Hash Intel',         sub: 'Local hashing / Reputation pivots' },
+  password:   { title: 'Credential Exposure', sub: 'k-anonymous breach check (HIBP)' },
   cve:        { title: 'CVE Live Feed',      sub: 'NVD / Real-time vulnerabilities' },
   ssl:        { title: 'SSL / TLS Inspector',sub: 'crt.sh / Certificate Transparency' },
   email:      { title: 'Email Security',     sub: 'SPF / DMARC / DKIM / DNSSEC' },
@@ -386,9 +387,11 @@ window.addEventListener('appinstalled', () => {
 // ── Delegated click actions — replaces inline onclick handlers (which a
 //    strict CSP without 'unsafe-inline' blocks). Buttons carry data-* attrs. ──
 document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-copy],[data-copy-hash],[data-pivot-page],[data-action="toggle-cve"]');
+  const el = e.target.closest('[data-copy],[data-copy-hash],[data-pivot-page],[data-block-ip],[data-action="toggle-cve"]');
   if (!el) return;
-  if (el.hasAttribute('data-copy')) {
+  if (el.hasAttribute('data-block-ip')) {
+    window.addToBlocklist?.(el.dataset.blockIp, 'Blocked from Threat Intel', 'danger');
+  } else if (el.hasAttribute('data-copy')) {
     navigator.clipboard.writeText(el.dataset.copy).then(() => window.showToast?.('Copied', 'success'));
   } else if (el.hasAttribute('data-copy-hash')) {
     window.copyHash?.(el.dataset.copyHash, el);

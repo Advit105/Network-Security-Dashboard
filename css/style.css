@@ -1010,6 +1010,44 @@ body::after {
 .cases-empty-sm { font-family: var(--f-mono); font-size: 11px; color: var(--text-3); padding: 8px 2px; }
 @media (max-width: 720px) { .cases-layout { grid-template-columns: 1fr; } }
 
+/* Threat Intel — unified enrichment */
+.intel-verdict {
+    border: 1px solid var(--border); border-radius: var(--r);
+    background: var(--glass-bg); box-shadow: var(--sh);
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.intel-verdict.danger { border-color: rgba(250,77,86,0.35); }
+.intel-verdict.warn   { border-color: rgba(241,194,27,0.35); }
+.intel-verdict.success{ border-color: rgba(66,190,101,0.30); }
+.intel-verdict-head { display: flex; align-items: center; gap: 12px; }
+.intel-score { font-family: var(--f-mono); font-size: 11px; color: var(--text-3); }
+.intel-evidence { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.intel-evidence li { font-size: 12.5px; color: var(--text-1); }
+.intel-noev { font-family: var(--f-mono); font-size: 12px; color: var(--text-3); line-height: 1.6; }
+.intel-caveat { font-family: var(--f-mono); font-size: 10.5px; color: var(--text-3); border-top: 1px dashed var(--border); padding-top: 8px; }
+.intel-pivots { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.intel-pivots a.ioc-pivot { text-decoration: none; }
+.intel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.intel-card {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: var(--r); box-shadow: var(--sh); padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 7px;
+}
+.intel-card-title { font-family: var(--f-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+.intel-kv { display: flex; gap: 10px; font-size: 12.5px; align-items: baseline; }
+.intel-kv b { font-family: var(--f-mono); font-size: 10.5px; color: var(--text-3); min-width: 74px; font-weight: 500; flex-shrink: 0; }
+.intel-kv span { color: var(--text-1); word-break: break-all; }
+.intel-kv a { color: var(--cyan-ink); }
+.intel-bulk-head { font-size: 12.5px; color: var(--text-2); margin-bottom: 10px; line-height: 1.6; }
+
+/* MITRE ATT&CK chip (log analyzer) */
+.attack-chip {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    color: var(--purple-ink); background: var(--purple-bg);
+    border: 1px solid rgba(190,149,255,0.25); border-radius: 4px;
+    padding: 2px 6px; white-space: nowrap; flex-shrink: 0;
+}
+
 .panels { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; flex: 1; }
 
 /* ═══════════════════════════════════════════════════

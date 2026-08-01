@@ -4,13 +4,14 @@ A security operations dashboard that runs on real, live data — no simulations,
 
 ## Features
 
+- **Threat Intel** — paste any indicator (IP, domain, URL, hash — defanged ok) and every keyless source is queried at once, with an evidence-based exposure verdict; multiple IPs become a ranked bulk-triage table.
 - **Top Threat Origins** — geolocates every IP in your blocklist (via ipwho.is) and ranks the origin countries by count.
-- **Log Analyzer** — paste raw logs; suspicious patterns are parsed, public IPs are extracted, geolocated, and can be bulk-blocked.
+- **Log Analyzer** — paste raw logs; suspicious patterns are parsed (tagged with MITRE ATT&CK techniques), public IPs are extracted, geolocated, and can be bulk-blocked.
 - **IP Lookup** — geolocation, ISP, and exposure data (Shodan InternetDB) for any address.
 - **DNS Lookup** — live records via Google DNS-over-HTTPS.
 - **Blocklist Manager** — per-account blocklist that syncs across devices when signed in (Google or email); works fully offline as a guest (localStorage). Export to **iptables / pf / Cisco ACL / CSV / STIX 2.1**.
-- **Investigation Cases** — group the IPs, domains, hashes and notes from an investigation into named cases; synced to your account (Google) or kept local as a guest.
-- **Hash Generator / Password Checker** — Web Crypto API hashing, entropy analysis, and breach checks.
+- **Investigation Cases** — group the IPs, domains, hashes and notes from an investigation into named cases; synced to your account (Google) or kept local as a guest. Export a markdown incident report or an auto-generated Sigma detection rule.
+- **Hash Intel / Credential Exposure** — hash files locally (never uploaded) with one-click reputation pivots; k-anonymous password breach checks via HIBP.
 - **CVE Live Feed** — latest vulnerabilities from the NVD.
 - **SSL/TLS Inspector** — Certificate Transparency lookups via crt.sh.
 - **Email Security Checker** — live SPF/DMARC/DKIM/MX/DNSSEC audit for any domain via DNS-over-HTTPS.
