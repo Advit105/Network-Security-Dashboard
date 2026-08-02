@@ -23,23 +23,7 @@
     ? code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)))
     : '';
 
-  // Geolocate one IP via ipwho.is (cached). Mirrors world_map.js — failed
-  // lookups are cached (never succeed); network errors are not (retry later).
-  async function geolocate(ip) {
-    const cache = load(GEO_CACHE_KEY);
-    if (cache[ip]) return cache[ip];
-    try {
-      const res = await fetch(`https://ipwho.is/${ip}`);
-      if (!res.ok) return { ok: false, transient: true };
-      const d = await res.json();
-      const entry = d.success
-        ? { ok: true, lat: d.latitude, lon: d.longitude, city: d.city || '', country: d.country || '', code: d.country_code || '' }
-        : { ok: false };
-      const c = load(GEO_CACHE_KEY); c[ip] = entry;
-      localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(c));
-      return entry;
-    } catch { return { ok: false, transient: true }; }
-  }
+  // Geolocation is shared via window.SentinelGeo (util.js), writing the same cache key.
 
   const emptyState = (title, sub) =>
     `<div class="origins-empty"><div class="origins-empty-title">${title}</div><div class="origins-empty-sub">${sub}</div></div>`;
@@ -57,7 +41,7 @@
     try {
       // Geolocate any not-yet-cached IPs (gentle pacing for ipwho.is limits)
       for (const e of list) {
-        if (!load(GEO_CACHE_KEY)[e.ip]) { await geolocate(e.ip); await sleep(150); }
+        if (!load(GEO_CACHE_KEY)[e.ip]) { await SentinelGeo(e.ip); await sleep(150); }
       }
 
       const cache = load(GEO_CACHE_KEY);
