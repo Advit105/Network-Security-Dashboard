@@ -2,9 +2,13 @@
 
 A security operations dashboard that runs on real, live data — no simulations, no seeded demo content.
 
+<!-- Portfolio tip: drop a screenshot or GIF of the console here, e.g.
+![SentinelX console](docs/screenshot.png) -->
+
 ## Features
 
-- **Threat Intel** — paste any indicator (IP, domain, URL, hash — defanged ok) and every keyless source is queried at once, with an evidence-based exposure verdict; multiple IPs become a ranked bulk-triage table.
+- **Threat Intel** — paste any indicator (IP, domain, URL, hash — defanged ok) and every keyless source is queried at once, with an evidence-based exposure verdict that shows **source attribution + a confidence level** (which sources answered); recent lookups are kept for one-click re-runs, and multiple IPs become a ranked bulk-triage table.
+- **AI Assistant** *(bring your own Claude key — optional)* — an AI analyst layer over your own data: an incident **summary** for any Investigation Case, a plain-English **explanation** of a Threat Intel verdict, and attack-chain **triage** of parsed logs. Runs client-side against the Anthropic API; the free core needs no key.
 - **Top Threat Origins** — geolocates every IP in your blocklist (via ipwho.is) and ranks the origin countries by count.
 - **Log Analyzer** — paste raw logs; suspicious patterns are parsed (tagged with MITRE ATT&CK techniques), public IPs are extracted, geolocated, and can be bulk-blocked.
 - **IP Lookup** — geolocation, ISP, and exposure data (Shodan InternetDB) for any address.
@@ -107,6 +111,24 @@ Firebase Authorized domains (step 5) so Google sign-in works there.
 > The FastAPI backend (email/password + MFA) can't run on Pages — that path is
 > for self-hosting only. Google sign-in + Firestore covers the hosted version.
 
+## AI Assistant (bring your own Claude key)
+
+An optional AI layer adds analyst-grade summaries on top of your data — powered
+by your own [Anthropic Claude](https://console.anthropic.com) API key. It drives
+three surfaces:
+
+- **Investigation Cases → ✦ AI Summary** — an incident report (severity + key
+  indicators + recommended actions) from the case's indicators and notes.
+- **Threat Intel → ✦ Explain** — a plain-English read of the exposure verdict.
+- **Log Analyzer → ✦ AI Triage** — the likely attack chain over parsed,
+  MITRE-tagged events.
+
+Enable it in **Settings → AI Assistant**: paste an `sk-ant-…` key and Save. The
+key is stored only in your browser (`localStorage`) and sent **directly to the
+Anthropic API** — never to a SentinelX server (there is none for this). Leave it
+unset and the AI buttons simply prompt for a key; everything else works
+unchanged.
+
 ## Installable app, offline & hardening
 
 - **PWA** — [manifest.json](manifest.json) + [sw.js](sw.js) make it installable (Chrome/Edge show an "Install app" button; iOS: Share → Add to Home Screen) and fast on repeat visits. The service worker caches the app shell for offline use but **never caches cross-origin/API responses**, so live data stays live.
@@ -118,4 +140,4 @@ Firebase Authorized domains (step 5) so Google sign-in works there.
 
 ## Stack
 
-Vanilla HTML/CSS/JS single-page app (no build step) · FastAPI · PostgreSQL · Argon2id · TOTP MFA.
+Vanilla HTML/CSS/JS single-page app (no build step) · Anthropic Claude API (optional AI layer) · FastAPI · PostgreSQL · Argon2id · TOTP MFA.
