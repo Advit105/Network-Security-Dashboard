@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:8000 https://*.googleapis.com https://*.firebaseapp.com https://www.google.com https://ipwho.is https://dns.google https://internetdb.shodan.io https://crt.sh https://api.pwnedpasswords.com https://api.ipify.org https://api.first.org https://nvd.nist.gov https://services.nvd.nist.gov https://onionoo.torproject.org https://rdap.org https://stat.ripe.net https://www.abuseipdb.com; frame-src https://*.firebaseapp.com https://accounts.google.com https://apis.google.com https://www.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:8000 https://*.googleapis.com https://*.firebaseapp.com https://www.google.com https://ipwho.is https://dns.google https://internetdb.shodan.io https://crt.sh https://api.pwnedpasswords.com https://api.ipify.org https://api.first.org https://nvd.nist.gov https://services.nvd.nist.gov https://onionoo.torproject.org https://rdap.org https://stat.ripe.net https://www.abuseipdb.com https://api.anthropic.com; frame-src https://*.firebaseapp.com https://accounts.google.com https://apis.google.com https://www.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SentinelX — SOC Security Dashboard</title>
     <meta name="description" content="Real-time security operations center dashboard with threat monitoring, IP lookup, DNS analysis, and cryptographic tools." />
@@ -1685,6 +1685,16 @@
                         </div>
                     </div>
                     <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title">AI Assistant (Claude)</h2></div>
+                        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px">
+                            <div class="settings-info"><span class="settings-label">Claude API Key</span><span class="settings-desc">Bring your own key to enable AI case summaries. Stored only in this browser and sent directly to Anthropic — get one at <span class="mono">console.anthropic.com</span>. <span id="ai-key-status"><span style="color:var(--text-3)">No key set</span></span></span></div>
+                            <div style="display:flex;gap:8px">
+                                <input type="password" id="ai-apikey" class="tool-input" placeholder="sk-ant-..." style="flex:1"/>
+                                <button class="panel-btn" id="ai-save-key" style="white-space:nowrap">Save Key</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
                         <div class="panel-header"><h2 class="panel-title">Appearance</h2></div>
                         <div class="settings-row">
                             <div class="settings-info"><span class="settings-label">Dark Mode</span><span class="settings-desc">Toggle between dark and light theme</span></div>
@@ -1718,18 +1728,19 @@
     </div>
 
     <script defer src="js/toast.js?v=20260804"></script>
+    <script defer src="js/util.js?v=20260807"></script>
     <script defer src="js/firebase-config.js?v=20260804"></script>
     <script type="module" src="js/gauth.js?v=20260804"></script>
     <script defer src="js/api.js?v=20260804"></script>
+    <script defer src="js/ai.js?v=20260806"></script>
     <script defer src="js/main.js?v=20260804"></script>
-    <script defer src="js/threat_origins.js?v=20260804"></script>
-    <script defer src="js/log_parser.js?v=20260804"></script>
+    <script defer src="js/threat_origins.js?v=20260807"></script>
+    <script defer src="js/log_parser.js?v=20260807"></script>
     <script defer src="js/ip_lookup.js?v=20260804"></script>
     <script defer src="js/dns_lookup.js?v=20260804"></script>
-    <script defer src="js/blocklist.js?v=20260804"></script>
-    <script defer src="js/cases.js?v=20260804"></script>
-    <script defer src="js/intel.js?v=20260804"></script>
-    <script defer src="js/search_filter.js?v=20260804"></script>
+    <script defer src="js/blocklist.js?v=20260807"></script>
+    <script defer src="js/cases.js?v=20260807"></script>
+    <script defer src="js/intel.js?v=20260807"></script>
     <script defer src="js/hash_generator.js?v=20260804"></script>
     <script defer src="js/password_checker.js?v=20260804"></script>
     <script defer src="js/cve_feed.js?v=20260804"></script>

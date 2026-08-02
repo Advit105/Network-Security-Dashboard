@@ -18,7 +18,7 @@
   'use strict';
 
   const esc = (s) => window.escHtml(s ?? '');
-  const GEO_CACHE_KEY = 'sentinelx_geo_cache_v2'; // shared app-wide geo cache
+  let lastEvidence = null; // { kind, value, text } for the AI "Explain" button (single-indicator views only)
 
   // ── Indicator type detection ──────────────────────
   const RE = {
@@ -53,20 +53,7 @@
     } catch { return null; }
   };
 
-  async function geo(ip) {
-    try {
-      const cache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {};
-      if (cache[ip]?.ok) return cache[ip];
-    } catch {}
-    const d = await jfetch(`https://ipwho.is/${ip}`);
-    if (!d || !d.success) return null;
-    const entry = { ok: true, lat: d.latitude, lon: d.longitude, city: d.city || '', country: d.country || '', code: d.country_code || '', isp: d.connection?.isp || '' };
-    try {
-      const cache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {};
-      cache[ip] = entry; localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(cache));
-    } catch {}
-    return entry;
-  }
+  const geo = (ip) => window.SentinelGeo(ip);   // shared cached ipwho.is helper (util.js)
   const internetdb = (ip) => jfetch(`https://internetdb.shodan.io/${ip}`);
   const asnInfo = (ip) => jfetch(`https://stat.ripe.net/data/network-info/data.json?resource=${ip}`);
   const torCheck = (ip) => jfetch(`https://onionoo.torproject.org/summary?limit=4&search=${ip}`);
@@ -128,11 +115,26 @@
   }
   const kv = (k, v) => v ? `<div class="intel-kv"><b>${k}</b><span>${v}</span></div>` : '';
 
-  function verdictBanner(v, signals) {
+  // Confidence reflects how complete the evidence is (which sources answered),
+  // separate from the signal score (how adverse the findings are).
+  function sourcesLine(meta) {
+    if (!meta) return '';
+    const list = meta.sources.map(s => {
+      const color = s.ok === null ? 'var(--text-3)' : s.ok ? 'var(--green)' : 'var(--red)';
+      const mark = s.ok === null ? '—' : s.ok ? '✓' : '✕';
+      return `<span style="color:${color}">${esc(s.name)} ${mark}</span>`;
+    }).join('<span style="color:var(--text-3)"> · </span>');
+    return `<div class="intel-sources" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px;font-size:11px">
+      <span class="alert-badge ${meta.confidence.cls}">${meta.confidence.label}</span>
+      <span style="color:var(--text-3)">sources: ${list}</span></div>`;
+  }
+
+  function verdictBanner(v, signals, meta) {
     const ev = signals.filter(x => x.w > 0);
     return `
       <div class="intel-verdict ${v.cls}">
-        <div class="intel-verdict-head"><span class="alert-badge ${v.cls}">${v.label}</span><span class="intel-score">signal score ${v.score}</span></div>
+        <div class="intel-verdict-head"><span class="alert-badge ${v.cls}">${v.label}</span><span class="intel-score">signal score ${v.score}</span><button class="panel-btn intel-explain-btn" id="intel-explain" style="margin-left:auto" title="AI plain-English explanation — needs a Claude API key (Settings → AI Assistant)">✦ Explain</button></div>
+        ${sourcesLine(meta)}
         ${ev.length ? `<ul class="intel-evidence">${ev.map(x => `<li>${esc(x.t)}</li>`).join('')}</ul>` : '<div class="intel-noev">No adverse signals in any queried source.</div>'}
         <div class="intel-caveat">${CAVEAT}</div>
       </div>`;
@@ -167,11 +169,36 @@
     const v = verdictFrom(signals);
     const ports = idb?.ports || [];
     const vulns = idb?.vulns || [];
+    lastEvidence = { kind: 'ip', value: ip, text: [
+      `Exposure verdict: ${v.label} (signal score ${v.score})`,
+      signals.filter(x => x.w > 0).length ? 'Signals:\n' + signals.filter(x => x.w > 0).map(x => '- ' + x.t).join('\n') : 'Signals: none',
+      g?.ok ? `Geolocation: ${[g.city, g.country].filter(Boolean).join(', ') || '?'}; ISP ${g.isp || '?'}` : 'Geolocation: unavailable',
+      asn?.data?.asns?.length ? `ASN: AS${asn.data.asns[0]}${asn.data.prefix ? ' (' + asn.data.prefix + ')' : ''}` : '',
+      `Reverse DNS: ${rdns || 'none'}`,
+      `Open ports: ${ports.length ? ports.join(', ') : 'none known'}`,
+      `Known CVEs: ${vulns.length ? vulns.join(', ') : 'none known'}`,
+      `InternetDB tags: ${(idb?.tags || []).join(', ') || 'none'}`,
+      `Hostnames: ${(idb?.hostnames || []).slice(0, 5).join(', ') || 'none'}`,
+      tor?.relays?.length ? 'Tor: active relay' : 'Tor: not a known relay',
+    ].filter(Boolean).join('\n') };
+    // Attribution: which sources answered → confidence in the exposure picture.
+    const ipCore = [!!g, idb !== null, !!asn, tor !== null].filter(Boolean).length;
+    const meta = {
+      confidence: idb === null ? { label: 'LOW CONFIDENCE', cls: 'warn' }
+        : ipCore >= 3 ? { label: 'HIGH CONFIDENCE', cls: 'success' }
+        : { label: 'MEDIUM CONFIDENCE', cls: 'info' },
+      sources: [
+        { name: 'ipwho.is', ok: !!(g && g.ok) },
+        { name: 'InternetDB', ok: idb !== null },
+        { name: 'RIPE', ok: !!asn },
+        { name: 'Tor', ok: tor !== null },
+      ],
+    };
     out.innerHTML = `
-      ${verdictBanner(v, signals)}
+      ${verdictBanner(v, signals, meta)}
       ${pivots('ip', ip)}
       <div class="intel-grid">
-        ${card('Geolocation', g
+        ${card('Geolocation', g?.ok
           ? kv('Location', esc([g.city, g.country].filter(Boolean).join(', '))) + kv('ISP', esc(g.isp))
           : '<div class="intel-noev">unavailable</div>')}
         ${card('Network', (asn?.data?.asns?.length ? kv('ASN', 'AS' + esc(String(asn.data.asns[0]))) : '') + kv('Prefix', esc(asn?.data?.prefix || '')) + kv('Reverse DNS', esc(rdns || '—')) || '<div class="intel-noev">unavailable</div>')}
@@ -202,8 +229,29 @@
     const resolvedVulns = idbs.reduce((n, d) => n + (d?.vulns?.length || 0), 0);
     const signals = domainSignals(ageDays, mx, txt, resolvedVulns);
     const v = verdictFrom(signals);
+    lastEvidence = { kind: 'domain', value: domain, text: [
+      `Exposure verdict: ${v.label} (signal score ${v.score})`,
+      signals.filter(x => x.w > 0).length ? 'Signals:\n' + signals.filter(x => x.w > 0).map(x => '- ' + x.t).join('\n') : 'Signals: none',
+      `Resolves to: ${ips.length ? ips.slice(0, 6).join(', ') : 'does not resolve'}`,
+      regDate ? `Registered: ${regDate} (${ageDays} days ago)` : 'Registration: RDAP unavailable',
+      `MX: ${mx === null ? 'unavailable' : (mx.length ? mx.join(', ') : 'none')}`,
+      `SPF: ${txt === null ? 'unavailable' : ((txt || []).some(r => /v=spf1/i.test(r)) ? 'present' : 'missing')}`,
+      pivotIPs.length ? 'Resolved-host exposure:\n' + pivotIPs.map((ip, i) => `- ${ip}: ${idbs[i] && !idbs[i].__notFound ? `${(idbs[i].ports || []).length} ports, ${(idbs[i].vulns || []).length} CVEs` : 'no known exposure'}`).join('\n') : '',
+      `Name servers: ${(ns?.Answer || []).slice(0, 4).map(r => r.data).join(', ') || 'unavailable'}`,
+    ].filter(Boolean).join('\n') };
+    const dnsOk = [a, aaaa, ns, mxr, txtr].some(x => x !== null);
+    const meta = {
+      confidence: !dnsOk ? { label: 'LOW CONFIDENCE', cls: 'warn' }
+        : reg ? { label: 'HIGH CONFIDENCE', cls: 'success' }
+        : { label: 'MEDIUM CONFIDENCE', cls: 'info' },
+      sources: [
+        { name: 'dns.google', ok: dnsOk },
+        { name: 'RDAP', ok: !!reg },
+        { name: 'InternetDB', ok: pivotIPs.length ? idbs.some(d => d !== null) : null },
+      ],
+    };
     out.innerHTML = `
-      ${verdictBanner(v, signals)}
+      ${verdictBanner(v, signals, meta)}
       ${pivots('domain', domain)}
       <div class="intel-grid">
         ${card('Resolution', ips.length ? ips.slice(0, 6).map(i => `<div class="intel-kv"><b>IP</b><span class="mono">${esc(i)}</span></div>`).join('') : '<div class="intel-noev">does not resolve</div>')}
@@ -255,6 +303,25 @@
       </tr>`).join('')}</tbody></table>`;
   }
 
+  // ── Lookup history (recent single-indicator lookups; localStorage) ──
+  const HIST_KEY = 'sentinelx_intel_history';
+  const loadHist = () => { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return []; } };
+  function pushHist(type, value) {
+    const h = [{ type, value, ts: Date.now() }, ...loadHist().filter(e => e.value !== value)].slice(0, 12);
+    localStorage.setItem(HIST_KEY, JSON.stringify(h));
+    renderHist();
+  }
+  function renderHist() {
+    const el = document.getElementById('intel-history');
+    if (!el) return;
+    const h = loadHist();
+    if (!h.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.innerHTML = '<span style="font-size:11px;color:var(--text-3);align-self:center">Recent:</span>'
+      + h.map(e => `<button class="ioc-pivot" data-hist="${esc(e.value)}" title="${esc(e.type)} — click to re-run">${esc(e.value.length > 28 ? e.value.slice(0, 26) + '…' : e.value)}</button>`).join('')
+      + '<button class="ioc-pivot" data-hist-clear="1" title="Clear history" style="opacity:.7">Clear</button>';
+  }
+
   // ── Controller ────────────────────────────────────
   async function run() {
     const input = document.getElementById('intel-input');
@@ -272,10 +339,25 @@
     }
 
     const { type, value } = parsed[0];
+    pushHist(type, value);
     out.innerHTML = `<div class="loading-row"><div class="spinner"></div><span>Enriching ${esc(value)} across all sources…</span></div>`;
     if (type === 'ip') return enrichIP(value, out);
     if (type === 'domain') return enrichDomain(value, out);
     if (type === 'hash') return enrichHash(value, out);
+  }
+
+  // ── AI explanation of the current single-indicator evidence (shared window.AI) ──
+  async function aiExplain() {
+    if (!window.AI || !lastEvidence) return;
+    const title = `AI Explanation — ${lastEvidence.value}`;
+    if (!AI.requireKey()) return;
+    AI.modal(title, '<div class="loading-row"><div class="spinner"></div><span>Explaining the evidence…</span></div>');
+    try {
+      const md = await AI.explainIntel(lastEvidence.kind, lastEvidence.value, lastEvidence.text);
+      AI.modal(title, `<div class="ai-md">${AI.mdToHtml(md)}</div>`);
+    } catch (err) {
+      AI.modal(title, `<div style="color:var(--red)">${esc(err.message)}</div>`);
+    }
   }
 
   function init() {
@@ -283,6 +365,27 @@
     document.getElementById('intel-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run();
     });
+    document.getElementById('intel-results')?.addEventListener('click', (e) => {
+      if (e.target.closest('#intel-explain')) aiExplain();
+    });
+
+    // Recent-lookups bar, inserted just above the results area.
+    const results = document.getElementById('intel-results');
+    if (results && !document.getElementById('intel-history')) {
+      const bar = document.createElement('div');
+      bar.id = 'intel-history';
+      bar.setAttribute('style', 'display:none;flex-wrap:wrap;gap:6px;margin-bottom:10px');
+      results.insertAdjacentElement('beforebegin', bar);
+      bar.addEventListener('click', (e) => {
+        if (e.target.closest('[data-hist-clear]')) { localStorage.removeItem(HIST_KEY); renderHist(); return; }
+        const b = e.target.closest('[data-hist]');
+        if (b) {
+          const inp = document.getElementById('intel-input');
+          if (inp) { inp.value = b.dataset.hist; run(); }
+        }
+      });
+      renderHist();
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

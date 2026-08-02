@@ -303,13 +303,7 @@ function downloadBlocklist(fmt) {
     const list = loadBlocklist();
     if (list.length === 0) { notify('Blocklist is empty — nothing to export', 'warn'); return; }
     const meta = EXPORT_META[fmt] || EXPORT_META.txt;
-    const blob = new Blob([blocklistToFormat(list, fmt)], { type: meta.mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sentinelx-blocklist.${meta.ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
+    SentinelDownload(`sentinelx-blocklist.${meta.ext}`, blocklistToFormat(list, fmt), meta.mime);
 }
 
 // ── Event Listeners ────────────────────────────────
@@ -341,6 +335,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('blocklist-tbody')?.addEventListener('click', e => {
         const btn = e.target.closest('.remove-btn');
         if (btn?.dataset.ip) removeFromBlocklist(btn.dataset.ip);
+    });
+
+    // Table search filter (folded in from the former search_filter.js)
+    document.getElementById('blocklist-search')?.addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        document.getElementById('blocklist-tbody')?.querySelectorAll('tr').forEach(row => {
+            row.style.display = q && !row.textContent.toLowerCase().includes(q) ? 'none' : '';
+        });
     });
 
     // Export menu (native <details>; each item carries data-export="<format>")

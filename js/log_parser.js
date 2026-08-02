@@ -113,7 +113,10 @@ function analyzeLogs(rawText) {
 }
 
 // ── Render Results ─────────────────────────────────
+let lastLogResults = null; // captured for the AI "Triage" button
+
 function renderResults(results) {
+    lastLogResults = results;
     const panel = document.getElementById('results-panel');
     const list = document.getElementById('results-list');
     const summary = document.getElementById('results-summary');
@@ -135,6 +138,7 @@ function renderResults(results) {
     if (counts.warn) summary.innerHTML += `<div class="alert-badge warn">${counts.warn} Warnings</div>`;
     if (counts.success) summary.innerHTML += `<div class="alert-badge success">${counts.success} OK</div>`;
     if (counts.info) summary.innerHTML += `<div class="alert-badge info">${counts.info} Info</div>`;
+    summary.innerHTML += `<button class="panel-btn" id="log-triage" style="margin-left:auto" title="AI triage of these detections — needs a Claude API key (Settings → AI Assistant)">✦ AI Triage</button>`;
 
     // Result rows
     list.innerHTML = results.map((r, i) => `
@@ -143,7 +147,7 @@ function renderResults(results) {
       <div class="result-info">
         <span class="result-type" style="color:var(--${r.severity === 'danger' ? 'red' : r.severity === 'warn' ? 'amber' : r.severity === 'success' ? 'green' : 'cyan'}-ink)">${r.type}</span>${r.attack ? ` <span class="attack-chip" title="MITRE ATT&CK — ${r.attack[1]}">${r.attack[0]}</span>` : ''}
         <span class="alert-msg">${r.desc}</span>
-        <span class="result-raw">${escapeHTML(r.raw)}</span>
+        <span class="result-raw">${escHtml(r.raw)}</span>
       </div>
       <span class="result-line">Line ${r.line}</span>
       <div class="alert-badge ${r.severity}">${r.severity === 'danger' ? 'Critical' : r.severity === 'warn' ? 'Warning' : r.severity === 'success' ? 'OK' : 'Info'}</div>
@@ -153,42 +157,10 @@ function renderResults(results) {
     panel.style.display = 'flex';
 }
 
-function escapeHTML(str) {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-}
-
 // ═══════════════════════════════════════════════════
 //  THREAT ACTOR PIPELINE — extract IPs → geolocate → block
 // ═══════════════════════════════════════════════════
-const GEO_CACHE_KEY = 'sentinelx_geo_cache_v2'; // shared with threat_origins.js
-
-function loadGeoCacheLP() {
-    try { return JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {}; } catch { return {}; }
-}
-function cacheGeoLP(ip, entry) {
-    const c = loadGeoCacheLP();
-    c[ip] = entry;
-    localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(c));
-}
-async function geolocateLP(ip) {
-    const cached = loadGeoCacheLP()[ip];
-    if (cached) return cached;
-    try {
-        const res = await fetch(`https://ipwho.is/${ip}`);
-        if (!res.ok) return { ok: false, transient: true };
-        const d = await res.json();
-        const entry = d.success
-            ? { ok: true, lat: d.latitude, lon: d.longitude, city: d.city || '', country: d.country || '' }
-            : { ok: false };
-        cacheGeoLP(ip, entry);
-        return entry;
-    } catch {
-        return { ok: false, transient: true };
-    }
-}
+// Geolocation is shared via window.SentinelGeo (util.js).
 
 // Aggregate public attacker IPs from analysis results
 function buildActors(results) {
@@ -251,8 +223,8 @@ async function renderActors(results) {
 
     // Geolocate each row live (cached, throttled)
     for (const a of currentActors) {
-        const wasCached = !!loadGeoCacheLP()[a.ip];
-        const geo = await geolocateLP(a.ip);
+        const wasCached = SentinelGeo.cached(a.ip);
+        const geo = await SentinelGeo(a.ip);
         const cell = tbody.querySelector(`tr[data-ip="${a.ip}"] .actor-loc`);
         if (cell) {
             cell.textContent = geo.ok
@@ -292,6 +264,35 @@ function blockAllActors() {
     }
 }
 
+// ── AI triage of the parsed detections (shared window.AI) ──
+async function aiTriage() {
+    if (!window.AI || !lastLogResults || !lastLogResults.length) return;
+    const title = 'AI Log Triage';
+    if (!AI.requireKey()) return;
+    const counts = { danger: 0, warn: 0, success: 0, info: 0 };
+    lastLogResults.forEach(r => counts[r.severity]++);
+    const byType = {};
+    lastLogResults.forEach(r => {
+        const k = r.attack ? `${r.type} [${r.attack[0]} ${r.attack[1]}]` : r.type;
+        byType[k] = (byType[k] || 0) + 1;
+    });
+    const actors = buildActors(lastLogResults);
+    const evidence = [
+        `Detections: ${lastLogResults.length} lines flagged — ${counts.danger} critical, ${counts.warn} warning, ${counts.success} ok, ${counts.info} info.`,
+        'Detection types:\n' + Object.entries(byType).map(([k, n]) => `- ${k} ×${n}`).join('\n'),
+        actors.length
+            ? 'Public source IPs:\n' + actors.slice(0, 15).map(a => `- ${a.ip}: ${a.hits} hit(s), mostly ${a.topPattern} (${a.worst})`).join('\n')
+            : 'Public source IPs: none extracted (sources may be private/internal).',
+    ].join('\n\n');
+    AI.modal(title, '<div class="loading-row"><div class="spinner"></div><span>Triaging detections…</span></div>');
+    try {
+        const md = await AI.triageLog(evidence);
+        AI.modal(title, `<div class="ai-md">${AI.mdToHtml(md)}</div>`);
+    } catch (err) {
+        AI.modal(title, `<div style="color:var(--red)">${escHtml(err.message)}</div>`);
+    }
+}
+
 // ── Sample Logs ────────────────────────────────────
 const SAMPLE_LOGS = `May 17 10:21:03 server sshd[1234]: Failed password for root from 192.168.1.104 port 22 ssh2
 May 17 10:21:05 server sshd[1234]: Failed password for root from 192.168.1.104 port 22 ssh2
@@ -317,6 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('log-block-all-btn')?.addEventListener('click', blockAllActors);
 
+    document.getElementById('results-panel')?.addEventListener('click', (e) => {
+        if (e.target.closest('#log-triage')) aiTriage();
+    });
+
     document.getElementById('load-sample-btn').addEventListener('click', () => {
         document.getElementById('log-input').value = SAMPLE_LOGS;
     });
@@ -328,5 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const actors = document.getElementById('log-actors-panel');
         if (actors) actors.style.display = 'none';
         currentActors = [];
+        lastLogResults = null;
     });
 });

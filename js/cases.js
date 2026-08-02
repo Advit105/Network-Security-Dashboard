@@ -95,6 +95,7 @@
     el.innerHTML = `
       <div class="case-head">
         <input class="case-name-input" id="case-name" value="${esc(c.name || '')}" placeholder="Case name"/>
+        <button class="panel-btn" id="case-ai" title="AI incident summary — needs a Claude API key (Settings → AI Assistant)">✦ AI Summary</button>
         <button class="panel-btn" id="case-report" title="Download an incident report (markdown)">Report</button>
         <button class="panel-btn" id="case-sigma" title="Generate a Sigma detection rule from the indicators">Sigma</button>
         <button class="panel-btn danger-btn" id="case-delete">Delete</button>
@@ -118,13 +119,22 @@
     if (box) { box.value = ''; box.focus(); }
   }
 
+  // ── AI incident summary (shared window.AI client; BYO Claude key) ──
+  async function aiSummary(c) {
+    if (!window.AI) return;
+    const title = `AI Summary — ${c.name || 'Untitled case'}`;
+    if (!AI.requireKey()) return;
+    AI.modal(title, '<div class="loading-row"><div class="spinner"></div><span>Analyzing case…</span></div>');
+    try {
+      const md = await AI.summarizeCase(c);
+      AI.modal(title, `<div class="ai-md">${AI.mdToHtml(md)}</div>`);
+    } catch (err) {
+      AI.modal(title, `<div style="color:var(--red)">${esc(err.message)}</div>`);
+    }
+  }
+
   // ── Exports: incident report (markdown) + Sigma detection rule ──
-  const dl = (name, text, mime = 'text/plain') => {
-    const url = URL.createObjectURL(new Blob([text], { type: mime }));
-    const a = document.createElement('a');
-    a.href = url; a.download = name; a.click();
-    URL.revokeObjectURL(url);
-  };
+  const dl = window.SentinelDownload;   // shared Blob download helper (util.js)
   const slug = (s) => (s || 'case').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'case';
 
   const IP_RE = /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
@@ -213,6 +223,7 @@ level: medium
       if (e.target.closest('#case-delete')) return removeCase(selectedId);
       if (e.target.closest('#case-item-add')) return addItem();
       const c = () => load().find(x => x.id === selectedId);
+      if (e.target.closest('#case-ai')) { const x = c(); if (x) aiSummary(x); return; }
       if (e.target.closest('#case-report')) { const x = c(); if (x) exportReport(x); return; }
       if (e.target.closest('#case-sigma')) { const x = c(); if (x) exportSigma(x); return; }
       const rm = e.target.closest('[data-item]');
