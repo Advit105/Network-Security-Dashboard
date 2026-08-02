@@ -286,13 +286,7 @@
                  ════════════════════════════════ -->
             <div id="page-dashboard" class="page active">
 
-                <!-- Live threat-intel marquee (NVD, last 7 days) -->
-                <div id="intel-ticker" class="ticker-wrap" style="display:none">
-                    <span class="ticker-label">Live intel</span>
-                    <div class="ticker-viewport"><div class="ticker-track" id="ticker-track"></div></div>
-                </div>
-
-                <!-- Hero strip — greeting + live session facts -->
+                <!-- Hero strip — greeting + session tiles -->
                 <div class="dash-hero">
                     <div class="dash-radar" aria-hidden="true">
                         <div class="radar-sweep"></div>
@@ -301,7 +295,6 @@
                     <div class="dash-hero-text">
                         <h2 class="dash-hero-title">Security <span class="grad-text">Command Center</span></h2>
                         <p class="dash-hero-sub">Live monitoring — your blocklist, global threat origins and NVD vulnerability intel. All data is real.</p>
-                        <p class="dash-hero-fact"><span class="hero-fact-caret">&gt;</span> <span id="hero-fact">syncing live threat intel…</span></p>
                     </div>
                     <div class="dash-hero-chips">
                         <div class="hero-chip">
@@ -313,13 +306,6 @@
                             <span class="hero-chip-val" id="dash-myip">detecting…</span>
                         </div>
                     </div>
-                </div>
-
-                <!-- Live facts ticker — rotates real, self-refreshing threat facts -->
-                <div class="facts-strip" id="facts-strip">
-                    <span class="facts-live"><span class="facts-live-dot"></span>LIVE FACTS</span>
-                    <div class="facts-view"><span class="facts-text" id="facts-text">connecting to live intel feeds…</span></div>
-                    <div class="facts-dots" id="facts-dots"></div>
                 </div>
 
                 <!-- Real-time stat tiles (blocklist-driven, only real data) -->
@@ -1744,8 +1730,6 @@
     <script defer src="js/hash_generator.js?v=20260804"></script>
     <script defer src="js/password_checker.js?v=20260804"></script>
     <script defer src="js/cve_feed.js?v=20260804"></script>
-    <script defer src="js/facts.js?v=20260804"></script>
-    <script defer src="js/ticker.js?v=20260804"></script>
     <script defer src="js/ssl_inspector.js?v=20260804"></script>
     <script defer src="js/abuseipdb.js?v=20260804"></script>
     <script defer src="js/typosquat.js?v=20260804"></script>

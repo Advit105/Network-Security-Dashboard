@@ -150,8 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch { /* enrichment is best-effort; feed already rendered */ }
   }
 
-  // Share the live NVD data with the facts ticker (facts.js) so it doesn't
-  // hit the rate-limited NVD API a second time. Fires whenever data changes.
+  // Publish the live NVD data (window.SentinelCVE + 'sentinel-cve' event) so any
+  // other module can reuse it without a second hit to the rate-limited NVD API.
   function publishCVEData() {
     window.SentinelCVE = { list: allCves, total: window.__cveTotal, updated: Date.now() };
     window.dispatchEvent(new Event('sentinel-cve'));
